@@ -1,17 +1,664 @@
-import type { Metadata } from "next";
-import PlaceholderPage from "@/components/PlaceholderPage";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Matches | FIFA World Cup 2026",
-  description: "All FIFA World Cup 2026 match schedules, results, and fixtures.",
-};
+/**
+ * matches/page.tsx — Editorial Tournament Archive
+ *
+ * NOT a dashboard. NOT a sports app.
+ * This is a curated World Cup archive — like an exhibition catalogue.
+ *
+ * Layout:
+ *   MATCHES (massive) + "104 Matches · June 11 — July 26"
+ *   Search input (thin underline)
+ *   Stage filter (text links, not pills)
+ *   Date groups (JUNE 12, JUNE 13...) as massive section headings
+ *   Match entries as typography compositions (ARGENTINA — SAUDI ARABIA)
+ *
+ * Visual rules:
+ *   - 70-80% viewport width, centered
+ *   - No cards, no borders, no shadows, no panels
+ *   - Thin 1px separators only
+ *   - Massive whitespace between sections
+ *   - Full country names, always
+ *   - Typography-first hierarchy
+ */
+
+import React, { useState, useMemo, useCallback } from "react";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { gsap } from "gsap";
+
+import {
+  MATCHES,
+  TOTAL_MATCHES,
+  TournamentStage,
+  MatchStatus,
+  STAGE_LABELS_SHORT,
+  filterMatches,
+  groupMatchesByDate,
+  formatDateEditorial,
+  getTournamentDateRange,
+} from "@/lib/matches-data";
+
+import type { Match } from "@/lib/data/matches";
+import TeamLogo from "@/components/TeamLogo";
+
+// ---------------------------------------------------------------------------
+// Stage filter — minimal text links, not pills
+// ---------------------------------------------------------------------------
+
+const STAGES = [
+  TournamentStage.ALL,
+  TournamentStage.GROUP_STAGE,
+  TournamentStage.ROUND_OF_32,
+  TournamentStage.ROUND_OF_16,
+  TournamentStage.QUARTER_FINALS,
+  TournamentStage.SEMI_FINALS,
+  TournamentStage.FINAL,
+] as const;
+
+// ---------------------------------------------------------------------------
+// Match Entry — typography composition, not a card
+// ---------------------------------------------------------------------------
+
+function MatchEntry({ match, index }: { match: Match; index: number }) {
+  const linkRef = React.useRef<HTMLAnchorElement>(null);
+
+  const isFinished = match.status === MatchStatus.FINISHED;
+  const isLive = match.status === MatchStatus.LIVE;
+
+  // Winner/loser opacity
+  const homeDimmed =
+    isFinished && match.homeScore !== undefined && match.awayScore !== undefined
+      ? match.homeScore < match.awayScore
+      : false;
+  const awayDimmed =
+    isFinished && match.homeScore !== undefined && match.awayScore !== undefined
+      ? match.awayScore < match.homeScore
+      : false;
+
+  const handleEnter = () => {
+    if (!linkRef.current) return;
+    gsap.to(linkRef.current, { x: 4, duration: 0.35, ease: "power2.out" });
+  };
+  const handleLeave = () => {
+    if (!linkRef.current) return;
+    gsap.to(linkRef.current, { x: 0, duration: 0.35, ease: "power2.out" });
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: 0.5,
+        delay: Math.min(index * 0.03, 0.4),
+        ease: [0.25, 0.46, 0.45, 0.94],
+      }}
+    >
+      <Link
+        ref={linkRef}
+        href={`/matches/${match.id}`}
+        onMouseEnter={handleEnter}
+        onMouseLeave={handleLeave}
+        className="block focus-visible:outline-none group"
+        style={{
+          textDecoration: "none",
+          padding: "clamp(1.2rem, 2vw, 1.8rem) 0",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          willChange: "transform",
+        }}
+        aria-label={`${match.home.name} versus ${match.away.name}`}
+      >
+        {/* Top line: stage info + venue */}
+        <div className="flex items-center justify-between mb-3 md:mb-4">
+          <div className="flex items-center gap-3">
+            {/* Live indicator */}
+            {isLive && (
+              <span className="flex items-center gap-1.5">
+                <span className="relative flex h-[5px] w-[5px]">
+                  <span
+                    className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60"
+                    style={{ background: "#00D1FF" }}
+                  />
+                  <span
+                    className="relative inline-flex rounded-full h-[5px] w-[5px]"
+                    style={{ background: "#00D1FF" }}
+                  />
+                </span>
+                <span
+                  style={{
+                    fontSize: "0.6rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.14em",
+                    color: "#00D1FF",
+                  }}
+                >
+                  LIVE
+                  {match.liveData && ` · ${match.liveData.currentMinute}'`}
+                </span>
+              </span>
+            )}
+
+            {/* Stage / Group */}
+            <span
+              style={{
+                fontSize: "0.6rem",
+                fontWeight: 400,
+                letterSpacing: "0.16em",
+                color: isLive ? "rgba(0,209,255,0.4)" : "rgba(255,255,255,0.2)",
+                textTransform: "uppercase",
+              }}
+            >
+              {match.group ?? STAGE_LABELS_SHORT[match.stage]}
+            </span>
+
+            {/* Time */}
+            <span
+              style={{
+                fontSize: "0.6rem",
+                fontWeight: 400,
+                letterSpacing: "0.12em",
+                color: "rgba(255,255,255,0.15)",
+              }}
+            >
+              {match.time}
+            </span>
+          </div>
+
+          {/* Venue — desktop only */}
+          <span
+            className="hidden md:block"
+            style={{
+              fontSize: "0.6rem",
+              fontWeight: 300,
+              letterSpacing: "0.1em",
+              color: "rgba(255,255,255,0.15)",
+            }}
+          >
+            {match.stadium}, {match.city}
+          </span>
+        </div>
+
+        {/* Main line: TEAM — score — TEAM */}
+        <div className="flex items-center gap-3 md:gap-6">
+          {/* Home team */}
+          <div
+            className="flex-1 flex items-center justify-end gap-3 md:gap-4"
+            style={{
+              opacity: homeDimmed ? 0.3 : 1,
+              transition: "opacity 0.3s ease",
+            }}
+          >
+            <span
+              className="text-right uppercase font-bold"
+              style={{
+                fontSize: "clamp(0.85rem, 1.8vw, 1.55rem)",
+                letterSpacing: "0.08em",
+                lineHeight: 1.1,
+                color: "#ffffff",
+              }}
+            >
+              {match.home.name}
+            </span>
+            <TeamLogo code={match.home.code} size={28} />
+          </div>
+
+          {/* Score / Time block — center */}
+          <div
+            className="flex-shrink-0 flex items-center justify-center"
+            style={{ minWidth: "clamp(50px, 8vw, 90px)" }}
+          >
+            {isFinished || isLive ? (
+              <div className="flex flex-col items-center">
+                <span
+                  className="tabular-nums font-light"
+                  style={{
+                    fontSize: "clamp(0.85rem, 1.8vw, 1.55rem)",
+                    letterSpacing: "0.12em",
+                    color: isLive ? "#00D1FF" : "rgba(255,255,255,0.8)",
+                  }}
+                >
+                  {match.homeScore} — {match.awayScore}
+                </span>
+                {isLive && match.liveData && (
+                  <span
+                    style={{
+                      fontSize: "0.6rem",
+                      fontWeight: 700,
+                      color: "#00D1FF",
+                      marginTop: "2px",
+                      letterSpacing: "0.05em",
+                    }}
+                  >
+                    {match.liveData.currentMinute}'
+                  </span>
+                )}
+              </div>
+            ) : (
+              <span
+                style={{
+                  fontSize: "0.6rem",
+                  letterSpacing: "0.12em",
+                  color: "rgba(255,255,255,0.25)",
+                }}
+              >
+                vs
+              </span>
+            )}
+          </div>
+
+          {/* Away team */}
+          <div
+            className="flex-1 flex items-center justify-start gap-3 md:gap-4"
+            style={{
+              opacity: awayDimmed ? 0.3 : 1,
+              transition: "opacity 0.3s ease",
+            }}
+          >
+            <TeamLogo code={match.away.code} size={28} />
+            <span
+              className="text-left uppercase font-bold"
+              style={{
+                fontSize: "clamp(0.85rem, 1.8vw, 1.55rem)",
+                letterSpacing: "0.08em",
+                lineHeight: 1.1,
+                color: "#ffffff",
+              }}
+            >
+              {match.away.name}
+            </span>
+          </div>
+        </div>
+
+        {/* FT badge for finished matches */}
+        {isFinished && (
+          <div className="mt-2 text-center">
+            <span
+              style={{
+                fontSize: "0.5rem",
+                fontWeight: 500,
+                letterSpacing: "0.2em",
+                color: "rgba(255,255,255,0.15)",
+              }}
+            >
+              FT
+            </span>
+          </div>
+        )}
+      </Link>
+    </motion.div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
 
 export default function MatchesPage() {
+  const [activeStage, setActiveStage] = useState<TournamentStage>(TournamentStage.ALL);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const dateRange = useMemo(() => getTournamentDateRange(MATCHES), []);
+
+  const filtered = useMemo(
+    () => filterMatches(MATCHES, activeStage, searchQuery),
+    [activeStage, searchQuery]
+  );
+
+  const grouped = useMemo(() => groupMatchesByDate(filtered), [filtered]);
+
+  const liveCount = useMemo(
+    () => MATCHES.filter((m) => m.status === MatchStatus.LIVE).length,
+    []
+  );
+
+  const handleStageChange = useCallback((stage: TournamentStage) => {
+    setActiveStage(stage);
+  }, []);
+
+  let runningIndex = 0;
+
   return (
-    <PlaceholderPage
-      title="Matches"
-      subtitle="Full schedule, results, and live fixtures — coming soon."
-      accentChar="M"
-    />
+    <div
+      className="fixed inset-0 bg-[#050505] overflow-y-auto"
+      style={{ fontFamily: "var(--font-inter, 'Inter', sans-serif)" }}
+    >
+      <div
+        className="mx-auto"
+        style={{
+          width: "min(80%, 1200px)",
+          minWidth: "320px",
+          paddingBottom: "8rem",
+        }}
+      >
+        {/* ══════════════════════════════════════════════════════════════════
+            EDITORIAL HEADER
+        ═══════════════════════════════════════════════════════════════════ */}
+        <header style={{ paddingTop: "clamp(2.5rem, 6vw, 5rem)" }}>
+          {/* Back arrow */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            style={{ marginBottom: "clamp(2rem, 4vw, 3.5rem)" }}
+          >
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 group focus-visible:outline-none"
+              style={{
+                textDecoration: "none",
+                fontSize: "0.65rem",
+                fontWeight: 400,
+                letterSpacing: "0.16em",
+                color: "rgba(255,255,255,0.25)",
+                textTransform: "uppercase",
+                transition: "color 0.25s ease",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.6)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.25)")}
+              aria-label="Back to home"
+            >
+              ← Home
+            </Link>
+          </motion.div>
+
+          {/* MATCHES — the title */}
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+            style={{
+              fontSize: "clamp(3rem, 8vw, 7rem)",
+              fontWeight: 800,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              color: "#ffffff",
+              lineHeight: 0.9,
+              marginBottom: "clamp(1rem, 2vw, 1.5rem)",
+            }}
+          >
+            Matches
+          </motion.h1>
+
+          {/* Subtitle — count + date range */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.15 }}
+            className="flex flex-wrap items-center gap-3"
+          >
+            <span
+              style={{
+                fontSize: "clamp(0.7rem, 1.1vw, 0.85rem)",
+                fontWeight: 300,
+                letterSpacing: "0.1em",
+                color: "rgba(255,255,255,0.3)",
+              }}
+            >
+              {TOTAL_MATCHES} Matches
+            </span>
+            <span style={{ color: "rgba(255,255,255,0.1)" }}>·</span>
+            <span
+              style={{
+                fontSize: "clamp(0.7rem, 1.1vw, 0.85rem)",
+                fontWeight: 300,
+                letterSpacing: "0.1em",
+                color: "rgba(255,255,255,0.2)",
+              }}
+            >
+              {dateRange}
+            </span>
+            {liveCount > 0 && (
+              <>
+                <span style={{ color: "rgba(255,255,255,0.1)" }}>·</span>
+                <span
+                  className="flex items-center gap-1.5"
+                  style={{
+                    fontSize: "0.65rem",
+                    fontWeight: 600,
+                    letterSpacing: "0.12em",
+                    color: "#00D1FF",
+                  }}
+                >
+                  <span className="relative flex h-[4px] w-[4px]">
+                    <span
+                      className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                      style={{ background: "#00D1FF" }}
+                    />
+                    <span className="relative inline-flex rounded-full h-[4px] w-[4px]" style={{ background: "#00D1FF" }} />
+                  </span>
+                  {liveCount} Live
+                </span>
+              </>
+            )}
+          </motion.div>
+        </header>
+
+        {/* ══════════════════════════════════════════════════════════════════
+            CONTROLS — search + filters
+        ═══════════════════════════════════════════════════════════════════ */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.25 }}
+          style={{
+            marginTop: "clamp(2rem, 4vw, 3.5rem)",
+            paddingBottom: "clamp(1rem, 2vw, 1.5rem)",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
+          {/* Search — thin underline */}
+          <div className="flex items-center gap-3 mb-6" style={{ maxWidth: "420px" }}>
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true" style={{ opacity: 0.25, flexShrink: 0 }}>
+              <circle cx="5.5" cy="5.5" r="4.5" stroke="white" strokeWidth="1" />
+              <path d="M9.5 9.5L13 13" stroke="white" strokeWidth="1" strokeLinecap="round" />
+            </svg>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search team, city, stadium..."
+              spellCheck={false}
+              autoComplete="off"
+              aria-label="Search matches"
+              className="w-full bg-transparent focus:outline-none"
+              style={{
+                fontSize: "0.78rem",
+                fontWeight: 300,
+                letterSpacing: "0.08em",
+                color: "#ffffff",
+                caretColor: "#00D1FF",
+                paddingBottom: "6px",
+                borderBottom: "1px solid rgba(255,255,255,0.08)",
+              }}
+            />
+            {searchQuery && (
+              <span
+                style={{
+                  fontSize: "0.55rem",
+                  letterSpacing: "0.1em",
+                  color: "rgba(255,255,255,0.2)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {filtered.length}
+              </span>
+            )}
+          </div>
+
+          {/* Stage filter — text links, not pills */}
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2" role="tablist" aria-label="Tournament stage filter">
+            {STAGES.map((stage) => {
+              const isActive = stage === activeStage;
+              return (
+                <button
+                  key={stage}
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => handleStageChange(stage)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: "4px 0",
+                    fontSize: "0.68rem",
+                    fontWeight: isActive ? 600 : 400,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    color: isActive ? "#ffffff" : "rgba(255,255,255,0.2)",
+                    borderBottom: isActive ? "1px solid rgba(255,255,255,0.5)" : "1px solid transparent",
+                    transition: "all 0.25s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) e.currentTarget.style.color = "rgba(255,255,255,0.5)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) e.currentTarget.style.color = "rgba(255,255,255,0.2)";
+                  }}
+                >
+                  {STAGE_LABELS_SHORT[stage]}
+                </button>
+              );
+            })}
+          </div>
+        </motion.div>
+
+        {/* ══════════════════════════════════════════════════════════════════
+            MATCH LIST — grouped by date
+        ═══════════════════════════════════════════════════════════════════ */}
+        <AnimatePresence mode="wait">
+          {filtered.length === 0 ? (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4 }}
+              className="flex flex-col items-center"
+              style={{ paddingTop: "clamp(4rem, 10vw, 8rem)" }}
+            >
+              <span
+                style={{
+                  fontSize: "clamp(3rem, 8vw, 6rem)",
+                  fontWeight: 900,
+                  letterSpacing: "0.04em",
+                  opacity: 0.04,
+                  lineHeight: 1,
+                }}
+              >
+                0
+              </span>
+              <p
+                style={{
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.18em",
+                  color: "rgba(255,255,255,0.2)",
+                  textTransform: "uppercase",
+                  marginTop: "1.5rem",
+                }}
+              >
+                No matches found
+              </p>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  style={{
+                    marginTop: "1.5rem",
+                    fontSize: "0.6rem",
+                    letterSpacing: "0.14em",
+                    color: "rgba(0,209,255,0.5)",
+                    textTransform: "uppercase",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  Clear search
+                </button>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key={`${activeStage}-${searchQuery}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              {Array.from(grouped.entries()).map(([date, dateMatches]) => {
+                const gi = runningIndex;
+                runningIndex += dateMatches.length;
+                const { month, day } = formatDateEditorial(date);
+
+                return (
+                  <section
+                    key={date}
+                    aria-label={`Matches on ${month} ${day}`}
+                    style={{ marginTop: "clamp(3rem, 6vw, 5rem)" }}
+                  >
+                    {/* ── MASSIVE DATE HEADER ──────────────── */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        duration: 0.6,
+                        delay: Math.min(gi * 0.03, 0.3),
+                        ease: [0.25, 0.46, 0.45, 0.94],
+                      }}
+                      style={{
+                        marginBottom: "clamp(1rem, 2vw, 2rem)",
+                        paddingBottom: "clamp(0.8rem, 1.5vw, 1.2rem)",
+                        borderBottom: "1px solid rgba(255,255,255,0.06)",
+                      }}
+                    >
+                      <h2
+                        style={{
+                          fontSize: "clamp(2rem, 5vw, 4rem)",
+                          fontWeight: 800,
+                          letterSpacing: "0.04em",
+                          textTransform: "uppercase",
+                          color: "#ffffff",
+                          lineHeight: 1,
+                          opacity: 0.85,
+                        }}
+                      >
+                        {month} {day}
+                      </h2>
+                    </motion.div>
+
+                    {/* ── MATCH ENTRIES ──────────────────────── */}
+                    {dateMatches.map((match, i) => (
+                      <MatchEntry key={match.id} match={match} index={gi + i} />
+                    ))}
+                  </section>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ══════════════════════════════════════════════════════════════════
+            FOOTER — subtle, editorial
+        ═══════════════════════════════════════════════════════════════════ */}
+        <footer
+          style={{
+            marginTop: "clamp(4rem, 8vw, 6rem)",
+            paddingTop: "1.5rem",
+            borderTop: "1px solid rgba(255,255,255,0.04)",
+          }}
+        >
+          <p
+            style={{
+              fontSize: "0.55rem",
+              letterSpacing: "0.16em",
+              color: "rgba(255,255,255,0.1)",
+              textTransform: "uppercase",
+            }}
+          >
+            FIFA World Cup 2026 · {TOTAL_MATCHES} Matches · {dateRange}
+          </p>
+        </footer>
+      </div>
+    </div>
   );
 }

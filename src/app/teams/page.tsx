@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import PlaceholderPage from "@/components/PlaceholderPage";
+import TeamsExperience from "@/components/globe/TeamsExperience";
 
 export const metadata: Metadata = {
   title: "Teams | FIFA World Cup 2026",
@@ -8,10 +8,8 @@ export const metadata: Metadata = {
 
 export default function TeamsPage() {
   return (
-    <PlaceholderPage
-      title="Teams"
-      subtitle="48 nations. One dream. The interactive globe is coming."
-      accentChar="T"
-    />
+    <main className="w-full h-screen bg-[#050505]">
+      <TeamsExperience />
+    </main>
   );
 }
