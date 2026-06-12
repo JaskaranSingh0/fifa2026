@@ -90,5 +90,6 @@ export const STAGE_LABELS_SHORT: Record<TournamentStage, string> = {
   [TournamentStage.ROUND_OF_16]: "R16",
   [TournamentStage.QUARTER_FINALS]: "QF",
   [TournamentStage.SEMI_FINALS]: "SF",
+  [TournamentStage.THIRD_PLACE]: "3rd Place",
   [TournamentStage.FINAL]: "Final",
 };

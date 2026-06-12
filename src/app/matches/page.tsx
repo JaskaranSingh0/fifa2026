@@ -28,18 +28,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import { gsap } from "gsap";
 
 import {
-  MATCHES,
-  TOTAL_MATCHES,
   TournamentStage,
   MatchStatus,
   STAGE_LABELS_SHORT,
-  filterMatches,
-  groupMatchesByDate,
   formatDateEditorial,
-  getTournamentDateRange,
 } from "@/lib/matches-data";
 
-import type { Match } from "@/lib/data/matches";
+import {
+  useLiveMatches,
+  filterLiveMatches,
+  groupLiveMatchesByDate,
+} from "@/hooks/useLiveMatches";
+import type { MatchWithScore } from "@/app/api/matches/route";
 import TeamLogo from "@/components/TeamLogo";
 
 // ---------------------------------------------------------------------------
@@ -53,6 +53,7 @@ const STAGES = [
   TournamentStage.ROUND_OF_16,
   TournamentStage.QUARTER_FINALS,
   TournamentStage.SEMI_FINALS,
+  TournamentStage.THIRD_PLACE,
   TournamentStage.FINAL,
 ] as const;
 
@@ -60,7 +61,7 @@ const STAGES = [
 // Match Entry — typography composition, not a card
 // ---------------------------------------------------------------------------
 
-function MatchEntry({ match, index }: { match: Match; index: number }) {
+function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) {
   const linkRef = React.useRef<HTMLAnchorElement>(null);
 
   const isFinished = match.status === MatchStatus.FINISHED;
@@ -298,18 +299,31 @@ export default function MatchesPage() {
   const [activeStage, setActiveStage] = useState<TournamentStage>(TournamentStage.ALL);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const dateRange = useMemo(() => getTournamentDateRange(MATCHES), []);
+  // Poll for live data every 30 seconds
+  const { matches: allMatches, isLoading, lastUpdated } = useLiveMatches(30000);
+
+  const totalMatches = allMatches.length;
+
+  const dateRange = useMemo(() => {
+    if (!allMatches.length) return "";
+    const sorted = [...allMatches].sort((a, b) => a.date.localeCompare(b.date));
+    const first = new Date(sorted[0].date + "T00:00:00");
+    const last = new Date(sorted[sorted.length - 1].date + "T00:00:00");
+    const f = first.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+    const l = last.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+    return `${f} — ${l}`;
+  }, [allMatches]);
 
   const filtered = useMemo(
-    () => filterMatches(MATCHES, activeStage, searchQuery),
-    [activeStage, searchQuery]
+    () => filterLiveMatches(allMatches, activeStage, searchQuery),
+    [allMatches, activeStage, searchQuery]
   );
 
-  const grouped = useMemo(() => groupMatchesByDate(filtered), [filtered]);
+  const grouped = useMemo(() => groupLiveMatchesByDate(filtered), [filtered]);
 
   const liveCount = useMemo(
-    () => MATCHES.filter((m) => m.status === MatchStatus.LIVE).length,
-    []
+    () => allMatches.filter((m) => m.status === MatchStatus.LIVE).length,
+    [allMatches]
   );
 
   const handleStageChange = useCallback((stage: TournamentStage) => {
@@ -395,7 +409,7 @@ export default function MatchesPage() {
                 color: "rgba(255,255,255,0.3)",
               }}
             >
-              {TOTAL_MATCHES} Matches
+              {totalMatches} Matches
             </span>
             <span style={{ color: "rgba(255,255,255,0.1)" }}>·</span>
             <span
@@ -655,7 +669,7 @@ export default function MatchesPage() {
               textTransform: "uppercase",
             }}
           >
-            FIFA World Cup 2026 · {TOTAL_MATCHES} Matches · {dateRange}
+            FIFA World Cup 2026 · {totalMatches} Matches · {dateRange}
           </p>
         </footer>
       </div>

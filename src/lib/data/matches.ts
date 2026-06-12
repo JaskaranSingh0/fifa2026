@@ -3,7 +3,7 @@ import { TeamData, getTeam } from "./teams";
 import { GROUPS } from "./groups";
 
 export enum MatchStatus { UPCOMING = "UPCOMING", LIVE = "LIVE", FINISHED = "FINISHED", POSTPONED = "POSTPONED" }
-export enum TournamentStage { ALL = "ALL", GROUP_STAGE = "GROUP_STAGE", ROUND_OF_32 = "ROUND_OF_32", ROUND_OF_16 = "ROUND_OF_16", QUARTER_FINALS = "QUARTER_FINALS", SEMI_FINALS = "SEMI_FINALS", FINAL = "FINAL" }
+export enum TournamentStage { ALL = "ALL", GROUP_STAGE = "GROUP_STAGE", ROUND_OF_32 = "ROUND_OF_32", ROUND_OF_16 = "ROUND_OF_16", QUARTER_FINALS = "QUARTER_FINALS", SEMI_FINALS = "SEMI_FINALS", THIRD_PLACE = "THIRD_PLACE", FINAL = "FINAL" }
 export interface LiveMatchData { currentMinute: number; isExtraTime: boolean; isPenalties: boolean; penaltyScore?: [number, number]; }
 export interface Match { id: string; stage: TournamentStage; group?: string; matchNumber: number; date: string; time: string; stadium: string; city: string; country: string; home: TeamData; away: TeamData; status: MatchStatus; homeScore?: number; awayScore?: number; liveData?: LiveMatchData; }
 
@@ -859,7 +859,7 @@ export const MATCHES: Match[] = [
     city: "Houston",
     country: "USA/MEX/CAN",
     home: getTeam("POR"),
-    away: getTeam("DR "),
+    away: getTeam("COD"),
     status: MatchStatus.UPCOMING
   },
   {
@@ -901,7 +901,7 @@ export const MATCHES: Match[] = [
     city: "Guadalajara",
     country: "USA/MEX/CAN",
     home: getTeam("COL"),
-    away: getTeam("DR "),
+    away: getTeam("COD"),
     status: MatchStatus.UPCOMING
   },
   {
@@ -928,7 +928,7 @@ export const MATCHES: Match[] = [
     stadium: "Atlanta",
     city: "Atlanta",
     country: "USA/MEX/CAN",
-    home: getTeam("DR "),
+    home: getTeam("COD"),
     away: getTeam("UZB"),
     status: MatchStatus.UPCOMING
   },
@@ -1354,7 +1354,7 @@ export const MATCHES: Match[] = [
   },
   {
     id: "m097",
-    stage: TournamentStage.GROUP_STAGE,
+    stage: TournamentStage.QUARTER_FINALS,
     group: undefined,
     matchNumber: 97,
     date: "2026-07-09",
@@ -1368,7 +1368,7 @@ export const MATCHES: Match[] = [
   },
   {
     id: "m098",
-    stage: TournamentStage.GROUP_STAGE,
+    stage: TournamentStage.QUARTER_FINALS,
     group: undefined,
     matchNumber: 98,
     date: "2026-07-10",
@@ -1382,7 +1382,7 @@ export const MATCHES: Match[] = [
   },
   {
     id: "m099",
-    stage: TournamentStage.GROUP_STAGE,
+    stage: TournamentStage.QUARTER_FINALS,
     group: undefined,
     matchNumber: 99,
     date: "2026-07-11",
@@ -1396,7 +1396,7 @@ export const MATCHES: Match[] = [
   },
   {
     id: "m100",
-    stage: TournamentStage.GROUP_STAGE,
+    stage: TournamentStage.QUARTER_FINALS,
     group: undefined,
     matchNumber: 100,
     date: "2026-07-11",
@@ -1410,7 +1410,7 @@ export const MATCHES: Match[] = [
   },
   {
     id: "m101",
-    stage: TournamentStage.GROUP_STAGE,
+    stage: TournamentStage.SEMI_FINALS,
     group: undefined,
     matchNumber: 101,
     date: "2026-07-14",
@@ -1424,7 +1424,7 @@ export const MATCHES: Match[] = [
   },
   {
     id: "m102",
-    stage: TournamentStage.GROUP_STAGE,
+    stage: TournamentStage.SEMI_FINALS,
     group: undefined,
     matchNumber: 102,
     date: "2026-07-15",
@@ -1433,12 +1433,12 @@ export const MATCHES: Match[] = [
     city: "Atlanta",
     country: "USA/MEX/CAN",
     home: getTeam("W99"),
-    away: getTeam("W10"),
+    away: getTeam("W100"),
     status: MatchStatus.UPCOMING
   },
   {
     id: "m103",
-    stage: TournamentStage.GROUP_STAGE,
+    stage: TournamentStage.THIRD_PLACE,
     group: undefined,
     matchNumber: 103,
     date: "2026-07-18",
@@ -1446,8 +1446,8 @@ export const MATCHES: Match[] = [
     stadium: "Miami (Miami Gardens)",
     city: "Miami",
     country: "USA/MEX/CAN",
-    home: getTeam("L10"),
-    away: getTeam("L10"),
+    home: getTeam("L101"),
+    away: getTeam("L102"),
     status: MatchStatus.UPCOMING
   },
   {
@@ -1460,8 +1460,8 @@ export const MATCHES: Match[] = [
     stadium: "New York/New Jersey (East Rutherford)",
     city: "New York/New Jersey",
     country: "USA/MEX/CAN",
-    home: getTeam("W10"),
-    away: getTeam("W10"),
+    home: getTeam("W101"),
+    away: getTeam("W102"),
     status: MatchStatus.UPCOMING
   },
 ];

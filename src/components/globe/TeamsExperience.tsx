@@ -1,61 +1,162 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useRef, useCallback, Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Preload, PerformanceMonitor } from "@react-three/drei";
 import { AnimatePresence, motion } from "framer-motion";
+import { gsap } from "gsap";
 
 import Earth from "./Earth";
 import SpaceDust from "./SpaceDust";
 import SelectedCountryOverlay from "./SelectedCountryOverlay";
+import TeamProfileOverlay from "./TeamProfileOverlay";
 import { globeTeams, GlobeTeamData } from "@/lib/data/globe-teams";
+import { getTeamProfile, TeamProfile } from "@/lib/data/team-profiles";
+
+// ---------------------------------------------------------------------------
+// State machine: IDLE → COUNTRY_SELECTED → TEAM_OVERLAY → COUNTRY_SELECTED → IDLE
+// ---------------------------------------------------------------------------
+type ExperienceState = "IDLE" | "COUNTRY_SELECTED" | "TRANSITIONING" | "TEAM_OVERLAY";
 
 export default function TeamsExperience() {
   const [dpr, setDpr] = useState(1.5);
   const [selectedCountry, setSelectedCountry] = useState<GlobeTeamData | null>(null);
+  const [experienceState, setExperienceState] = useState<ExperienceState>("IDLE");
 
-  const handleSelectCountry = (country: GlobeTeamData | null) => {
+  // Refs for GSAP transition targets
+  const canvasWrapRef = useRef<HTMLDivElement>(null);
+  const darkOverlayRef = useRef<HTMLDivElement>(null);
+
+  const handleSelectCountry = useCallback((country: GlobeTeamData | null) => {
     setSelectedCountry(country);
-  };
+    setExperienceState(country ? "COUNTRY_SELECTED" : "IDLE");
+  }, []);
+
+  // ── EXPLORE TEAM: GSAP-driven transition ─────────────────────────────
+  const handleExploreTeam = useCallback(() => {
+    if (!selectedCountry) return;
+    setExperienceState("TRANSITIONING");
+
+    const tl = gsap.timeline({
+      onComplete: () => setExperienceState("TEAM_OVERLAY"),
+    });
+
+    // Step 1+2: Dark overlay fades in over the globe (800ms)
+    if (darkOverlayRef.current) {
+      tl.to(darkOverlayRef.current, {
+        opacity: 1,
+        duration: 0.8,
+        ease: "power2.inOut",
+      }, 0);
+    }
+
+    // Step 3: Globe canvas fades (runs concurrently)
+    if (canvasWrapRef.current) {
+      tl.to(canvasWrapRef.current, {
+        opacity: 0,
+        duration: 0.6,
+        ease: "power2.in",
+      }, 0.2);
+    }
+  }, [selectedCountry]);
+
+  // ── BACK: return from team overlay to country selected ─────────────
+  const handleBackFromOverlay = useCallback(() => {
+    setExperienceState("COUNTRY_SELECTED");
+
+    // Restore canvas opacity
+    if (canvasWrapRef.current) {
+      gsap.to(canvasWrapRef.current, { opacity: 1, duration: 0.6, ease: "power2.out" });
+    }
+    if (darkOverlayRef.current) {
+      gsap.to(darkOverlayRef.current, { opacity: 0, duration: 0.4, ease: "power2.out" });
+    }
+  }, []);
+
+  // Resolve profile for the selected team
+  const teamProfile: TeamProfile | null = selectedCountry
+    ? getTeamProfile(selectedCountry.code)
+    : null;
+
+  // Fallback profile for teams without full data
+  const resolvedProfile: TeamProfile | null = selectedCountry
+    ? teamProfile ?? {
+        code: selectedCountry.code,
+        logo: `/logos/${selectedCountry.code}.png`,
+        flag: "🏳️",
+        fifaRanking: selectedCountry.ranking ?? 0,
+        confederation: "",
+        coach: "—",
+        captain: "—",
+        worldCupAppearances: 0,
+        titles: 0,
+        bestFinish: "—",
+        description: `${selectedCountry.name} are competing in the FIFA World Cup 2026.`,
+        squad: [],
+      }
+    : null;
 
   return (
     <div className="relative w-full h-screen bg-[#050505] overflow-hidden select-none">
-      <Canvas
-        camera={{ position: [0, 0, 5], fov: 45 }}
-        gl={{ antialias: true, alpha: false }}
-        dpr={dpr}
-      >
-        <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(2)} />
-        
-        {/* Lights */}
-        <ambientLight intensity={0.02} />
-        <directionalLight position={[5, 3, 5]} intensity={1.5} />
-        
-        <Suspense fallback={null}>
-          <Earth 
-            teams={globeTeams} 
-            selectedCountry={selectedCountry}
-            onSelectCountry={handleSelectCountry}
-          />
-        </Suspense>
 
-        <SpaceDust />
-        <Preload all />
-      </Canvas>
+      {/* ── Globe Canvas ────────────────────────────────────────────────── */}
+      <div ref={canvasWrapRef} className="absolute inset-0">
+        <Canvas
+          camera={{ position: [0, 0, 5], fov: 45 }}
+          gl={{ antialias: true, alpha: false }}
+          dpr={dpr}
+        >
+          <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(2)} />
+          <ambientLight intensity={0.02} />
+          <directionalLight position={[5, 3, 5]} intensity={1.5} />
 
-      {/* 2D Overlay layer - Selection state */}
+          <Suspense fallback={null}>
+            <Earth
+              teams={globeTeams}
+              selectedCountry={selectedCountry}
+              onSelectCountry={handleSelectCountry}
+            />
+          </Suspense>
+
+          <SpaceDust />
+          <Preload all />
+        </Canvas>
+      </div>
+
+      {/* ── GSAP dark overlay (used during transition) ───────────────── */}
+      <div
+        ref={darkOverlayRef}
+        className="absolute inset-0 pointer-events-none z-10"
+        style={{ background: "#050505", opacity: 0 }}
+      />
+
+      {/* ── Country selection overlay ────────────────────────────────── */}
       <AnimatePresence>
-        {selectedCountry && (
-          <SelectedCountryOverlay 
-            country={selectedCountry} 
-            onClose={() => handleSelectCountry(null)}
+        {(experienceState === "COUNTRY_SELECTED" || experienceState === "TRANSITIONING") &&
+          selectedCountry && (
+            <SelectedCountryOverlay
+              country={selectedCountry}
+              isTransitioning={experienceState === "TRANSITIONING"}
+              onExploreTeam={handleExploreTeam}
+              onClose={() => handleSelectCountry(null)}
+            />
+          )}
+      </AnimatePresence>
+
+      {/* ── Team profile overlay (sibling of globe, not nested) ──────── */}
+      <AnimatePresence>
+        {experienceState === "TEAM_OVERLAY" && selectedCountry && resolvedProfile && (
+          <TeamProfileOverlay
+            profile={resolvedProfile}
+            teamName={selectedCountry.name}
+            onBack={handleBackFromOverlay}
           />
         )}
       </AnimatePresence>
 
-      {/* Default UI - Heading and Sidebars */}
+      {/* ── Default UI — IDLE state: heading + sidebars ──────────────── */}
       <AnimatePresence>
-        {!selectedCountry && (
+        {experienceState === "IDLE" && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -98,7 +199,6 @@ export default function TeamsExperience() {
           </motion.div>
         )}
       </AnimatePresence>
-      
     </div>
   );
 }
