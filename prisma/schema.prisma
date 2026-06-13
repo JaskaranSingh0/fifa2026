@@ -1,0 +1,21 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Match {
+  id        String   @id
+  homeTeam  String
+  awayTeam  String
+  homeScore Int      @default(0)
+  awayScore Int      @default(0)
+  minute    Int      @default(0)
+  status    String   @default("SCHEDULED")
+  date      DateTime
+  stage     String
+  stadiumId String?
+}

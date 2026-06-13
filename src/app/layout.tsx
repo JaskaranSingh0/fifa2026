@@ -1,13 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["300", "400", "700", "900"],
-  variable: "--font-inter",
-  display: "swap",
-});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -40,14 +32,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body
         className="antialiased overflow-hidden"
-        style={{ background: "#050505", margin: 0, padding: 0 }}
+        style={{ 
+          background: "#050505", 
+          margin: 0, 
+          padding: 0,
+          "--font-inter": "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        } as React.CSSProperties}
         suppressHydrationWarning
       >
         {children}

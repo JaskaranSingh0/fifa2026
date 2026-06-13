@@ -7,6 +7,7 @@ import {
   TeamProfile,
   groupSquadByPosition,
 } from "@/lib/data/team-profiles";
+import { getTeamBranding } from "@/lib/data/team-branding";
 
 interface Props {
   profile: TeamProfile;
@@ -23,6 +24,7 @@ interface Props {
 export default function TeamProfileOverlay({ profile, teamName, onBack }: Props) {
   const squadGroups = groupSquadByPosition(profile.squad);
   const contentRef = useRef<HTMLDivElement>(null);
+  const branding = getTeamBranding(profile.code);
 
   // ── GSAP staggered entrance ──────────────────────────────────────────
   useEffect(() => {
@@ -59,9 +61,11 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
       transition={{ duration: 0.5 }}
       className="fixed inset-0 z-50 overflow-y-auto"
       style={{
-        background: "#050505",
+        background: `radial-gradient(circle at top, color-mix(in srgb, var(--team-primary) 8%, transparent) 0%, #050505 100%)`,
         fontFamily: "var(--font-inter, 'Inter', sans-serif)",
-      }}
+        "--team-primary": branding.primary,
+        "--team-secondary": branding.secondary,
+      } as React.CSSProperties}
     >
       <div
         ref={contentRef}
@@ -96,6 +100,28 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
           </button>
         </div>
 
+        {/* ── LOGO & FLAG ───────────────────────────────────────────────── */}
+        <div
+          data-animate
+          className="flex items-center gap-4"
+          style={{ marginTop: "clamp(2rem, 5vw, 4rem)" }}
+        >
+          {profile.logo && (
+            <img
+              src={profile.logo}
+              alt={`${teamName} logo`}
+              style={{
+                width: "clamp(2.5rem, 5vw, 4rem)",
+                height: "auto",
+                objectFit: "contain",
+              }}
+            />
+          )}
+          <span style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }}>
+            {profile.flag}
+          </span>
+        </div>
+
         {/* ── NATION NAME ───────────────────────────────────────────────── */}
         <h1
           data-animate
@@ -106,7 +132,7 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
             textTransform: "uppercase",
             color: "#ffffff",
             lineHeight: 0.9,
-            marginTop: "clamp(2rem, 5vw, 4rem)",
+            marginTop: "clamp(1rem, 2vw, 2rem)",
             marginBottom: "clamp(2rem, 4vw, 3rem)",
           }}
         >
@@ -133,7 +159,7 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
           data-separator
           style={{
             height: "1px",
-            background: "rgba(255,255,255,0.06)",
+            background: "color-mix(in srgb, var(--team-primary) 40%, rgba(255,255,255,0.06))",
             transformOrigin: "left",
             marginBottom: "clamp(2.5rem, 5vw, 4rem)",
           }}
@@ -149,6 +175,7 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
           }}
         >
           {[
+            { label: "FIFA Ranking", value: `#${profile.fifaRanking}`, isAccent: true },
             { label: "Coach", value: profile.coach },
             { label: "Captain", value: profile.captain },
             { label: "World Cup Titles", value: profile.titles.toString() },
@@ -172,7 +199,7 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
                 style={{
                   fontSize: "clamp(0.85rem, 1.3vw, 1.05rem)",
                   fontWeight: 500,
-                  color: "#ffffff",
+                  color: stat.isAccent ? "var(--team-primary)" : "#ffffff",
                   lineHeight: 1.3,
                 }}
               >
@@ -187,7 +214,7 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
           data-separator
           style={{
             height: "1px",
-            background: "rgba(255,255,255,0.06)",
+            background: "color-mix(in srgb, var(--team-primary) 40%, rgba(255,255,255,0.06))",
             transformOrigin: "left",
             marginBottom: "clamp(3rem, 6vw, 5rem)",
           }}
@@ -207,7 +234,7 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
                 fontWeight: 800,
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
-                color: "#ffffff",
+                color: "var(--team-primary)",
                 lineHeight: 1,
                 marginBottom: "clamp(1.5rem, 3vw, 2.5rem)",
                 opacity: 0.85,

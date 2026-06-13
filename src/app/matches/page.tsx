@@ -35,12 +35,14 @@ import {
 } from "@/lib/matches-data";
 
 import {
-  useLiveMatches,
   filterLiveMatches,
   groupLiveMatchesByDate,
 } from "@/hooks/useLiveMatches";
+import { useRealtimeMatches } from "@/hooks/useRealtimeMatches";
 import type { MatchWithScore } from "@/app/api/matches/route";
 import TeamLogo from "@/components/TeamLogo";
+import LiveIndicator from "@/components/LiveIndicator";
+import { getTeamBranding } from "@/lib/data/team-branding";
 
 // ---------------------------------------------------------------------------
 // Stage filter — minimal text links, not pills
@@ -63,9 +65,35 @@ const STAGES = [
 
 function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) {
   const linkRef = React.useRef<HTMLAnchorElement>(null);
+  const [flashHome, setFlashHome] = useState(false);
+  const [flashAway, setFlashAway] = useState(false);
+  const prevHomeRef = React.useRef(match.homeScore);
+  const prevAwayRef = React.useRef(match.awayScore);
+
+  React.useEffect(() => {
+    if (match.homeScore !== undefined && match.homeScore > (prevHomeRef.current ?? -1)) {
+      if (prevHomeRef.current !== undefined) {
+        setFlashHome(true);
+        setTimeout(() => setFlashHome(false), 600);
+      }
+    }
+    prevHomeRef.current = match.homeScore;
+  }, [match.homeScore]);
+
+  React.useEffect(() => {
+    if (match.awayScore !== undefined && match.awayScore > (prevAwayRef.current ?? -1)) {
+      if (prevAwayRef.current !== undefined) {
+        setFlashAway(true);
+        setTimeout(() => setFlashAway(false), 600);
+      }
+    }
+    prevAwayRef.current = match.awayScore;
+  }, [match.awayScore]);
 
   const isFinished = match.status === MatchStatus.FINISHED;
   const isLive = match.status === MatchStatus.LIVE;
+  const homeBranding = getTeamBranding(match.home.code);
+  const awayBranding = getTeamBranding(match.away.code);
 
   // Winner/loser opacity
   const homeDimmed =
@@ -115,29 +143,7 @@ function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) 
           <div className="flex items-center gap-3">
             {/* Live indicator */}
             {isLive && (
-              <span className="flex items-center gap-1.5">
-                <span className="relative flex h-[5px] w-[5px]">
-                  <span
-                    className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60"
-                    style={{ background: "#00D1FF" }}
-                  />
-                  <span
-                    className="relative inline-flex rounded-full h-[5px] w-[5px]"
-                    style={{ background: "#00D1FF" }}
-                  />
-                </span>
-                <span
-                  style={{
-                    fontSize: "0.6rem",
-                    fontWeight: 700,
-                    letterSpacing: "0.14em",
-                    color: "#00D1FF",
-                  }}
-                >
-                  LIVE
-                  {match.liveData && ` · ${match.liveData.currentMinute}'`}
-                </span>
-              </span>
+              <LiveIndicator minute={match.liveData?.currentMinute} />
             )}
 
             {/* Stage / Group */}
@@ -212,14 +218,26 @@ function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) 
             {isFinished || isLive ? (
               <div className="flex flex-col items-center">
                 <span
-                  className="tabular-nums font-light"
+                  className="tabular-nums font-light flex gap-2"
                   style={{
                     fontSize: "clamp(0.85rem, 1.8vw, 1.55rem)",
                     letterSpacing: "0.12em",
-                    color: isLive ? "#00D1FF" : "rgba(255,255,255,0.8)",
+                    color: isLive ? "#ffffff" : "rgba(255,255,255,0.8)",
                   }}
                 >
-                  {match.homeScore} — {match.awayScore}
+                  <span
+                    className={flashHome ? "score-flash" : ""}
+                    style={{ "--team-primary": homeBranding.primary } as React.CSSProperties}
+                  >
+                    {match.homeScore}
+                  </span>
+                  <span>—</span>
+                  <span
+                    className={flashAway ? "score-flash" : ""}
+                    style={{ "--team-primary": awayBranding.primary } as React.CSSProperties}
+                  >
+                    {match.awayScore}
+                  </span>
                 </span>
                 {isLive && match.liveData && (
                   <span
@@ -299,8 +317,7 @@ export default function MatchesPage() {
   const [activeStage, setActiveStage] = useState<TournamentStage>(TournamentStage.ALL);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Poll for live data every 30 seconds
-  const { matches: allMatches, isLoading, lastUpdated } = useLiveMatches(30000);
+  const { matches: allMatches } = useRealtimeMatches();
 
   const totalMatches = allMatches.length;
 
@@ -332,11 +349,56 @@ export default function MatchesPage() {
 
   let runningIndex = 0;
 
+  const liveMatches = useMemo(() => allMatches.filter(m => m.status === MatchStatus.LIVE), [allMatches]);
+
   return (
     <div
       className="fixed inset-0 bg-[#050505] overflow-y-auto"
       style={{ fontFamily: "var(--font-inter, 'Inter', sans-serif)" }}
     >
+      <style>{`
+        @keyframes scoreFlash {
+          0% { color: #ffffff; text-shadow: none; }
+          30% { color: var(--team-primary); text-shadow: 0 0 15px var(--team-primary); }
+          100% { color: #ffffff; text-shadow: none; }
+        }
+        .score-flash {
+          animation: scoreFlash 600ms ease-out;
+        }
+      `}</style>
+      
+      {/* ── LIVE MATCH TICKER ────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {liveMatches.length > 0 && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="w-full bg-[#111111] border-b border-[rgba(255,255,255,0.1)] overflow-hidden"
+          >
+            <div className="mx-auto flex items-center gap-8 py-3 px-4 overflow-x-auto whitespace-nowrap" style={{ width: "min(80%, 1200px)", minWidth: "320px" }}>
+              <span className="text-[0.6rem] font-bold tracking-widest text-[#FF0000] uppercase shrink-0 flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF0000] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FF0000]"></span>
+                </span>
+                Live Matches
+              </span>
+              {liveMatches.map((m) => (
+                <div key={m.id} className="flex items-center gap-3 text-sm shrink-0">
+                  <span className="font-semibold text-white">{m.home.name}</span>
+                  <span className="font-bold text-[#FF0000] bg-black/50 px-2 py-0.5 rounded tabular-nums">
+                    {m.homeScore} - {m.awayScore}
+                  </span>
+                  <span className="font-semibold text-white">{m.away.name}</span>
+                  <span className="text-[0.65rem] text-white/50">{m.liveData?.currentMinute}'</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div
         className="mx-auto"
         style={{
@@ -431,15 +493,15 @@ export default function MatchesPage() {
                     fontSize: "0.65rem",
                     fontWeight: 600,
                     letterSpacing: "0.12em",
-                    color: "#00D1FF",
+                    color: "#FF0000",
                   }}
                 >
                   <span className="relative flex h-[4px] w-[4px]">
                     <span
                       className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-                      style={{ background: "#00D1FF" }}
+                      style={{ background: "#FF0000" }}
                     />
-                    <span className="relative inline-flex rounded-full h-[4px] w-[4px]" style={{ background: "#00D1FF" }} />
+                    <span className="relative inline-flex rounded-full h-[4px] w-[4px]" style={{ background: "#FF0000" }} />
                   </span>
                   {liveCount} Live
                 </span>

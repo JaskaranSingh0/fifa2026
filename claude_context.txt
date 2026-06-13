@@ -1,10 +1,7 @@
-# FIFA 2026 Globe Project Context
+# FIFA 2026 Globe Project Complete Context
 
-This is a Next.js (App Router) project built with React Three Fiber/Drei for a 3D interactive globe experience. Below are the current files that make up the project:
-
-## File: `package.json`
-
-```json
+## File: package.json
+``
 {
   "name": "fifa",
   "version": "0.1.0",
@@ -47,12 +44,10 @@ This is a Next.js (App Router) project built with React Three Fiber/Drei for a 3
     "seed": "tsx prisma/seed.ts"
   }
 }
+``
 
-```
-
-## File: `tsconfig.json`
-
-```json
+## File: tsconfig.json
+``
 {
   "compilerOptions": {
     "target": "ES2017",
@@ -87,12 +82,10 @@ This is a Next.js (App Router) project built with React Three Fiber/Drei for a 3
   ],
   "exclude": ["node_modules"]
 }
+``
 
-```
-
-## File: `next.config.ts`
-
-```ts
+## File: next.config.ts
+``
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -107,12 +100,179 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+``
 
-```
+## File: postcss.config.mjs
+``
+const config = {
+  plugins: {
+    "@tailwindcss/postcss": {},
+  },
+};
 
-## File: `src/app/layout.tsx`
+export default config;
+``
 
-```tsx
+## File: eslint.config.mjs
+``
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+  ]),
+]);
+
+export default eslintConfig;
+``
+
+## File: src/app/globals.css
+``
+@import "tailwindcss";
+
+/* ──────────────────────────────────────────────────────────
+   Design tokens
+   ────────────────────────────────────────────────────────── */
+:root {
+  --color-bg: #050505;
+  --color-text: #ffffff;
+  --color-accent: #00d1ff;
+  --font-primary: var(--font-inter, 'Inter', sans-serif);
+}
+
+/* ──────────────────────────────────────────────────────────
+   Reset & base
+   ────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Navigation focus — custom ring in accent color
+   ────────────────────────────────────────────────────────── */
+a:focus-visible {
+  outline: 1px solid rgba(0, 209, 255, 0.5);
+  outline-offset: 6px;
+  border-radius: 2px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Custom cursor — subtle dot for the immersive experience
+   ────────────────────────────────────────────────────────── */
+@media (pointer: fine) {
+  html {
+    cursor: none;
+  }
+
+  .cursor-dot {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 6px;
+    background: rgba(0, 209, 255, 0.8);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: width 0.2s ease, height 0.2s ease, opacity 0.2s ease;
+    mix-blend-mode: screen;
+  }
+
+  .cursor-ring {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 32px;
+    height: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: width 0.35s ease, height 0.35s ease, border-color 0.35s ease;
+  }
+
+  a:hover ~ .cursor-dot,
+  button:hover ~ .cursor-dot {
+    width: 10px;
+    height: 10px;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────
+   Reduced motion — disable all animations
+   ────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────
+   Selection color
+   ────────────────────────────────────────────────────────── */
+::selection {
+  background: rgba(0, 209, 255, 0.2);
+  color: #ffffff;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Three.js canvas
+   ────────────────────────────────────────────────────────── */
+canvas {
+  display: block;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Utilities
+   ────────────────────────────────────────────────────────── */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.mask-image-y {
+  mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+}
+``
+
+## File: src/app/layout.tsx
+``
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -170,12 +330,10 @@ export default function RootLayout({
     </html>
   );
 }
+``
 
-```
-
-## File: `src/app/page.tsx`
-
-```tsx
+## File: src/app/page.tsx
+``
 "use client";
 
 /**
@@ -623,150 +781,89 @@ function CustomCursor() {
     </>
   );
 }
+``
 
-```
+## File: src/app/api/matches/route.ts
+``
+// api/matches/route.ts — Serves match data merged with live scores.
+// Client components poll this endpoint for updates.
 
-## File: `src/app/globals.css`
+import { NextResponse } from "next/server";
+import { MATCHES, Match, MatchStatus } from "@/lib/data/matches";
+import { LIVE_SCORES } from "@/lib/data/live-scores";
 
-```css
-@import "tailwindcss";
+export const dynamic = "force-dynamic"; // Never cache — always serve fresh data
 
-/* ──────────────────────────────────────────────────────────
-   Design tokens
-   ────────────────────────────────────────────────────────── */
-:root {
-  --color-bg: #050505;
-  --color-text: #ffffff;
-  --color-accent: #00d1ff;
-  --font-primary: var(--font-inter, 'Inter', sans-serif);
+export interface MatchWithScore {
+  id: string;
+  stage: string;
+  group?: string;
+  matchNumber: number;
+  date: string;
+  time: string;
+  stadium: string;
+  city: string;
+  country: string;
+  home: { code: string; name: string; flag: string; colors: [string, string] };
+  away: { code: string; name: string; flag: string; colors: [string, string] };
+  status: MatchStatus;
+  homeScore?: number;
+  awayScore?: number;
+  liveData?: {
+    currentMinute: number;
+    isExtraTime: boolean;
+    isPenalties: boolean;
+    penaltyScore?: [number, number];
+  };
 }
 
-/* ──────────────────────────────────────────────────────────
-   Reset & base
-   ────────────────────────────────────────────────────────── */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+function mergeMatch(match: Match): MatchWithScore {
+  const live = LIVE_SCORES[match.id];
+  return {
+    id: match.id,
+    stage: match.stage,
+    group: match.group,
+    matchNumber: match.matchNumber,
+    date: match.date,
+    time: match.time,
+    stadium: match.stadium,
+    city: match.city,
+    country: match.country,
+    home: {
+      code: match.home.code,
+      name: match.home.name,
+      flag: match.home.flag,
+      colors: match.home.colors,
+    },
+    away: {
+      code: match.away.code,
+      name: match.away.name,
+      flag: match.away.flag,
+      colors: match.away.colors,
+    },
+    status: live?.status ?? match.status,
+    homeScore: live?.homeScore ?? match.homeScore,
+    awayScore: live?.awayScore ?? match.awayScore,
+    liveData: live?.liveData ?? match.liveData,
+  };
 }
 
-html,
-body {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: var(--font-primary);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
+export async function GET() {
+  const merged = MATCHES.map(mergeMatch);
+
+  return NextResponse.json(
+    { matches: merged, updatedAt: new Date().toISOString() },
+    {
+      headers: {
+        "Cache-Control": "no-store, max-age=0",
+      },
+    }
+  );
 }
+``
 
-/* ──────────────────────────────────────────────────────────
-   Navigation focus — custom ring in accent color
-   ────────────────────────────────────────────────────────── */
-a:focus-visible {
-  outline: 1px solid rgba(0, 209, 255, 0.5);
-  outline-offset: 6px;
-  border-radius: 2px;
-}
-
-/* ──────────────────────────────────────────────────────────
-   Custom cursor — subtle dot for the immersive experience
-   ────────────────────────────────────────────────────────── */
-@media (pointer: fine) {
-  html {
-    cursor: none;
-  }
-
-  .cursor-dot {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 6px;
-    height: 6px;
-    background: rgba(0, 209, 255, 0.8);
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 9999;
-    transform: translate(-50%, -50%);
-    transition: width 0.2s ease, height 0.2s ease, opacity 0.2s ease;
-    mix-blend-mode: screen;
-  }
-
-  .cursor-ring {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 32px;
-    height: 32px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 9998;
-    transform: translate(-50%, -50%);
-    transition: width 0.35s ease, height 0.35s ease, border-color 0.35s ease;
-  }
-
-  a:hover ~ .cursor-dot,
-  button:hover ~ .cursor-dot {
-    width: 10px;
-    height: 10px;
-  }
-}
-
-/* ──────────────────────────────────────────────────────────
-   Reduced motion — disable all animations
-   ────────────────────────────────────────────────────────── */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* ──────────────────────────────────────────────────────────
-   Selection color
-   ────────────────────────────────────────────────────────── */
-::selection {
-  background: rgba(0, 209, 255, 0.2);
-  color: #ffffff;
-}
-
-/* ──────────────────────────────────────────────────────────
-   Three.js canvas
-   ────────────────────────────────────────────────────────── */
-canvas {
-  display: block;
-}
-
-/* ──────────────────────────────────────────────────────────
-   Utilities
-   ────────────────────────────────────────────────────────── */
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-none {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.mask-image-y {
-  mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
-  -webkit-mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
-}
-
-```
-
-## File: `src/app/bracket/page.tsx`
-
-```tsx
+## File: src/app/bracket/page.tsx
+``
 import type { Metadata } from "next";
 import PlaceholderPage from "@/components/PlaceholderPage";
 
@@ -784,12 +881,10 @@ export default function BracketPage() {
     />
   );
 }
+``
 
-```
-
-## File: `src/app/groups/page.tsx`
-
-```tsx
+## File: src/app/groups/page.tsx
+``
 import type { Metadata } from "next";
 import PlaceholderPage from "@/components/PlaceholderPage";
 
@@ -807,12 +902,10 @@ export default function GroupsPage() {
     />
   );
 }
+``
 
-```
-
-## File: `src/app/matches/page.tsx`
-
-```tsx
+## File: src/app/matches/page.tsx
+``
 "use client";
 
 /**
@@ -843,18 +936,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import { gsap } from "gsap";
 
 import {
-  MATCHES,
-  TOTAL_MATCHES,
   TournamentStage,
   MatchStatus,
   STAGE_LABELS_SHORT,
-  filterMatches,
-  groupMatchesByDate,
   formatDateEditorial,
-  getTournamentDateRange,
 } from "@/lib/matches-data";
 
-import type { Match } from "@/lib/data/matches";
+import {
+  useLiveMatches,
+  filterLiveMatches,
+  groupLiveMatchesByDate,
+} from "@/hooks/useLiveMatches";
+import type { MatchWithScore } from "@/app/api/matches/route";
 import TeamLogo from "@/components/TeamLogo";
 
 // ---------------------------------------------------------------------------
@@ -868,6 +961,7 @@ const STAGES = [
   TournamentStage.ROUND_OF_16,
   TournamentStage.QUARTER_FINALS,
   TournamentStage.SEMI_FINALS,
+  TournamentStage.THIRD_PLACE,
   TournamentStage.FINAL,
 ] as const;
 
@@ -875,7 +969,7 @@ const STAGES = [
 // Match Entry — typography composition, not a card
 // ---------------------------------------------------------------------------
 
-function MatchEntry({ match, index }: { match: Match; index: number }) {
+function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) {
   const linkRef = React.useRef<HTMLAnchorElement>(null);
 
   const isFinished = match.status === MatchStatus.FINISHED;
@@ -1113,18 +1207,31 @@ export default function MatchesPage() {
   const [activeStage, setActiveStage] = useState<TournamentStage>(TournamentStage.ALL);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const dateRange = useMemo(() => getTournamentDateRange(MATCHES), []);
+  // Poll for live data every 30 seconds
+  const { matches: allMatches, isLoading, lastUpdated } = useLiveMatches(30000);
+
+  const totalMatches = allMatches.length;
+
+  const dateRange = useMemo(() => {
+    if (!allMatches.length) return "";
+    const sorted = [...allMatches].sort((a, b) => a.date.localeCompare(b.date));
+    const first = new Date(sorted[0].date + "T00:00:00");
+    const last = new Date(sorted[sorted.length - 1].date + "T00:00:00");
+    const f = first.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+    const l = last.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+    return `${f} — ${l}`;
+  }, [allMatches]);
 
   const filtered = useMemo(
-    () => filterMatches(MATCHES, activeStage, searchQuery),
-    [activeStage, searchQuery]
+    () => filterLiveMatches(allMatches, activeStage, searchQuery),
+    [allMatches, activeStage, searchQuery]
   );
 
-  const grouped = useMemo(() => groupMatchesByDate(filtered), [filtered]);
+  const grouped = useMemo(() => groupLiveMatchesByDate(filtered), [filtered]);
 
   const liveCount = useMemo(
-    () => MATCHES.filter((m) => m.status === MatchStatus.LIVE).length,
-    []
+    () => allMatches.filter((m) => m.status === MatchStatus.LIVE).length,
+    [allMatches]
   );
 
   const handleStageChange = useCallback((stage: TournamentStage) => {
@@ -1210,7 +1317,7 @@ export default function MatchesPage() {
                 color: "rgba(255,255,255,0.3)",
               }}
             >
-              {TOTAL_MATCHES} Matches
+              {totalMatches} Matches
             </span>
             <span style={{ color: "rgba(255,255,255,0.1)" }}>·</span>
             <span
@@ -1470,22 +1577,21 @@ export default function MatchesPage() {
               textTransform: "uppercase",
             }}
           >
-            FIFA World Cup 2026 · {TOTAL_MATCHES} Matches · {dateRange}
+            FIFA World Cup 2026 · {totalMatches} Matches · {dateRange}
           </p>
         </footer>
       </div>
     </div>
   );
 }
+``
 
-```
-
-## File: `src/app/matches/[id]/page.tsx`
-
-```tsx
+## File: src/app/matches/[id]/page.tsx
+``
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MATCHES } from "@/lib/matches-data";
+import { getLiveScore } from "@/lib/data/live-scores";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -1504,6 +1610,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export function generateStaticParams() {
   return MATCHES.map((m) => ({ id: m.id }));
 }
+
+// Force dynamic rendering so live scores are always fresh
+export const dynamic = "force-dynamic";
 
 export default async function MatchDetailPage({ params }: Props) {
   const { id } = await params;
@@ -1526,6 +1635,16 @@ export default async function MatchDetailPage({ params }: Props) {
       </main>
     );
   }
+
+  // Merge with live score data
+  const liveScore = getLiveScore(match.id);
+  const status = liveScore?.status ?? match.status;
+  const homeScore = liveScore?.homeScore ?? match.homeScore;
+  const awayScore = liveScore?.awayScore ?? match.awayScore;
+  const liveData = liveScore?.liveData ?? match.liveData;
+
+  const isFinished = status === "FINISHED";
+  const isLive = status === "LIVE";
 
   return (
     <main
@@ -1552,32 +1671,70 @@ export default async function MatchDetailPage({ params }: Props) {
       <div className="flex items-center gap-8 md:gap-16">
         <div className="flex flex-col items-center gap-3">
           <span style={{ fontSize: "4rem", lineHeight: 1 }}>{match.home.flag}</span>
-          <span style={{ fontSize: "0.8rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase" }}>
+          <span
+            style={{
+              fontSize: "0.8rem",
+              fontWeight: 700,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              opacity: isFinished && homeScore !== undefined && awayScore !== undefined && homeScore < awayScore ? 0.35 : 1,
+            }}
+          >
             {match.home.code}
           </span>
         </div>
 
         <div className="flex flex-col items-center gap-1">
-          {match.homeScore !== undefined && match.awayScore !== undefined ? (
-            <span style={{ fontSize: "clamp(2.5rem, 6vw, 5rem)", fontWeight: 800, letterSpacing: "0.04em" }}>
-              {match.homeScore} — {match.awayScore}
+          {homeScore !== undefined && awayScore !== undefined ? (
+            <span style={{
+              fontSize: "clamp(2.5rem, 6vw, 5rem)",
+              fontWeight: 800,
+              letterSpacing: "0.04em",
+              color: isLive ? "#00D1FF" : "#ffffff",
+            }}>
+              {homeScore} — {awayScore}
             </span>
           ) : (
             <span style={{ fontSize: "clamp(1rem, 2vw, 1.4rem)", fontWeight: 300, letterSpacing: "0.1em", color: "rgba(255,255,255,0.4)" }}>
               {match.time}
             </span>
           )}
-          <span style={{ fontSize: "0.55rem", letterSpacing: "0.14em", color: "rgba(255,255,255,0.25)", textTransform: "uppercase" }}>
-            {match.status}
+          <span style={{
+            fontSize: "0.55rem",
+            letterSpacing: "0.14em",
+            color: isLive ? "#00D1FF" : "rgba(255,255,255,0.25)",
+            textTransform: "uppercase",
+            fontWeight: isLive ? 700 : 400,
+          }}>
+            {isLive && liveData ? `LIVE · ${liveData.currentMinute}'` : status}
           </span>
         </div>
 
         <div className="flex flex-col items-center gap-3">
           <span style={{ fontSize: "4rem", lineHeight: 1 }}>{match.away.flag}</span>
-          <span style={{ fontSize: "0.8rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase" }}>
+          <span
+            style={{
+              fontSize: "0.8rem",
+              fontWeight: 700,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              opacity: isFinished && homeScore !== undefined && awayScore !== undefined && awayScore < homeScore ? 0.35 : 1,
+            }}
+          >
             {match.away.code}
           </span>
         </div>
+      </div>
+
+      {/* Team Names */}
+      <div className="flex items-center gap-4 mt-6">
+        <span style={{ fontSize: "clamp(0.75rem, 1.2vw, 0.95rem)", fontWeight: 300, letterSpacing: "0.1em", color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>
+          {match.home.name}
+        </span>
+        <span style={{ color: "rgba(255,255,255,0.1)", fontSize: "0.7rem" }}>vs</span>
+        <span style={{ fontSize: "clamp(0.75rem, 1.2vw, 0.95rem)", fontWeight: 300, letterSpacing: "0.1em", color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>
+          {match.away.name}
+        </span>
       </div>
 
       {/* Venue */}
@@ -1600,12 +1757,10 @@ export default async function MatchDetailPage({ params }: Props) {
     </main>
   );
 }
+``
 
-```
-
-## File: `src/app/stadiums/page.tsx`
-
-```tsx
+## File: src/app/stadiums/page.tsx
+``
 import type { Metadata } from "next";
 import PlaceholderPage from "@/components/PlaceholderPage";
 
@@ -1623,12 +1778,10 @@ export default function StadiumsPage() {
     />
   );
 }
+``
 
-```
-
-## File: `src/app/teams/page.tsx`
-
-```tsx
+## File: src/app/teams/page.tsx
+``
 import type { Metadata } from "next";
 import TeamsExperience from "@/components/globe/TeamsExperience";
 
@@ -1644,12 +1797,202 @@ export default function TeamsPage() {
     </main>
   );
 }
+``
 
-```
+## File: src/components/Navigation.tsx
+``
+"use client";
 
-## File: `src/components/ParticleBackground.tsx`
+/**
+ * Navigation.tsx
+ *
+ * GSAP-powered portal navigation for the FIFA World Cup 2026 homepage.
+ *
+ * Each nav item is a "destination" — not a button.
+ * Hover triggers an elegant GSAP animation:
+ *   - Hovered item: scale up, full brightness, wider letter spacing
+ *   - All other items: fade to ~40% opacity
+ *
+ * The component fires onNavHover(state) to wire the particle system
+ * to display nav-specific particle formations.
+ */
 
-```tsx
+import React, { useRef, useCallback, useEffect } from "react";
+import Link from "next/link";
+import { gsap } from "gsap";
+import { ParticleState } from "@/lib/particle-system";
+
+// ---------------------------------------------------------------------------
+// Nav item definitions
+// ---------------------------------------------------------------------------
+
+const NAV_ITEMS = [
+  { label: "MATCHES", href: "/matches", state: ParticleState.HOVER_MATCHES },
+  { label: "TEAMS", href: "/teams", state: ParticleState.HOVER_TEAMS },
+  { label: "STADIUMS", href: "/stadiums", state: ParticleState.HOVER_STADIUMS },
+  { label: "GROUPS", href: "/groups", state: ParticleState.HOVER_GROUPS },
+  { label: "BRACKET", href: "/bracket", state: ParticleState.HOVER_BRACKET },
+] as const;
+
+// ---------------------------------------------------------------------------
+// Props
+// ---------------------------------------------------------------------------
+
+interface NavigationProps {
+  onNavHover: (state: ParticleState) => void;
+  isVisible: boolean;        // Controlled by intro sequence
+  reducedMotion: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+export default function Navigation({
+  onNavHover,
+  isVisible,
+  reducedMotion,
+}: NavigationProps) {
+  const navRef = useRef<HTMLElement>(null);
+  const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const activeHoverIndex = useRef<number | null>(null);
+  const gsapCtx = useRef<gsap.Context | null>(null);
+
+  // Create GSAP context — cleans up animations on unmount
+  useEffect(() => {
+    gsapCtx.current = gsap.context(() => {}, navRef);
+    return () => gsapCtx.current?.revert();
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Hover in
+  // ---------------------------------------------------------------------------
+  const handleMouseEnter = useCallback(
+    (index: number) => {
+      activeHoverIndex.current = index;
+      onNavHover(NAV_ITEMS[index].state);
+
+      if (reducedMotion) return;
+
+      gsapCtx.current?.add(() => {
+        itemRefs.current.forEach((el, i) => {
+          if (!el) return;
+          if (i === index) {
+            // Active item: scale up, full brightness, wider tracking
+            gsap.to(el, {
+              scale: 1.06,
+              opacity: 1,
+              letterSpacing: "0.32em",
+              duration: 0.4,
+              ease: "power2.out",
+            });
+          } else {
+            // Inactive items: fade back
+            gsap.to(el, {
+              scale: 1,
+              opacity: 0.22,
+              letterSpacing: "0.25em",
+              duration: 0.35,
+              ease: "power2.out",
+            });
+          }
+        });
+      });
+    },
+    [onNavHover, reducedMotion]
+  );
+
+  // ---------------------------------------------------------------------------
+  // Hover out (reset)
+  // ---------------------------------------------------------------------------
+  const handleMouseLeave = useCallback(() => {
+    activeHoverIndex.current = null;
+    onNavHover(ParticleState.IDLE);
+
+    if (reducedMotion) return;
+
+    gsapCtx.current?.add(() => {
+      itemRefs.current.forEach((el) => {
+        if (!el) return;
+        gsap.to(el, {
+          scale: 1,
+          opacity: 1,
+          letterSpacing: "0.25em",
+          duration: 0.4,
+          ease: "power2.out",
+        });
+      });
+    });
+  }, [onNavHover, reducedMotion]);
+
+  // ---------------------------------------------------------------------------
+  // Keyboard focus — same visual treatment as hover
+  // ---------------------------------------------------------------------------
+  const handleFocus = useCallback(
+    (index: number) => handleMouseEnter(index),
+    [handleMouseEnter]
+  );
+  const handleBlur = useCallback(() => handleMouseLeave(), [handleMouseLeave]);
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
+  return (
+    <nav
+      ref={navRef}
+      role="navigation"
+      aria-label="Main navigation"
+      className={`
+        relative z-20 flex flex-col md:flex-row
+        items-center justify-center
+        gap-8 md:gap-10 lg:gap-14
+        transition-opacity duration-700
+        ${isVisible ? "opacity-100" : "opacity-0 pointer-events-none"}
+      `}
+    >
+      {NAV_ITEMS.map((item, index) => (
+        <Link
+          key={item.label}
+          href={item.href}
+          ref={(el) => { itemRefs.current[index] = el; }}
+          onMouseEnter={() => handleMouseEnter(index)}
+          onMouseLeave={handleMouseLeave}
+          onFocus={() => handleFocus(index)}
+          onBlur={handleBlur}
+          aria-label={`Navigate to ${item.label}`}
+          className={`
+            nav-item
+            font-bold uppercase
+            text-white
+            select-none
+            no-underline
+            whitespace-nowrap
+            block
+            min-h-[48px] md:min-h-0
+            flex items-center
+            cursor-pointer
+            focus-visible:outline-none
+            focus-visible:ring-0
+          `}
+          style={{
+            fontFamily: "'Inter', sans-serif",
+            fontSize: "clamp(1.6rem, 3.2vw, 3.2rem)",
+            letterSpacing: "0.25em",
+            lineHeight: 1,
+            // Will-change hint for GPU compositing during GSAP animations
+            willChange: "transform, opacity",
+          }}
+        >
+          {item.label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+``
+
+## File: src/components/ParticleBackground.tsx
+``
 "use client";
 
 /**
@@ -1938,12 +2281,10 @@ export default function ParticleBackground({
     </div>
   );
 }
+``
 
-```
-
-## File: `src/components/PlaceholderPage.tsx`
-
-```tsx
+## File: src/components/PlaceholderPage.tsx
+``
 "use client";
 
 /**
@@ -2091,12 +2432,10 @@ export default function PlaceholderPage({
     </main>
   );
 }
+``
 
-```
-
-## File: `src/components/TeamLogo.tsx`
-
-```tsx
+## File: src/components/TeamLogo.tsx
+``
 "use client";
 
 /**
@@ -2214,12 +2553,10 @@ export default function TeamLogo({ code, size = 28, className }: TeamLogoProps) 
     </svg>
   );
 }
+``
 
-```
-
-## File: `src/components/WelcomeText.tsx`
-
-```tsx
+## File: src/components/WelcomeText.tsx
+``
 "use client";
 
 /**
@@ -2335,12 +2672,10 @@ export default function WelcomeText({ isVisible, reducedMotion }: WelcomeTextPro
     </motion.div>
   );
 }
+``
 
-```
-
-## File: `src/components/globe/Atmosphere.tsx`
-
-```tsx
+## File: src/components/globe/Atmosphere.tsx
+``
 "use client";
 
 import React, { useMemo } from "react";
@@ -2378,12 +2713,10 @@ export default function Atmosphere({ radius = 2.05 }) {
     </mesh>
   );
 }
+``
 
-```
-
-## File: `src/components/globe/Earth.tsx`
-
-```tsx
+## File: src/components/globe/Earth.tsx
+``
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
@@ -2601,12 +2934,10 @@ export default function Earth({ teams, selectedCountry, onSelectCountry }: Earth
     </group>
   );
 }
+``
 
-```
-
-## File: `src/components/globe/Markers.tsx`
-
-```tsx
+## File: src/components/globe/Markers.tsx
+``
 "use client";
 
 import React, { useRef, useState } from "react";
@@ -2719,43 +3050,107 @@ export default function Markers({ teams, radius, onSelectCountry, selectedCountr
     </group>
   );
 }
+``
 
-```
-
-## File: `src/components/globe/SelectedCountryOverlay.tsx`
-
-```tsx
+## File: src/components/globe/SelectedCountryOverlay.tsx
+``
 "use client";
 
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { motion } from "framer-motion";
+import { gsap } from "gsap";
 import { GlobeTeamData } from "@/lib/data/globe-teams";
 
 interface Props {
   country: GlobeTeamData;
+  isTransitioning: boolean;
+  onExploreTeam: () => void;
   onClose: () => void;
 }
 
-export default function SelectedCountryOverlay({ country, onClose }: Props) {
+/**
+ * SelectedCountryOverlay
+ *
+ * Pure presentation layer — no overlay state.
+ * State machine lives in TeamsExperience.
+ *
+ * Shows: country name + GROUP/RANK + EXPLORE TEAM button + Back to Globe
+ * During transition: name scales up via GSAP, buttons fade out
+ */
+export default function SelectedCountryOverlay({
+  country,
+  isTransitioning,
+  onExploreTeam,
+  onClose,
+}: Props) {
+  const nameRef = useRef<HTMLHeadingElement>(null);
+  const metaRef = useRef<HTMLDivElement>(null);
+  const buttonsRef = useRef<HTMLDivElement>(null);
+
+  // ── GSAP transition: name grows, meta + buttons fade ──────────────
+  useEffect(() => {
+    if (!isTransitioning) return;
+
+    const tl = gsap.timeline();
+
+    // Step 1: Country name scales up
+    if (nameRef.current) {
+      tl.to(nameRef.current, {
+        scale: 1.4,
+        duration: 0.8,
+        ease: "expo.out",
+      }, 0);
+    }
+
+    // Step 2: Meta info fades
+    if (metaRef.current) {
+      tl.to(metaRef.current, {
+        opacity: 0,
+        duration: 0.4,
+        ease: "power2.in",
+      }, 0);
+    }
+
+    // Step 3: Buttons fade
+    if (buttonsRef.current) {
+      tl.to(buttonsRef.current, {
+        opacity: 0,
+        duration: 0.3,
+        ease: "power2.in",
+      }, 0);
+    }
+
+    return () => { tl.kill(); };
+  }, [isTransitioning]);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
-      className="absolute inset-0 pointer-events-none flex flex-col items-center justify-between py-12 z-10"
+      className="absolute inset-0 pointer-events-none flex flex-col items-center justify-between py-12 z-20"
     >
+      {/* Country name */}
       <div className="flex-1 flex flex-col justify-center items-center mt-32">
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.5, duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center"
-        >
-          <h1 className="text-white text-6xl md:text-8xl font-light tracking-[0.2em] uppercase">
+        <div className="text-center">
+          <h1
+            ref={nameRef}
+            className="text-white font-light tracking-[0.2em] uppercase"
+            style={{
+              fontSize: "clamp(3rem, 8vw, 8rem)",
+              lineHeight: 0.9,
+            }}
+          >
             {country.name}
           </h1>
-          <div className="mt-6 flex space-x-8 justify-center opacity-70">
+
+          {/* Meta: group + ranking */}
+          <div
+            ref={metaRef}
+            className="mt-6 flex space-x-8 justify-center"
+            style={{ opacity: 0.7 }}
+          >
             {country.group && (
               <span className="text-white text-sm tracking-[0.3em] uppercase">
                 GROUP {country.group}
@@ -2767,30 +3162,78 @@ export default function SelectedCountryOverlay({ country, onClose }: Props) {
               </span>
             )}
           </div>
-        </motion.div>
+        </div>
       </div>
 
-      <motion.button
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1, duration: 1 }}
-        onClick={(e) => {
-          e.stopPropagation();
-          onClose();
-        }}
-        className="pointer-events-auto text-white/50 hover:text-white transition-colors duration-300 text-sm tracking-[0.2em] uppercase pb-8"
+      {/* Bottom: EXPLORE TEAM + Back to Globe */}
+      <div
+        ref={buttonsRef}
+        className="flex flex-col items-center gap-6 pointer-events-auto pb-8"
       >
-        BACK TO GLOBE
-      </motion.button>
+        {/* EXPLORE TEAM */}
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+          onClick={onExploreTeam}
+          style={{
+            background: "none",
+            border: "1px solid rgba(255,255,255,0.15)",
+            cursor: "pointer",
+            padding: "14px 40px",
+            fontSize: "0.7rem",
+            fontWeight: 500,
+            letterSpacing: "0.22em",
+            textTransform: "uppercase",
+            color: "rgba(255,255,255,0.6)",
+            transition: "all 0.35s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = "rgba(255,255,255,0.4)";
+            e.currentTarget.style.color = "#ffffff";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
+            e.currentTarget.style.color = "rgba(255,255,255,0.6)";
+          }}
+        >
+          Explore Team
+        </motion.button>
+
+        {/* Back to Globe */}
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2, duration: 0.8 }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontSize: "0.6rem",
+            fontWeight: 400,
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+            color: "rgba(255,255,255,0.25)",
+            transition: "color 0.25s ease",
+            padding: 0,
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.5)")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.25)")}
+        >
+          Back to Globe
+        </motion.button>
+      </div>
     </motion.div>
   );
 }
+``
 
-```
-
-## File: `src/components/globe/SpaceDust.tsx`
-
-```tsx
+## File: src/components/globe/SpaceDust.tsx
+``
 "use client";
 
 import React, { useRef, useMemo } from "react";
@@ -2849,70 +3292,474 @@ export default function SpaceDust() {
     </points>
   );
 }
+``
 
-```
-
-## File: `src/components/globe/TeamsExperience.tsx`
-
-```tsx
+## File: src/components/globe/TeamProfileOverlay.tsx
+``
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useRef, useEffect } from "react";
+import { motion } from "framer-motion";
+import { gsap } from "gsap";
+import {
+  TeamProfile,
+  groupSquadByPosition,
+} from "@/lib/data/team-profiles";
+
+interface Props {
+  profile: TeamProfile;
+  teamName: string;
+  onBack: () => void;
+}
+
+// ---------------------------------------------------------------------------
+// Editorial team overlay — NOT a dashboard, NOT cards, NOT tabs.
+// Think exhibition catalogue. Think architecture monograph.
+// GSAP drives entrance animations. Framer Motion handles mount/unmount.
+// ---------------------------------------------------------------------------
+
+export default function TeamProfileOverlay({ profile, teamName, onBack }: Props) {
+  const squadGroups = groupSquadByPosition(profile.squad);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // ── GSAP staggered entrance ──────────────────────────────────────────
+  useEffect(() => {
+    if (!contentRef.current) return;
+
+    const sections = contentRef.current.querySelectorAll("[data-animate]");
+    gsap.set(sections, { opacity: 0, y: 20 });
+    gsap.to(sections, {
+      opacity: 1,
+      y: 0,
+      duration: 0.7,
+      ease: "power2.out",
+      stagger: 0.1,
+      delay: 0.2,
+    });
+
+    // Separators: draw from left
+    const separators = contentRef.current.querySelectorAll("[data-separator]");
+    gsap.set(separators, { scaleX: 0 });
+    gsap.to(separators, {
+      scaleX: 1,
+      duration: 0.8,
+      ease: "power2.out",
+      stagger: 0.15,
+      delay: 0.4,
+    });
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+      className="fixed inset-0 z-50 overflow-y-auto"
+      style={{
+        background: "#050505",
+        fontFamily: "var(--font-inter, 'Inter', sans-serif)",
+      }}
+    >
+      <div
+        ref={contentRef}
+        className="mx-auto"
+        style={{
+          width: "min(72%, 960px)",
+          minWidth: "320px",
+          paddingBottom: "8rem",
+        }}
+      >
+        {/* ── BACK ──────────────────────────────────────────────────────── */}
+        <div data-animate style={{ paddingTop: "clamp(2.5rem, 6vw, 5rem)" }}>
+          <button
+            onClick={onBack}
+            className="inline-flex items-center gap-2 group"
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontSize: "0.65rem",
+              fontWeight: 400,
+              letterSpacing: "0.16em",
+              color: "rgba(255,255,255,0.25)",
+              textTransform: "uppercase",
+              transition: "color 0.25s ease",
+              padding: 0,
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.6)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.25)")}
+          >
+            ← Back to Globe
+          </button>
+        </div>
+
+        {/* ── NATION NAME ───────────────────────────────────────────────── */}
+        <h1
+          data-animate
+          style={{
+            fontSize: "clamp(3.5rem, 10vw, 9rem)",
+            fontWeight: 800,
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+            color: "#ffffff",
+            lineHeight: 0.9,
+            marginTop: "clamp(2rem, 5vw, 4rem)",
+            marginBottom: "clamp(2rem, 4vw, 3rem)",
+          }}
+        >
+          {teamName}
+        </h1>
+
+        {/* ── DESCRIPTION ───────────────────────────────────────────────── */}
+        <p
+          data-animate
+          style={{
+            fontSize: "clamp(1rem, 1.6vw, 1.25rem)",
+            fontWeight: 300,
+            lineHeight: 1.7,
+            color: "rgba(255,255,255,0.55)",
+            maxWidth: "640px",
+            marginBottom: "clamp(3rem, 6vw, 5rem)",
+          }}
+        >
+          {profile.description}
+        </p>
+
+        {/* ── SEPARATOR ─────────────────────────────────────────────────── */}
+        <div
+          data-separator
+          style={{
+            height: "1px",
+            background: "rgba(255,255,255,0.06)",
+            transformOrigin: "left",
+            marginBottom: "clamp(2.5rem, 5vw, 4rem)",
+          }}
+        />
+
+        {/* ── STATS — editorial, not cards ───────────────────────────────── */}
+        <div
+          data-animate
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5"
+          style={{
+            gap: "clamp(2rem, 4vw, 3.5rem)",
+            marginBottom: "clamp(3rem, 6vw, 5rem)",
+          }}
+        >
+          {[
+            { label: "Coach", value: profile.coach },
+            { label: "Captain", value: profile.captain },
+            { label: "World Cup Titles", value: profile.titles.toString() },
+            { label: "Appearances", value: profile.worldCupAppearances.toString() },
+            { label: "Best Finish", value: profile.bestFinish },
+          ].map((stat) => (
+            <div key={stat.label}>
+              <div
+                style={{
+                  fontSize: "0.6rem",
+                  fontWeight: 400,
+                  letterSpacing: "0.16em",
+                  textTransform: "uppercase",
+                  color: "rgba(255,255,255,0.2)",
+                  marginBottom: "0.6rem",
+                }}
+              >
+                {stat.label}
+              </div>
+              <div
+                style={{
+                  fontSize: "clamp(0.85rem, 1.3vw, 1.05rem)",
+                  fontWeight: 500,
+                  color: "#ffffff",
+                  lineHeight: 1.3,
+                }}
+              >
+                {stat.value}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── SEPARATOR ─────────────────────────────────────────────────── */}
+        <div
+          data-separator
+          style={{
+            height: "1px",
+            background: "rgba(255,255,255,0.06)",
+            transformOrigin: "left",
+            marginBottom: "clamp(3rem, 6vw, 5rem)",
+          }}
+        />
+
+        {/* ── SQUAD BY POSITION ─────────────────────────────────────────── */}
+        {squadGroups.map((group) => (
+          <section
+            key={group.position}
+            data-animate
+            style={{ marginBottom: "clamp(3rem, 5vw, 4.5rem)" }}
+          >
+            {/* Position heading */}
+            <h2
+              style={{
+                fontSize: "clamp(1.5rem, 3.5vw, 2.5rem)",
+                fontWeight: 800,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: "#ffffff",
+                lineHeight: 1,
+                marginBottom: "clamp(1.5rem, 3vw, 2.5rem)",
+                opacity: 0.85,
+              }}
+            >
+              {group.label}
+            </h2>
+
+            {/* Player list */}
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {group.players.map((player) => (
+                <div
+                  key={player.name}
+                  style={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    justifyContent: "space-between",
+                    padding: "clamp(0.8rem, 1.5vw, 1.2rem) 0",
+                    borderBottom: "1px solid rgba(255,255,255,0.04)",
+                  }}
+                >
+                  {/* Number + Name */}
+                  <div className="flex items-baseline gap-3 md:gap-4">
+                    <span
+                      style={{
+                        fontSize: "0.65rem",
+                        fontWeight: 400,
+                        letterSpacing: "0.1em",
+                        color: "rgba(255,255,255,0.15)",
+                        minWidth: "24px",
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      {player.number}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "clamp(0.9rem, 1.5vw, 1.15rem)",
+                        fontWeight: 500,
+                        color: "#ffffff",
+                        letterSpacing: "0.02em",
+                      }}
+                    >
+                      {player.name}
+                    </span>
+                  </div>
+
+                  {/* Club */}
+                  <span
+                    className="hidden sm:block"
+                    style={{
+                      fontSize: "0.7rem",
+                      fontWeight: 300,
+                      letterSpacing: "0.08em",
+                      color: "rgba(255,255,255,0.2)",
+                      textAlign: "right",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {player.club}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+
+        {/* ── FOOTER ────────────────────────────────────────────────────── */}
+        <footer
+          data-animate
+          style={{
+            marginTop: "clamp(4rem, 8vw, 6rem)",
+            paddingTop: "1.5rem",
+            borderTop: "1px solid rgba(255,255,255,0.04)",
+          }}
+        >
+          <p
+            style={{
+              fontSize: "0.55rem",
+              letterSpacing: "0.16em",
+              color: "rgba(255,255,255,0.1)",
+              textTransform: "uppercase",
+            }}
+          >
+            FIFA World Cup 2026 · {teamName} · {profile.squad.length} Players
+          </p>
+        </footer>
+      </div>
+    </motion.div>
+  );
+}
+``
+
+## File: src/components/globe/TeamsExperience.tsx
+``
+"use client";
+
+import React, { useState, useRef, useCallback, Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Preload, PerformanceMonitor } from "@react-three/drei";
 import { AnimatePresence, motion } from "framer-motion";
+import { gsap } from "gsap";
 
 import Earth from "./Earth";
 import SpaceDust from "./SpaceDust";
 import SelectedCountryOverlay from "./SelectedCountryOverlay";
+import TeamProfileOverlay from "./TeamProfileOverlay";
 import { globeTeams, GlobeTeamData } from "@/lib/data/globe-teams";
+import { getTeamProfile, TeamProfile } from "@/lib/data/team-profiles";
+
+// ---------------------------------------------------------------------------
+// State machine: IDLE → COUNTRY_SELECTED → TEAM_OVERLAY → COUNTRY_SELECTED → IDLE
+// ---------------------------------------------------------------------------
+type ExperienceState = "IDLE" | "COUNTRY_SELECTED" | "TRANSITIONING" | "TEAM_OVERLAY";
 
 export default function TeamsExperience() {
   const [dpr, setDpr] = useState(1.5);
   const [selectedCountry, setSelectedCountry] = useState<GlobeTeamData | null>(null);
+  const [experienceState, setExperienceState] = useState<ExperienceState>("IDLE");
 
-  const handleSelectCountry = (country: GlobeTeamData | null) => {
+  // Refs for GSAP transition targets
+  const canvasWrapRef = useRef<HTMLDivElement>(null);
+  const darkOverlayRef = useRef<HTMLDivElement>(null);
+
+  const handleSelectCountry = useCallback((country: GlobeTeamData | null) => {
     setSelectedCountry(country);
-  };
+    setExperienceState(country ? "COUNTRY_SELECTED" : "IDLE");
+  }, []);
+
+  // ── EXPLORE TEAM: GSAP-driven transition ─────────────────────────────
+  const handleExploreTeam = useCallback(() => {
+    if (!selectedCountry) return;
+    setExperienceState("TRANSITIONING");
+
+    const tl = gsap.timeline({
+      onComplete: () => setExperienceState("TEAM_OVERLAY"),
+    });
+
+    // Step 1+2: Dark overlay fades in over the globe (800ms)
+    if (darkOverlayRef.current) {
+      tl.to(darkOverlayRef.current, {
+        opacity: 1,
+        duration: 0.8,
+        ease: "power2.inOut",
+      }, 0);
+    }
+
+    // Step 3: Globe canvas fades (runs concurrently)
+    if (canvasWrapRef.current) {
+      tl.to(canvasWrapRef.current, {
+        opacity: 0,
+        duration: 0.6,
+        ease: "power2.in",
+      }, 0.2);
+    }
+  }, [selectedCountry]);
+
+  // ── BACK: return from team overlay to country selected ─────────────
+  const handleBackFromOverlay = useCallback(() => {
+    setExperienceState("COUNTRY_SELECTED");
+
+    // Restore canvas opacity
+    if (canvasWrapRef.current) {
+      gsap.to(canvasWrapRef.current, { opacity: 1, duration: 0.6, ease: "power2.out" });
+    }
+    if (darkOverlayRef.current) {
+      gsap.to(darkOverlayRef.current, { opacity: 0, duration: 0.4, ease: "power2.out" });
+    }
+  }, []);
+
+  // Resolve profile for the selected team
+  const teamProfile: TeamProfile | null = selectedCountry
+    ? getTeamProfile(selectedCountry.code)
+    : null;
+
+  // Fallback profile for teams without full data
+  const resolvedProfile: TeamProfile | null = selectedCountry
+    ? teamProfile ?? {
+        code: selectedCountry.code,
+        logo: `/logos/${selectedCountry.code}.png`,
+        flag: "🏳️",
+        fifaRanking: selectedCountry.ranking ?? 0,
+        confederation: "",
+        coach: "—",
+        captain: "—",
+        worldCupAppearances: 0,
+        titles: 0,
+        bestFinish: "—",
+        description: `${selectedCountry.name} are competing in the FIFA World Cup 2026.`,
+        squad: [],
+      }
+    : null;
 
   return (
     <div className="relative w-full h-screen bg-[#050505] overflow-hidden select-none">
-      <Canvas
-        camera={{ position: [0, 0, 5], fov: 45 }}
-        gl={{ antialias: true, alpha: false }}
-        dpr={dpr}
-      >
-        <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(2)} />
-        
-        {/* Lights */}
-        <ambientLight intensity={0.02} />
-        <directionalLight position={[5, 3, 5]} intensity={1.5} />
-        
-        <Suspense fallback={null}>
-          <Earth 
-            teams={globeTeams} 
-            selectedCountry={selectedCountry}
-            onSelectCountry={handleSelectCountry}
-          />
-        </Suspense>
 
-        <SpaceDust />
-        <Preload all />
-      </Canvas>
+      {/* ── Globe Canvas ────────────────────────────────────────────────── */}
+      <div ref={canvasWrapRef} className="absolute inset-0">
+        <Canvas
+          camera={{ position: [0, 0, 5], fov: 45 }}
+          gl={{ antialias: true, alpha: false }}
+          dpr={dpr}
+        >
+          <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(2)} />
+          <ambientLight intensity={0.02} />
+          <directionalLight position={[5, 3, 5]} intensity={1.5} />
 
-      {/* 2D Overlay layer - Selection state */}
+          <Suspense fallback={null}>
+            <Earth
+              teams={globeTeams}
+              selectedCountry={selectedCountry}
+              onSelectCountry={handleSelectCountry}
+            />
+          </Suspense>
+
+          <SpaceDust />
+          <Preload all />
+        </Canvas>
+      </div>
+
+      {/* ── GSAP dark overlay (used during transition) ───────────────── */}
+      <div
+        ref={darkOverlayRef}
+        className="absolute inset-0 pointer-events-none z-10"
+        style={{ background: "#050505", opacity: 0 }}
+      />
+
+      {/* ── Country selection overlay ────────────────────────────────── */}
       <AnimatePresence>
-        {selectedCountry && (
-          <SelectedCountryOverlay 
-            country={selectedCountry} 
-            onClose={() => handleSelectCountry(null)}
+        {(experienceState === "COUNTRY_SELECTED" || experienceState === "TRANSITIONING") &&
+          selectedCountry && (
+            <SelectedCountryOverlay
+              country={selectedCountry}
+              isTransitioning={experienceState === "TRANSITIONING"}
+              onExploreTeam={handleExploreTeam}
+              onClose={() => handleSelectCountry(null)}
+            />
+          )}
+      </AnimatePresence>
+
+      {/* ── Team profile overlay (sibling of globe, not nested) ──────── */}
+      <AnimatePresence>
+        {experienceState === "TEAM_OVERLAY" && selectedCountry && resolvedProfile && (
+          <TeamProfileOverlay
+            profile={resolvedProfile}
+            teamName={selectedCountry.name}
+            onBack={handleBackFromOverlay}
           />
         )}
       </AnimatePresence>
 
-      {/* Default UI - Heading and Sidebars */}
+      {/* ── Default UI — IDLE state: heading + sidebars ──────────────── */}
       <AnimatePresence>
-        {!selectedCountry && (
+        {experienceState === "IDLE" && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -2955,16 +3802,114 @@ export default function TeamsExperience() {
           </motion.div>
         )}
       </AnimatePresence>
-      
     </div>
   );
 }
+``
 
-```
+## File: src/hooks/useLiveMatches.ts
+``
+// useLiveMatches.ts — Client-side hook that polls /api/matches for live data.
+//
+// Usage:
+//   const { matches, isLoading, lastUpdated } = useLiveMatches(30000);
+//
+// Polls every `intervalMs` (default 30s). Returns merged match data.
 
-## File: `src/hooks/useMouseInteraction.ts`
+"use client";
 
-```ts
+import { useState, useEffect, useCallback, useRef } from "react";
+import type { MatchWithScore } from "@/app/api/matches/route";
+import { MatchStatus, TournamentStage } from "@/lib/data/matches";
+
+export interface UseLiveMatchesResult {
+  matches: MatchWithScore[];
+  isLoading: boolean;
+  error: string | null;
+  lastUpdated: string | null;
+  refetch: () => Promise<void>;
+}
+
+export function useLiveMatches(intervalMs: number = 30000): UseLiveMatchesResult {
+  const [matches, setMatches] = useState<MatchWithScore[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+
+  const fetchMatches = useCallback(async () => {
+    try {
+      const res = await fetch("/api/matches", { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      if (mountedRef.current) {
+        setMatches(data.matches);
+        setLastUpdated(data.updatedAt);
+        setError(null);
+        setIsLoading(false);
+      }
+    } catch (err) {
+      if (mountedRef.current) {
+        setError(err instanceof Error ? err.message : "Failed to fetch matches");
+        setIsLoading(false);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    fetchMatches();
+
+    const interval = setInterval(fetchMatches, intervalMs);
+    return () => {
+      mountedRef.current = false;
+      clearInterval(interval);
+    };
+  }, [fetchMatches, intervalMs]);
+
+  return { matches, isLoading, error, lastUpdated, refetch: fetchMatches };
+}
+
+// ── Utility: filter & group (mirrors matches-data.ts but for MatchWithScore) ──
+
+export function filterLiveMatches(
+  matches: MatchWithScore[],
+  stage: string,
+  query: string
+): MatchWithScore[] {
+  return matches.filter((m) => {
+    const stageMatch = stage === TournamentStage.ALL || m.stage === stage;
+    const q = query.toLowerCase().trim();
+    const searchMatch =
+      !q ||
+      m.home.name.toLowerCase().includes(q) ||
+      m.away.name.toLowerCase().includes(q) ||
+      m.home.code.toLowerCase().includes(q) ||
+      m.away.code.toLowerCase().includes(q) ||
+      m.stadium.toLowerCase().includes(q) ||
+      m.city.toLowerCase().includes(q) ||
+      (m.group?.toLowerCase().includes(q) ?? false);
+    return stageMatch && searchMatch;
+  });
+}
+
+export function groupLiveMatchesByDate(matches: MatchWithScore[]): Map<string, MatchWithScore[]> {
+  const grouped = new Map<string, MatchWithScore[]>();
+  const sorted = [...matches].sort((a, b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    return a.matchNumber - b.matchNumber;
+  });
+  for (const match of sorted) {
+    if (!grouped.has(match.date)) grouped.set(match.date, []);
+    grouped.get(match.date)!.push(match);
+  }
+  return grouped;
+}
+``
+
+## File: src/hooks/useMouseInteraction.ts
+``
 /**
  * useMouseInteraction.ts
  *
@@ -3110,12 +4055,10 @@ export function useMouseInteraction(): MouseInteractionState {
 
   return state;
 }
+``
 
-```
-
-## File: `src/lib/matches-data.ts`
-
-```ts
+## File: src/lib/matches-data.ts
+``
 import { Match, TournamentStage } from "./data/matches";
 
 // Re-export core data & types for legacy compat
@@ -3208,14 +4151,13 @@ export const STAGE_LABELS_SHORT: Record<TournamentStage, string> = {
   [TournamentStage.ROUND_OF_16]: "R16",
   [TournamentStage.QUARTER_FINALS]: "QF",
   [TournamentStage.SEMI_FINALS]: "SF",
+  [TournamentStage.THIRD_PLACE]: "3rd Place",
   [TournamentStage.FINAL]: "Final",
 };
+``
 
-```
-
-## File: `src/lib/particle-system.ts`
-
-```ts
+## File: src/lib/particle-system.ts
+``
 /**
  * particle-system.ts
  *
@@ -3656,12 +4598,10 @@ export function prepareSphereTargets(
   }
   return targets;
 }
+``
 
-```
-
-## File: `src/lib/data/globe-teams.ts`
-
-```ts
+## File: src/lib/data/globe-teams.ts
+``
 export interface GlobeTeamData {
   name: string;
   code: string;
@@ -3738,12 +4678,10 @@ export const globeTeams: GlobeTeamData[] = [
   { name: "Scotland", code: "SCO", lat: 56.4907, lng: -4.2026, group: "K", ranking: 34 },
   { name: "Paraguay", code: "PAR", lat: -23.4425, lng: -58.4438, group: "L", ranking: 49 },
 ];
+``
 
-```
-
-## File: `src/lib/data/groups.ts`
-
-```ts
+## File: src/lib/data/groups.ts
+``
 // groups.ts
 import { TEAMS } from "./teams";
 export interface Group {
@@ -3768,18 +4706,70 @@ export const GROUPS: Group[] = [
 export function getGroupForTeam(code: string): Group | undefined {
   return GROUPS.find((g) => g.teams.includes(code));
 }
+``
 
-```
+## File: src/lib/data/live-scores.ts
+``
+// live-scores.ts — Dynamic match results, separate from static schedule.
+//
+// This file is the single source of truth for match outcomes.
+// The static schedule in matches.ts provides teams/dates/venues.
+// This file provides scores, status, and live data.
+//
+// To update: edit this file, or replace with an API fetch in the future.
 
-## File: `src/lib/data/matches.ts`
+import { MatchStatus } from "./matches";
 
-```ts
+export interface LiveScore {
+  matchId: string;
+  status: MatchStatus;
+  homeScore: number;
+  awayScore: number;
+  liveData?: {
+    currentMinute: number;
+    isExtraTime: boolean;
+    isPenalties: boolean;
+    penaltyScore?: [number, number];
+  };
+}
+
+/**
+ * All known results.
+ * Keyed by match ID for O(1) lookup.
+ */
+export const LIVE_SCORES: Record<string, LiveScore> = {
+  // ── June 11, 2026 — Matchday 1 ──────────────────────────────────────
+  m001: {
+    matchId: "m001",
+    status: MatchStatus.FINISHED,
+    homeScore: 2,  // Mexico
+    awayScore: 0,  // South Africa
+  },
+  m002: {
+    matchId: "m002",
+    status: MatchStatus.FINISHED,
+    homeScore: 2,  // South Korea
+    awayScore: 1,  // Czech Republic
+  },
+};
+
+/**
+ * Look up a live score by match ID.
+ * Returns null if no live data exists (match is still UPCOMING per schedule).
+ */
+export function getLiveScore(matchId: string): LiveScore | null {
+  return LIVE_SCORES[matchId] ?? null;
+}
+``
+
+## File: src/lib/data/matches.ts
+``
 // matches.ts
 import { TeamData, getTeam } from "./teams";
 import { GROUPS } from "./groups";
 
 export enum MatchStatus { UPCOMING = "UPCOMING", LIVE = "LIVE", FINISHED = "FINISHED", POSTPONED = "POSTPONED" }
-export enum TournamentStage { ALL = "ALL", GROUP_STAGE = "GROUP_STAGE", ROUND_OF_32 = "ROUND_OF_32", ROUND_OF_16 = "ROUND_OF_16", QUARTER_FINALS = "QUARTER_FINALS", SEMI_FINALS = "SEMI_FINALS", FINAL = "FINAL" }
+export enum TournamentStage { ALL = "ALL", GROUP_STAGE = "GROUP_STAGE", ROUND_OF_32 = "ROUND_OF_32", ROUND_OF_16 = "ROUND_OF_16", QUARTER_FINALS = "QUARTER_FINALS", SEMI_FINALS = "SEMI_FINALS", THIRD_PLACE = "THIRD_PLACE", FINAL = "FINAL" }
 export interface LiveMatchData { currentMinute: number; isExtraTime: boolean; isPenalties: boolean; penaltyScore?: [number, number]; }
 export interface Match { id: string; stage: TournamentStage; group?: string; matchNumber: number; date: string; time: string; stadium: string; city: string; country: string; home: TeamData; away: TeamData; status: MatchStatus; homeScore?: number; awayScore?: number; liveData?: LiveMatchData; }
 
@@ -4635,7 +5625,7 @@ export const MATCHES: Match[] = [
     city: "Houston",
     country: "USA/MEX/CAN",
     home: getTeam("POR"),
-    away: getTeam("DR "),
+    away: getTeam("COD"),
     status: MatchStatus.UPCOMING
   },
   {
@@ -4677,7 +5667,7 @@ export const MATCHES: Match[] = [
     city: "Guadalajara",
     country: "USA/MEX/CAN",
     home: getTeam("COL"),
-    away: getTeam("DR "),
+    away: getTeam("COD"),
     status: MatchStatus.UPCOMING
   },
   {
@@ -4704,7 +5694,7 @@ export const MATCHES: Match[] = [
     stadium: "Atlanta",
     city: "Atlanta",
     country: "USA/MEX/CAN",
-    home: getTeam("DR "),
+    home: getTeam("COD"),
     away: getTeam("UZB"),
     status: MatchStatus.UPCOMING
   },
@@ -5130,7 +6120,7 @@ export const MATCHES: Match[] = [
   },
   {
     id: "m097",
-    stage: TournamentStage.GROUP_STAGE,
+    stage: TournamentStage.QUARTER_FINALS,
     group: undefined,
     matchNumber: 97,
     date: "2026-07-09",
@@ -5144,7 +6134,7 @@ export const MATCHES: Match[] = [
   },
   {
     id: "m098",
-    stage: TournamentStage.GROUP_STAGE,
+    stage: TournamentStage.QUARTER_FINALS,
     group: undefined,
     matchNumber: 98,
     date: "2026-07-10",
@@ -5158,7 +6148,7 @@ export const MATCHES: Match[] = [
   },
   {
     id: "m099",
-    stage: TournamentStage.GROUP_STAGE,
+    stage: TournamentStage.QUARTER_FINALS,
     group: undefined,
     matchNumber: 99,
     date: "2026-07-11",
@@ -5172,7 +6162,7 @@ export const MATCHES: Match[] = [
   },
   {
     id: "m100",
-    stage: TournamentStage.GROUP_STAGE,
+    stage: TournamentStage.QUARTER_FINALS,
     group: undefined,
     matchNumber: 100,
     date: "2026-07-11",
@@ -5186,7 +6176,7 @@ export const MATCHES: Match[] = [
   },
   {
     id: "m101",
-    stage: TournamentStage.GROUP_STAGE,
+    stage: TournamentStage.SEMI_FINALS,
     group: undefined,
     matchNumber: 101,
     date: "2026-07-14",
@@ -5200,7 +6190,7 @@ export const MATCHES: Match[] = [
   },
   {
     id: "m102",
-    stage: TournamentStage.GROUP_STAGE,
+    stage: TournamentStage.SEMI_FINALS,
     group: undefined,
     matchNumber: 102,
     date: "2026-07-15",
@@ -5209,12 +6199,12 @@ export const MATCHES: Match[] = [
     city: "Atlanta",
     country: "USA/MEX/CAN",
     home: getTeam("W99"),
-    away: getTeam("W10"),
+    away: getTeam("W100"),
     status: MatchStatus.UPCOMING
   },
   {
     id: "m103",
-    stage: TournamentStage.GROUP_STAGE,
+    stage: TournamentStage.THIRD_PLACE,
     group: undefined,
     matchNumber: 103,
     date: "2026-07-18",
@@ -5222,8 +6212,8 @@ export const MATCHES: Match[] = [
     stadium: "Miami (Miami Gardens)",
     city: "Miami",
     country: "USA/MEX/CAN",
-    home: getTeam("L10"),
-    away: getTeam("L10"),
+    home: getTeam("L101"),
+    away: getTeam("L102"),
     status: MatchStatus.UPCOMING
   },
   {
@@ -5236,18 +6226,16 @@ export const MATCHES: Match[] = [
     stadium: "New York/New Jersey (East Rutherford)",
     city: "New York/New Jersey",
     country: "USA/MEX/CAN",
-    home: getTeam("W10"),
-    away: getTeam("W10"),
+    home: getTeam("W101"),
+    away: getTeam("W102"),
     status: MatchStatus.UPCOMING
   },
 ];
 export const TOTAL_MATCHES = MATCHES.length;
+``
 
-```
-
-## File: `src/lib/data/stadiums.ts`
-
-```ts
+## File: src/lib/data/stadiums.ts
+``
 // stadiums.ts — 16 official FIFA World Cup 2026 venues
 
 export interface Stadium {
@@ -5399,12 +6387,601 @@ if (VENUE_COUNT !== 16) {
     `stadiums.ts: expected 16 venues but found ${VENUE_COUNT}. Fix the list!`,
   );
 }
+``
 
-```
+## File: src/lib/data/team-profiles.ts
+``
+// team-profiles.ts — Team identity, staff, stats, and squads
+// Squads are representative V1 data. Architecture supports full 26-man
+// squads per team; teams without data fall back gracefully in the UI.
 
-## File: `src/lib/data/teams.ts`
+export type Position = "GK" | "DF" | "MF" | "FW";
 
-```ts
+export const POSITION_LABELS: Record<Position, string> = {
+  GK: "Goalkeepers",
+  DF: "Defenders",
+  MF: "Midfielders",
+  FW: "Forwards",
+};
+
+export const POSITION_ORDER: Position[] = ["GK", "DF", "MF", "FW"];
+
+export interface Player {
+  name: string;
+  number: number;
+  position: Position;
+  club: string;
+}
+
+export interface TeamProfile {
+  code: string;
+  logo: string;
+  flag: string;
+  fifaRanking: number;
+  confederation: string;
+  coach: string;
+  captain: string;
+  worldCupAppearances: number;
+  titles: number;
+  bestFinish: string;
+  description: string;
+  squad: Player[];
+}
+
+const p = (name: string, number: number, position: Position, club: string): Player =>
+  ({ name, number, position, club });
+
+export const TEAM_PROFILES: Record<string, TeamProfile> = {
+  ARG: {
+    code: "ARG",
+    logo: "/logos/ARG.png",
+    flag: "🇦🇷",
+    fifaRanking: 1,
+    confederation: "CONMEBOL",
+    coach: "Lionel Scaloni",
+    captain: "Lionel Messi",
+    worldCupAppearances: 18,
+    titles: 3,
+    bestFinish: "Champions (1978, 1986, 2022)",
+    description:
+      "The reigning world champions arrive in North America chasing back-to-back titles — something no nation has achieved since Brazil in 1962.",
+    squad: [
+      p("Emiliano Martínez", 23, "GK", "Aston Villa"),
+      p("Gerónimo Rulli", 12, "GK", "Marseille"),
+      p("Cristian Romero", 13, "DF", "Tottenham Hotspur"),
+      p("Lisandro Martínez", 25, "DF", "Manchester United"),
+      p("Nicolás Otamendi", 19, "DF", "Benfica"),
+      p("Nahuel Molina", 26, "DF", "Atlético Madrid"),
+      p("Nicolás Tagliafico", 3, "DF", "Lyon"),
+      p("Rodrigo De Paul", 7, "MF", "Atlético Madrid"),
+      p("Enzo Fernández", 24, "MF", "Chelsea"),
+      p("Alexis Mac Allister", 20, "MF", "Liverpool"),
+      p("Leandro Paredes", 5, "MF", "Roma"),
+      p("Lionel Messi", 10, "FW", "Inter Miami"),
+      p("Julián Álvarez", 9, "FW", "Atlético Madrid"),
+      p("Lautaro Martínez", 22, "FW", "Inter Milan"),
+      p("Ángel Di María", 11, "FW", "Benfica"),
+    ],
+  },
+
+  FRA: {
+    code: "FRA",
+    logo: "/logos/FRA.png",
+    flag: "🇫🇷",
+    fifaRanking: 2,
+    confederation: "UEFA",
+    coach: "Didier Deschamps",
+    captain: "Kylian Mbappé",
+    worldCupAppearances: 16,
+    titles: 2,
+    bestFinish: "Champions (1998, 2018)",
+    description:
+      "Finalists in two of the last three World Cups, Les Bleus bring the deepest talent pool in world football — and unfinished business from Qatar.",
+    squad: [
+      p("Mike Maignan", 16, "GK", "AC Milan"),
+      p("Brice Samba", 23, "GK", "Rennes"),
+      p("William Saliba", 17, "DF", "Arsenal"),
+      p("Ibrahima Konaté", 5, "DF", "Liverpool"),
+      p("Dayot Upamecano", 4, "DF", "Bayern Munich"),
+      p("Jules Koundé", 3, "DF", "Barcelona"),
+      p("Theo Hernández", 22, "DF", "AC Milan"),
+      p("Aurélien Tchouaméni", 8, "MF", "Real Madrid"),
+      p("Eduardo Camavinga", 6, "MF", "Real Madrid"),
+      p("Adrien Rabiot", 14, "MF", "Marseille"),
+      p("Antoine Griezmann", 7, "MF", "Atlético Madrid"),
+      p("Kylian Mbappé", 10, "FW", "Real Madrid"),
+      p("Ousmane Dembélé", 11, "FW", "Paris Saint-Germain"),
+      p("Marcus Thuram", 15, "FW", "Inter Milan"),
+      p("Randal Kolo Muani", 12, "FW", "Paris Saint-Germain"),
+    ],
+  },
+
+  BRA: {
+    code: "BRA",
+    logo: "/logos/BRA.png",
+    flag: "🇧🇷",
+    fifaRanking: 5,
+    confederation: "CONMEBOL",
+    coach: "Carlo Ancelotti",
+    captain: "Marquinhos",
+    worldCupAppearances: 22,
+    titles: 5,
+    bestFinish: "Champions (1958, 1962, 1970, 1994, 2002)",
+    description:
+      "The only nation to appear at every World Cup. Five stars on the shirt, and a generation determined to add a sixth.",
+    squad: [
+      p("Alisson Becker", 1, "GK", "Liverpool"),
+      p("Ederson", 23, "GK", "Manchester City"),
+      p("Marquinhos", 4, "DF", "Paris Saint-Germain"),
+      p("Gabriel Magalhães", 6, "DF", "Arsenal"),
+      p("Éder Militão", 3, "DF", "Real Madrid"),
+      p("Danilo", 2, "DF", "Flamengo"),
+      p("Wendell", 16, "DF", "Porto"),
+      p("Casemiro", 5, "MF", "Manchester United"),
+      p("Bruno Guimarães", 8, "MF", "Newcastle United"),
+      p("Lucas Paquetá", 7, "MF", "West Ham United"),
+      p("Vinícius Júnior", 10, "FW", "Real Madrid"),
+      p("Rodrygo", 11, "FW", "Real Madrid"),
+      p("Raphinha", 19, "FW", "Barcelona"),
+      p("Endrick", 9, "FW", "Real Madrid"),
+    ],
+  },
+
+  ENG: {
+    code: "ENG",
+    logo: "/logos/ENG.png",
+    flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+    fifaRanking: 3,
+    confederation: "UEFA",
+    coach: "Thomas Tuchel",
+    captain: "Harry Kane",
+    worldCupAppearances: 16,
+    titles: 1,
+    bestFinish: "Champions (1966)",
+    description:
+      "Sixty years since their only World Cup triumph. A golden generation with a point to prove on the biggest stage in North America.",
+    squad: [
+      p("Jordan Pickford", 1, "GK", "Everton"),
+      p("Dean Henderson", 23, "GK", "Crystal Palace"),
+      p("John Stones", 5, "DF", "Manchester City"),
+      p("Marc Guéhi", 6, "DF", "Crystal Palace"),
+      p("Kyle Walker", 2, "DF", "Manchester City"),
+      p("Trent Alexander-Arnold", 18, "DF", "Liverpool"),
+      p("Luke Shaw", 3, "DF", "Manchester United"),
+      p("Declan Rice", 4, "MF", "Arsenal"),
+      p("Jude Bellingham", 10, "MF", "Real Madrid"),
+      p("Phil Foden", 20, "MF", "Manchester City"),
+      p("Kobbie Mainoo", 8, "MF", "Manchester United"),
+      p("Harry Kane", 9, "FW", "Bayern Munich"),
+      p("Bukayo Saka", 7, "FW", "Arsenal"),
+      p("Cole Palmer", 11, "FW", "Chelsea"),
+    ],
+  },
+
+  ESP: {
+    code: "ESP",
+    logo: "/logos/ESP.png",
+    flag: "🇪🇸",
+    fifaRanking: 8,
+    confederation: "UEFA",
+    coach: "Luis de la Fuente",
+    captain: "Álvaro Morata",
+    worldCupAppearances: 16,
+    titles: 1,
+    bestFinish: "Champions (2010)",
+    description:
+      "The reigning European champions bring the youngest, most exciting squad in the tournament. Spain's new golden age is here.",
+    squad: [
+      p("Unai Simón", 23, "GK", "Athletic Bilbao"),
+      p("David Raya", 13, "GK", "Arsenal"),
+      p("Dani Carvajal", 2, "DF", "Real Madrid"),
+      p("Aymeric Laporte", 3, "DF", "Al-Nassr"),
+      p("Robin Le Normand", 24, "DF", "Atlético Madrid"),
+      p("Marc Cucurella", 14, "DF", "Chelsea"),
+      p("Pedri", 8, "MF", "Barcelona"),
+      p("Gavi", 6, "MF", "Barcelona"),
+      p("Rodri", 16, "MF", "Manchester City"),
+      p("Dani Olmo", 10, "MF", "Barcelona"),
+      p("Lamine Yamal", 19, "FW", "Barcelona"),
+      p("Nico Williams", 11, "FW", "Athletic Bilbao"),
+      p("Álvaro Morata", 7, "FW", "AC Milan"),
+    ],
+  },
+
+  GER: {
+    code: "GER",
+    logo: "/logos/GER.png",
+    flag: "🇩🇪",
+    fifaRanking: 16,
+    confederation: "UEFA",
+    coach: "Julian Nagelsmann",
+    captain: "Joshua Kimmich",
+    worldCupAppearances: 20,
+    titles: 4,
+    bestFinish: "Champions (1954, 1974, 1990, 2014)",
+    description:
+      "Four-time champions in the midst of a generational rebuild. Germany's young core gained confidence at their home Euros — now comes the World Cup.",
+    squad: [
+      p("Manuel Neuer", 1, "GK", "Bayern Munich"),
+      p("Marc-André ter Stegen", 22, "GK", "Barcelona"),
+      p("Antonio Rüdiger", 2, "DF", "Real Madrid"),
+      p("Jonathan Tah", 4, "DF", "Bayer Leverkusen"),
+      p("David Raum", 3, "DF", "RB Leipzig"),
+      p("Joshua Kimmich", 6, "DF", "Bayern Munich"),
+      p("İlkay Gündoğan", 8, "MF", "Barcelona"),
+      p("Jamal Musiala", 10, "MF", "Bayern Munich"),
+      p("Florian Wirtz", 17, "MF", "Bayer Leverkusen"),
+      p("Toni Kroos", 14, "MF", "Retired"),
+      p("Kai Havertz", 7, "FW", "Arsenal"),
+      p("Leroy Sané", 19, "FW", "Bayern Munich"),
+      p("Niclas Füllkrug", 9, "FW", "West Ham United"),
+    ],
+  },
+
+  POR: {
+    code: "POR",
+    logo: "/logos/POR.png",
+    flag: "🇵🇹",
+    fifaRanking: 7,
+    confederation: "UEFA",
+    coach: "Roberto Martínez",
+    captain: "Cristiano Ronaldo",
+    worldCupAppearances: 8,
+    titles: 0,
+    bestFinish: "Third Place (1966)",
+    description:
+      "Cristiano Ronaldo's last dance on the World Cup stage. A squad balancing legacy with a new generation of extraordinary talent.",
+    squad: [
+      p("Diogo Costa", 22, "GK", "Porto"),
+      p("Rui Patrício", 1, "GK", "Roma"),
+      p("Rúben Dias", 4, "DF", "Manchester City"),
+      p("Pepe", 3, "DF", "Porto"),
+      p("Nuno Mendes", 19, "DF", "Paris Saint-Germain"),
+      p("João Cancelo", 20, "DF", "Barcelona"),
+      p("Bruno Fernandes", 8, "MF", "Manchester United"),
+      p("Bernardo Silva", 10, "MF", "Manchester City"),
+      p("Vitinha", 14, "MF", "Paris Saint-Germain"),
+      p("Cristiano Ronaldo", 7, "FW", "Al-Nassr"),
+      p("Rafael Leão", 17, "FW", "AC Milan"),
+      p("Gonçalo Ramos", 9, "FW", "Paris Saint-Germain"),
+    ],
+  },
+
+  NED: {
+    code: "NED",
+    logo: "/logos/NED.png",
+    flag: "🇳🇱",
+    fifaRanking: 6,
+    confederation: "UEFA",
+    coach: "Ronald Koeman",
+    captain: "Virgil van Dijk",
+    worldCupAppearances: 11,
+    titles: 0,
+    bestFinish: "Runners-up (1974, 1978, 2010)",
+    description:
+      "Three World Cup finals, zero trophies. The Netherlands bring Total Football's legacy and an unwavering belief that this time will be different.",
+    squad: [
+      p("Bart Verbruggen", 13, "GK", "Brighton"),
+      p("Mark Flekken", 23, "GK", "Brentford"),
+      p("Virgil van Dijk", 4, "DF", "Liverpool"),
+      p("Nathan Aké", 5, "DF", "Manchester City"),
+      p("Jurriën Timber", 2, "DF", "Arsenal"),
+      p("Denzel Dumfries", 22, "DF", "Inter Milan"),
+      p("Frenkie de Jong", 21, "MF", "Barcelona"),
+      p("Ryan Gravenberch", 8, "MF", "Liverpool"),
+      p("Xavi Simons", 10, "MF", "RB Leipzig"),
+      p("Cody Gakpo", 11, "FW", "Liverpool"),
+      p("Memphis Depay", 9, "FW", "Atlético Madrid"),
+    ],
+  },
+
+  USA: {
+    code: "USA",
+    logo: "/logos/USA.png",
+    flag: "🇺🇸",
+    fifaRanking: 11,
+    confederation: "CONCACAF",
+    coach: "Mauricio Pochettino",
+    captain: "Christian Pulisic",
+    worldCupAppearances: 11,
+    titles: 0,
+    bestFinish: "Third Place (1930)",
+    description:
+      "The co-hosts. A young, hungry squad playing on home soil with a nation watching. This is American soccer's defining moment.",
+    squad: [
+      p("Matt Turner", 1, "GK", "Nottingham Forest"),
+      p("Ethan Horvath", 18, "GK", "Cardiff City"),
+      p("Sergiño Dest", 2, "DF", "PSV Eindhoven"),
+      p("Chris Richards", 15, "DF", "Crystal Palace"),
+      p("Tim Ream", 13, "DF", "Fulham"),
+      p("Antonee Robinson", 5, "DF", "Fulham"),
+      p("Tyler Adams", 4, "MF", "Bournemouth"),
+      p("Weston McKennie", 8, "MF", "Juventus"),
+      p("Yunus Musah", 6, "MF", "AC Milan"),
+      p("Giovanni Reyna", 7, "MF", "Borussia Dortmund"),
+      p("Christian Pulisic", 10, "FW", "AC Milan"),
+      p("Timothy Weah", 11, "FW", "Juventus"),
+      p("Folarin Balogun", 20, "FW", "Monaco"),
+    ],
+  },
+
+  MEX: {
+    code: "MEX",
+    logo: "/logos/MEX.png",
+    flag: "🇲🇽",
+    fifaRanking: 15,
+    confederation: "CONCACAF",
+    coach: "Javier Aguirre",
+    captain: "Edson Álvarez",
+    worldCupAppearances: 17,
+    titles: 0,
+    bestFinish: "Quarter-finals (1970, 1986)",
+    description:
+      "Co-hosts with the weight of a nation. Mexico have never advanced past the quarter-finals — the Azteca will be thundering for them to break the curse.",
+    squad: [
+      p("Guillermo Ochoa", 13, "GK", "Salernitana"),
+      p("Luis Malagón", 23, "GK", "América"),
+      p("Jorge Sánchez", 4, "DF", "Cruz Azul"),
+      p("César Montes", 3, "DF", "Almería"),
+      p("Jesús Gallardo", 6, "DF", "Monterrey"),
+      p("Johan Vásquez", 5, "DF", "Genoa"),
+      p("Edson Álvarez", 14, "MF", "West Ham United"),
+      p("Luis Chávez", 18, "MF", "Pachuca"),
+      p("Carlos Rodríguez", 8, "MF", "Cruz Azul"),
+      p("Hirving Lozano", 22, "FW", "PSV Eindhoven"),
+      p("Santiago Giménez", 9, "FW", "Feyenoord"),
+      p("Alexis Vega", 10, "FW", "Toluca"),
+    ],
+  },
+
+  CAN: {
+    code: "CAN",
+    logo: "/logos/CAN.png",
+    flag: "🇨🇦",
+    fifaRanking: 48,
+    confederation: "CONCACAF",
+    coach: "Jesse Marsch",
+    captain: "Alphonso Davies",
+    worldCupAppearances: 3,
+    titles: 0,
+    bestFinish: "Group Stage (1986, 2022)",
+    description:
+      "Co-hosts on a meteoric rise. Canada's golden generation, led by Alphonso Davies, aim to write history on home turf.",
+    squad: [
+      p("Milan Borjan", 18, "GK", "Red Star Belgrade"),
+      p("Maxime Crépeau", 16, "GK", "Portland Timbers"),
+      p("Alphonso Davies", 19, "DF", "Bayern Munich"),
+      p("Alistair Johnston", 2, "DF", "Celtic"),
+      p("Kamal Miller", 4, "DF", "Portland Timbers"),
+      p("Richie Laryea", 22, "DF", "Toronto FC"),
+      p("Stephen Eustáquio", 7, "MF", "Porto"),
+      p("Ismaël Koné", 8, "MF", "Marseille"),
+      p("Tajon Buchanan", 11, "MF", "Club Brugge"),
+      p("Jonathan David", 20, "FW", "Lille"),
+      p("Cyle Larin", 17, "FW", "Real Valladolid"),
+      p("Jonathan Osorio", 21, "FW", "Toronto FC"),
+    ],
+  },
+
+  URU: {
+    code: "URU",
+    logo: "/logos/URU.png",
+    flag: "🇺🇾",
+    fifaRanking: 11,
+    confederation: "CONMEBOL",
+    coach: "Marcelo Bielsa",
+    captain: "Federico Valverde",
+    worldCupAppearances: 14,
+    titles: 2,
+    bestFinish: "Champions (1930, 1950)",
+    description:
+      "The original World Cup winners. Uruguay's fierce identity and tactical intelligence make them perennial dark horses.",
+    squad: [
+      p("Sergio Rochet", 1, "GK", "Inter de Porto Alegre"),
+      p("Santiago Mele", 23, "GK", "Godoy Cruz"),
+      p("José María Giménez", 2, "DF", "Atlético Madrid"),
+      p("Ronald Araújo", 4, "DF", "Barcelona"),
+      p("Mathías Olivera", 16, "DF", "Napoli"),
+      p("Nahitan Nández", 8, "MF", "Al-Majmaah"),
+      p("Federico Valverde", 15, "MF", "Real Madrid"),
+      p("Rodrigo Bentancur", 6, "MF", "Tottenham Hotspur"),
+      p("Manuel Ugarte", 5, "MF", "Paris Saint-Germain"),
+      p("Darwin Núñez", 11, "FW", "Liverpool"),
+      p("Luis Suárez", 9, "FW", "Inter Miami"),
+      p("Facundo Pellistri", 22, "FW", "Manchester United"),
+    ],
+  },
+
+  COL: {
+    code: "COL",
+    logo: "/logos/COL.png",
+    flag: "🇨🇴",
+    fifaRanking: 14,
+    confederation: "CONMEBOL",
+    coach: "Néstor Lorenzo",
+    captain: "James Rodríguez",
+    worldCupAppearances: 7,
+    titles: 0,
+    bestFinish: "Quarter-finals (2014)",
+    description:
+      "Colombia's creative flair and relentless pressing made them Copa América finalists. They arrive with belief and a squad deep in attacking talent.",
+    squad: [
+      p("David Ospina", 1, "GK", "Al-Nassr"),
+      p("Camilo Vargas", 12, "GK", "Atlas"),
+      p("Davinson Sánchez", 23, "DF", "Galatasaray"),
+      p("Yerry Mina", 13, "DF", "Cagliari"),
+      p("Daniel Muñoz", 4, "DF", "Crystal Palace"),
+      p("Johan Mojica", 3, "DF", "Real Mallorca"),
+      p("James Rodríguez", 10, "MF", "São Paulo"),
+      p("Jefferson Lerma", 16, "MF", "Crystal Palace"),
+      p("Richard Ríos", 6, "MF", "Palmeiras"),
+      p("Jhon Arias", 14, "MF", "Fluminense"),
+      p("Luis Díaz", 7, "FW", "Liverpool"),
+      p("Rafael Santos Borré", 9, "FW", "Internacional"),
+    ],
+  },
+
+  MAR: {
+    code: "MAR",
+    logo: "/logos/MAR.png",
+    flag: "🇲🇦",
+    fifaRanking: 12,
+    confederation: "CAF",
+    coach: "Walid Regragui",
+    captain: "Romain Saïss",
+    worldCupAppearances: 7,
+    titles: 0,
+    bestFinish: "Semi-finals (2022)",
+    description:
+      "The Atlas Lions shattered barriers in Qatar, becoming the first African nation to reach a World Cup semi-final. They return with unfinished business.",
+    squad: [
+      p("Yassine Bounou", 1, "GK", "Al-Hilal"),
+      p("Munir El Kajoui", 12, "GK", "RS Berkane"),
+      p("Achraf Hakimi", 2, "DF", "Paris Saint-Germain"),
+      p("Nayef Aguerd", 5, "DF", "West Ham United"),
+      p("Romain Saïss", 6, "DF", "Besiktas"),
+      p("Noussair Mazraoui", 3, "DF", "Bayern Munich"),
+      p("Sofyan Amrabat", 4, "MF", "Fiorentina"),
+      p("Azzedine Ounahi", 8, "MF", "Marseille"),
+      p("Hakim Ziyech", 7, "MF", "Galatasaray"),
+      p("Youssef En-Nesyri", 19, "FW", "Sevilla"),
+      p("Abdelhamid Sabiri", 23, "FW", "Sampdoria"),
+    ],
+  },
+
+  JPN: {
+    code: "JPN",
+    logo: "/logos/JPN.png",
+    flag: "🇯🇵",
+    fifaRanking: 18,
+    confederation: "AFC",
+    coach: "Hajime Moriyasu",
+    captain: "Wataru Endo",
+    worldCupAppearances: 7,
+    titles: 0,
+    bestFinish: "Round of 16 (2002, 2022)",
+    description:
+      "The Samurai Blue have become giant-killers — beating Germany and Spain in Qatar. Now they want to go deeper. An Asian powerhouse with European pedigree.",
+    squad: [
+      p("Shūichi Gonda", 12, "GK", "Shimizu S-Pulse"),
+      p("Daniel Schmidt", 1, "GK", "Sint-Truiden"),
+      p("Ko Itakura", 22, "DF", "Borussia Mönchengladbach"),
+      p("Takehiro Tomiyasu", 16, "DF", "Arsenal"),
+      p("Yuto Nagatomo", 5, "DF", "FC Tokyo"),
+      p("Wataru Endo", 6, "MF", "Liverpool"),
+      p("Hidemasa Morita", 8, "MF", "Sporting CP"),
+      p("Takefusa Kubo", 11, "MF", "Real Sociedad"),
+      p("Ritsu Dōan", 14, "MF", "Freiburg"),
+      p("Kaoru Mitoma", 9, "FW", "Brighton"),
+      p("Daichi Kamada", 15, "FW", "Crystal Palace"),
+    ],
+  },
+
+  SEN: {
+    code: "SEN",
+    logo: "/logos/SEN.png",
+    flag: "🇸🇳",
+    fifaRanking: 17,
+    confederation: "CAF",
+    coach: "Aliou Cissé",
+    captain: "Kalidou Koulibaly",
+    worldCupAppearances: 4,
+    titles: 0,
+    bestFinish: "Quarter-finals (2002)",
+    description:
+      "Africa Cup of Nations champions. The Lions of Teranga combine pace, physicality, and technical brilliance into one of the continent's most dangerous squads.",
+    squad: [
+      p("Édouard Mendy", 16, "GK", "Al-Ahli"),
+      p("Seny Dieng", 1, "GK", "Middlesbrough"),
+      p("Kalidou Koulibaly", 3, "DF", "Al-Hilal"),
+      p("Abdou Diallo", 22, "DF", "Al-Arabi"),
+      p("Youssouf Sabaly", 2, "DF", "Real Betis"),
+      p("Pape Matar Sarr", 8, "MF", "Tottenham Hotspur"),
+      p("Nampalys Mendy", 6, "MF", "RC Lens"),
+      p("Idrissa Gueye", 5, "MF", "Everton"),
+      p("Sadio Mané", 10, "FW", "Al-Nassr"),
+      p("Ismaïla Sarr", 18, "FW", "Marseille"),
+      p("Nicolas Jackson", 9, "FW", "Chelsea"),
+    ],
+  },
+
+  BEL: {
+    code: "BEL",
+    logo: "/logos/BEL.png",
+    flag: "🇧🇪",
+    fifaRanking: 4,
+    confederation: "UEFA",
+    coach: "Domenico Tedesco",
+    captain: "Kevin De Bruyne",
+    worldCupAppearances: 14,
+    titles: 0,
+    bestFinish: "Third Place (2018)",
+    description:
+      "Belgium's golden generation is entering its twilight. De Bruyne, Courtois, Lukaku — their last chance to convert world-class talent into a World Cup trophy.",
+    squad: [
+      p("Thibaut Courtois", 1, "GK", "Real Madrid"),
+      p("Koen Casteels", 13, "GK", "Wolfsburg"),
+      p("Jan Vertonghen", 5, "DF", "Anderlecht"),
+      p("Arthur Theate", 4, "DF", "Rennes"),
+      p("Timothy Castagne", 21, "DF", "Fulham"),
+      p("Kevin De Bruyne", 7, "MF", "Manchester City"),
+      p("Youri Tielemans", 8, "MF", "Aston Villa"),
+      p("Amadou Onana", 6, "MF", "Everton"),
+      p("Romelu Lukaku", 9, "FW", "Roma"),
+      p("Jérémy Doku", 11, "FW", "Manchester City"),
+      p("Leandro Trossard", 14, "FW", "Arsenal"),
+    ],
+  },
+
+  CRO: {
+    code: "CRO",
+    logo: "/logos/CRO.png",
+    flag: "🇭🇷",
+    fifaRanking: 10,
+    confederation: "UEFA",
+    coach: "Zlatko Dalić",
+    captain: "Luka Modrić",
+    worldCupAppearances: 7,
+    titles: 0,
+    bestFinish: "Runners-up (2018)",
+    description:
+      "Finalists in 2018, third place in 2022. Luka Modrić's farewell tour — and a nation of four million that refuses to accept its size as a limitation.",
+    squad: [
+      p("Dominik Livaković", 23, "GK", "Fenerbahçe"),
+      p("Ivica Ivušić", 1, "GK", "Pafos"),
+      p("Joško Gvardiol", 20, "DF", "Manchester City"),
+      p("Duje Ćaleta-Car", 3, "DF", "Lyon"),
+      p("Josip Stanišić", 2, "DF", "Bayer Leverkusen"),
+      p("Borna Sosa", 19, "DF", "Ajax"),
+      p("Luka Modrić", 10, "MF", "Real Madrid"),
+      p("Mateo Kovačić", 8, "MF", "Manchester City"),
+      p("Marcelo Brozović", 11, "MF", "Al-Nassr"),
+      p("Lovro Majer", 7, "MF", "Wolfsburg"),
+      p("Ivan Perišić", 4, "FW", "Hajduk Split"),
+      p("Andrej Kramarić", 9, "FW", "Hoffenheim"),
+    ],
+  },
+};
+
+/** Get a team profile by code, returns null if not found */
+export function getTeamProfile(code: string): TeamProfile | null {
+  return TEAM_PROFILES[code] ?? null;
+}
+
+/** Group a squad by position, in display order */
+export function groupSquadByPosition(squad: Player[]): { position: Position; label: string; players: Player[] }[] {
+  return POSITION_ORDER
+    .map((pos) => ({
+      position: pos,
+      label: POSITION_LABELS[pos],
+      players: squad.filter((p) => p.position === pos),
+    }))
+    .filter((group) => group.players.length > 0);
+}
+``
+
+## File: src/lib/data/teams.ts
+``
 // teams.ts — 48 verified unique FIFA World Cup 2026 teams
 // Generated automatically from schedule
 export type Confederation = "UEFA" | "CONMEBOL" | "CONCACAF" | "CAF" | "AFC" | "OFC";
@@ -5420,8 +6997,8 @@ function t(code: string, name: string, flag: string, primary: string, secondary:
 }
 export const TEAMS_LIST: TeamData[] = [
   t("MEX", "Mexico", "🇲🇽", "#006847", "#CE1126", "CONCACAF"),
-  t("RSA", "South Africa", "🏳️", "#999999", "#333333", "UEFA"),
-  t("KOR", "South Korea", "🏳️", "#999999", "#333333", "UEFA"),
+  t("RSA", "South Africa", "🏳️", "#999999", "#333333", "CAF"),
+  t("KOR", "South Korea", "🏳️", "#999999", "#333333", "AFC"),
   t("CZE", "Czech Republic", "🏳️", "#999999", "#333333", "UEFA"),
   t("CAN", "Canada", "🇨🇦", "#FF0000", "#FFFFFF", "CONCACAF"),
   t("BIH", "Bosnia & Herzegovina", "🏳️", "#999999", "#333333", "UEFA"),
@@ -5429,14 +7006,14 @@ export const TEAMS_LIST: TeamData[] = [
   t("SUI", "Switzerland", "🇨🇭", "#FF0000", "#FFFFFF", "UEFA"),
   t("BRA", "Brazil", "🇧🇷", "#009739", "#FFDF00", "CONMEBOL"),
   t("MAR", "Morocco", "🇲🇦", "#C1272D", "#006233", "CAF"),
-  t("HAI", "Haiti", "🏳️", "#999999", "#333333", "UEFA"),
+  t("HAI", "Haiti", "🏳️", "#999999", "#333333", "CONCACAF"),
   t("SCO", "Scotland", "🏳️", "#999999", "#333333", "UEFA"),
-  t("USA", "USA", "🏳️", "#999999", "#333333", "UEFA"),
-  t("PAR", "Paraguay", "🏳️", "#999999", "#333333", "UEFA"),
+  t("USA", "USA", "🏳️", "#999999", "#333333", "CONCACAF"),
+  t("PAR", "Paraguay", "🏳️", "#999999", "#333333", "CONMEBOL"),
   t("AUS", "Australia", "🇦🇺", "#00843D", "#FFD700", "AFC"),
   t("TUR", "Turkey", "🇹🇷", "#E30A17", "#FFFFFF", "UEFA"),
   t("GER", "Germany", "🇩🇪", "#000000", "#DD0000", "UEFA"),
-  t("CUR", "Curaçao", "🏳️", "#999999", "#333333", "UEFA"),
+  t("CUR", "Curaçao", "🏳️", "#999999", "#333333", "CONCACAF"),
   t("CIV", "Ivory Coast", "🇨🇮", "#F77F00", "#009E49", "CAF"),
   t("ECU", "Ecuador", "🇪🇨", "#FFD100", "#034EA2", "CONMEBOL"),
   t("NED", "Netherlands", "🇳🇱", "#FF6600", "#FFFFFF", "UEFA"),
@@ -5458,10 +7035,10 @@ export const TEAMS_LIST: TeamData[] = [
   t("ARG", "Argentina", "🇦🇷", "#74ACDF", "#FFFFFF", "CONMEBOL"),
   t("ALG", "Algeria", "🇩🇿", "#006233", "#FFFFFF", "CAF"),
   t("AUT", "Austria", "🇦🇹", "#ED2939", "#FFFFFF", "UEFA"),
-  t("JOR", "Jordan", "🏳️", "#999999", "#333333", "UEFA"),
+  t("JOR", "Jordan", "🏳️", "#999999", "#333333", "AFC"),
   t("POR", "Portugal", "🇵🇹", "#006600", "#FF0000", "UEFA"),
-  t("DR ", "DR Congo", "🏳️", "#999999", "#333333", "UEFA"),
-  t("UZB", "Uzbekistan", "🏳️", "#999999", "#333333", "UEFA"),
+  t("COD", "DR Congo", "🏳️", "#999999", "#333333", "CAF"),
+  t("UZB", "Uzbekistan", "🏳️", "#999999", "#333333", "AFC"),
   t("COL", "Colombia", "🇨🇴", "#FCD116", "#003893", "CONMEBOL"),
   t("ENG", "England", "🏴", "#FFFFFF", "#002366", "UEFA"),
   t("CRO", "Croatia", "🇭🇷", "#FF0000", "#FFFFFF", "UEFA"),
@@ -5526,11 +7103,11 @@ export const TEAMS_LIST: TeamData[] = [
   t("W97", "W97", "🏳️", "#999999", "#333333", "UEFA"),
   t("W98", "W98", "🏳️", "#999999", "#333333", "UEFA"),
   t("W99", "W99", "🏳️", "#999999", "#333333", "UEFA"),
-  t("W10", "W100", "🏳️", "#999999", "#333333", "UEFA"),
-  t("L10", "L101", "🏳️", "#999999", "#333333", "UEFA"),
-  t("L10", "L102", "🏳️", "#999999", "#333333", "UEFA"),
-  t("W10", "W101", "🏳️", "#999999", "#333333", "UEFA"),
-  t("W10", "W102", "🏳️", "#999999", "#333333", "UEFA"),
+  t("W100", "W100", "🏳️", "#999999", "#333333", "UEFA"),
+  t("L101", "L101", "🏳️", "#999999", "#333333", "UEFA"),
+  t("L102", "L102", "🏳️", "#999999", "#333333", "UEFA"),
+  t("W101", "W101", "🏳️", "#999999", "#333333", "UEFA"),
+  t("W102", "W102", "🏳️", "#999999", "#333333", "UEFA"),
 ];
 export const TEAM_COUNT = TEAMS_LIST.length;
 export const TEAMS: Record<string, TeamData> = Object.fromEntries(TEAMS_LIST.map((team) => [team.code, team]));
@@ -5539,6 +7116,5 @@ export function getTeam(code: string): TeamData {
     code, name: code, flag: "🏳️", colors: ["#999999", "#CCCCCC"], confederation: "UEFA"
   };
 }
-
-```
+``
 

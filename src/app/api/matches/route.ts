@@ -3,8 +3,7 @@
 
 import { NextResponse } from "next/server";
 import { MATCHES, Match, MatchStatus } from "@/lib/data/matches";
-import { LIVE_SCORES } from "@/lib/data/live-scores";
-
+import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic"; // Never cache — always serve fresh data
 
 export interface MatchWithScore {
@@ -30,46 +29,49 @@ export interface MatchWithScore {
   };
 }
 
-function mergeMatch(match: Match): MatchWithScore {
-  const live = LIVE_SCORES[match.id];
-  return {
-    id: match.id,
-    stage: match.stage,
-    group: match.group,
-    matchNumber: match.matchNumber,
-    date: match.date,
-    time: match.time,
-    stadium: match.stadium,
-    city: match.city,
-    country: match.country,
-    home: {
-      code: match.home.code,
-      name: match.home.name,
-      flag: match.home.flag,
-      colors: match.home.colors,
-    },
-    away: {
-      code: match.away.code,
-      name: match.away.name,
-      flag: match.away.flag,
-      colors: match.away.colors,
-    },
-    status: live?.status ?? match.status,
-    homeScore: live?.homeScore ?? match.homeScore,
-    awayScore: live?.awayScore ?? match.awayScore,
-    liveData: live?.liveData ?? match.liveData,
-  };
-}
-
 export async function GET() {
-  const merged = MATCHES.map(mergeMatch);
+  try {
+    const dbMatches = await prisma.match.findMany();
 
-  return NextResponse.json(
-    { matches: merged, updatedAt: new Date().toISOString() },
-    {
-      headers: {
-        "Cache-Control": "no-store, max-age=0",
-      },
-    }
-  );
+    const merged = MATCHES.map((match) => {
+      // First try to match by exact ID
+      let dbMatch = dbMatches.find(m => m.id === match.id);
+      
+      // Fallback: match by team names (useful for external APIs that create custom IDs)
+      if (!dbMatch) {
+        dbMatch = dbMatches.find(m => m.homeTeam === match.home.name && m.awayTeam === match.away.name);
+      }
+
+      if (dbMatch) {
+        return {
+          ...match,
+          status: dbMatch.status as MatchStatus,
+          homeScore: dbMatch.homeScore,
+          awayScore: dbMatch.awayScore,
+          liveData: dbMatch.status === "LIVE" ? {
+            currentMinute: dbMatch.minute,
+            isExtraTime: false,
+            isPenalties: false
+          } : match.liveData
+        };
+      }
+
+      return match;
+    });
+
+    return NextResponse.json(
+      { matches: merged, updatedAt: new Date().toISOString() },
+      {
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      }
+    );
+  } catch (error) {
+    console.error("Error fetching matches:", error);
+    return NextResponse.json(
+      { matches: MATCHES, updatedAt: new Date().toISOString() },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
+  }
 }
