@@ -7,9 +7,13 @@ import { syncMatches } from "@/lib/match-sync";
 export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get("x-sync-secret");
-    const isCron = request.headers.get("user-agent") === "vercel-cron";
+    const authBearer = request.headers.get("authorization");
     
-    if (authHeader !== process.env.SYNC_SECRET && !isCron) {
+    // Check custom header or Vercel's standard CRON_SECRET bearer token
+    const isValidCustom = authHeader && authHeader === process.env.SYNC_SECRET;
+    const isValidCron = authBearer && authBearer === `Bearer ${process.env.CRON_SECRET}`;
+    
+    if (!isValidCustom && !isValidCron) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
     

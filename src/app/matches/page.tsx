@@ -156,7 +156,7 @@ function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) 
                 textTransform: "uppercase",
               }}
             >
-              {match.group ?? STAGE_LABELS_SHORT[match.stage]}
+              {match.group ?? STAGE_LABELS_SHORT[match.stage as TournamentStage]}
             </span>
 
             {/* Time */}

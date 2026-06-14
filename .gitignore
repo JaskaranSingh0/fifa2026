@@ -42,3 +42,19 @@ next-env.d.ts
 .next
 
 /src/generated/prisma
+
+# Context Extraction and Diagnostics
+PROJECT_CONTEXT_EXPORT/
+PROJECT_CONTEXT_EXPORT_tree.txt
+export_*.js
+file_list.txt
+generate_handoff.js
+parse.js
+patch.js
+test-results/
+
+# Diagnostic Scripts
+scripts/audit-live.ts
+scripts/clean-foreign-matches.ts
+scripts/debug-api-response.ts
+scripts/verify-seed.ts

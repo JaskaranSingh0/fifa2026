@@ -51,7 +51,7 @@ export function useRealtimeMatches(initialMatches: MatchWithScore[] = []) {
                   awayScore: updatedMatch.awayScore,
                   liveData: isMatchLive
                     ? {
-                        ...m.liveData,
+                        ...m.liveData || { isExtraTime: false, isPenalties: false },
                         currentMinute: updatedMatch.minute,
                       }
                     : m.liveData,

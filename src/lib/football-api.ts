@@ -12,48 +12,9 @@ export interface NormalizedMatch {
 }
 
 export async function fetchFromApiFootball(): Promise<NormalizedMatch[]> {
-  try {
-    const res = await fetch('https://football-live-streaming-api.p.rapidapi.com/matches?page=1', {
-      headers: {
-        'x-rapidapi-key': process.env.RAPIDAPI_KEY || '',
-        'x-rapidapi-host': 'football-live-streaming-api.p.rapidapi.com'
-      }
-    });
-    
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    
-    const data = await res.json();
-    const matchesList = data.matches || [];
-    
-    return matchesList.map((match: any): NormalizedMatch => {
-      const matchTime = parseInt(match.match_time) || Math.floor(Date.now() / 1000);
-      const isLive = match.match_status === 'live';
-      // If the match was in the past (e.g. started > 2 hours ago) and is no longer live, mark as FINISHED
-      const hasEnded = !isLive && (Date.now() / 1000) > (matchTime + 7200);
-      const status: 'SCHEDULED' | 'LIVE' | 'FINISHED' = isLive 
-        ? 'LIVE' 
-        : (hasEnded ? 'FINISHED' : 'SCHEDULED');
-      
-      // Create a unique external ID since the API doesn't provide a direct ID field
-      const externalId = `${match.home_team_name}-${match.away_team_name}-${matchTime}`.replace(/\s+/g, '-').toLowerCase();
-      
-      return {
-        externalId,
-        homeTeam: match.home_team_name || 'TBD',
-        awayTeam: match.away_team_name || 'TBD',
-        homeScore: parseInt(match.homeTeamScore) || 0,
-        awayScore: parseInt(match.awayTeamScore) || 0,
-        minute: isLive ? 45 : 0, // Fallback/average since this API does not supply the elapsed minute
-        status,
-        date: new Date(matchTime * 1000).toISOString(),
-        stage: match.league_name || 'World Cup',
-        source: 'api-football'
-      };
-    });
-  } catch (err) {
-    console.error('fetchFromApiFootball (Football Live Streaming API) failed:', err);
-    return [];
-  }
+  // API-Football free tier does not cover FIFA World Cup 2026 fixtures.
+  // football-data.org is the sole active data source for WC 2026 match sync.
+  return [];
 }
 
 export async function fetchFromFootballData(): Promise<NormalizedMatch[]> {

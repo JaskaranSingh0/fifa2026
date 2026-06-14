@@ -18,4 +18,5 @@ model Match {
   date      DateTime
   stage     String
   stadiumId String?
+  externalId String?
 }

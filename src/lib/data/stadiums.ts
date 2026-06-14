@@ -6,6 +6,8 @@ export interface Stadium {
   city: string;
   country: "USA" | "Mexico" | "Canada";
   capacity: number;
+  description: string;
+  surface: string;
 }
 
 export const STADIUMS: Stadium[] = [
@@ -16,6 +18,8 @@ export const STADIUMS: Stadium[] = [
     city: "East Rutherford",
     country: "USA",
     capacity: 82_500,
+    description: "The largest stadium in the 2026 tournament. Home to the World Cup Final, rising from the New Jersey meadowlands with a capacity that will make it the loudest venue in North America.",
+    surface: "Natural Grass"
   },
   {
     id: "sofi",
@@ -23,6 +27,8 @@ export const STADIUMS: Stadium[] = [
     city: "Los Angeles",
     country: "USA",
     capacity: 70_000,
+    description: "Hollywood's stadium. The futuristic translucent roof creates a cathedral of light above Los Angeles.",
+    surface: "Natural Grass"
   },
   {
     id: "att",
@@ -30,6 +36,8 @@ export const STADIUMS: Stadium[] = [
     city: "Dallas",
     country: "USA",
     capacity: 80_000,
+    description: "The world's largest domed stadium. Known as Jerry's World — a monument to excess and spectacle in the heart of Texas.",
+    surface: "Natural Grass"
   },
   {
     id: "nrg",
@@ -37,6 +45,8 @@ export const STADIUMS: Stadium[] = [
     city: "Houston",
     country: "USA",
     capacity: 72_000,
+    description: "Houston's retractable-roof colossus, built for extremes of weather and atmosphere.",
+    surface: "Natural Grass"
   },
   {
     id: "hard-rock",
@@ -44,6 +54,8 @@ export const STADIUMS: Stadium[] = [
     city: "Miami",
     country: "USA",
     capacity: 65_000,
+    description: "Miami's sunbaked open-air arena, where South American passion will find familiar heat.",
+    surface: "Natural Grass"
   },
   {
     id: "lumen",
@@ -51,6 +63,8 @@ export const STADIUMS: Stadium[] = [
     city: "Seattle",
     country: "USA",
     capacity: 69_000,
+    description: "Seattle's fortress in the Pacific Northwest. Famous for crowd noise that disrupts radio communications.",
+    surface: "Natural Grass"
   },
   {
     id: "arrowhead",
@@ -58,6 +72,8 @@ export const STADIUMS: Stadium[] = [
     city: "Kansas City",
     country: "USA",
     capacity: 76_000,
+    description: "Consistently voted the loudest stadium in the NFL. A cauldron in Kansas City.",
+    surface: "Natural Grass"
   },
   {
     id: "mercedes-benz",
@@ -65,6 +81,8 @@ export const STADIUMS: Stadium[] = [
     city: "Atlanta",
     country: "USA",
     capacity: 71_000,
+    description: "Atlanta's architectural marvel — a retractable roof shaped like a falcon's wings.",
+    surface: "Natural Grass"
   },
   {
     id: "lincoln",
@@ -72,6 +90,8 @@ export const STADIUMS: Stadium[] = [
     city: "Philadelphia",
     country: "USA",
     capacity: 69_000,
+    description: "Philadelphia's iconic stadium, where the city's fierce sporting identity runs deepest.",
+    surface: "Natural Grass"
   },
   {
     id: "gillette",
@@ -79,6 +99,8 @@ export const STADIUMS: Stadium[] = [
     city: "Foxborough",
     country: "USA",
     capacity: 65_000,
+    description: "New England's cathedral, home to the most successful dynasty in American sports history.",
+    surface: "Natural Grass"
   },
   {
     id: "boa",
@@ -86,6 +108,8 @@ export const STADIUMS: Stadium[] = [
     city: "Charlotte",
     country: "USA",
     capacity: 75_000,
+    description: "Charlotte's stadium, compact and loud, punching above its weight.",
+    surface: "Natural Grass"
   },
 
   // ── Mexico (3) ────────────────────────────────────────────────────────────
@@ -95,6 +119,8 @@ export const STADIUMS: Stadium[] = [
     city: "Mexico City",
     country: "Mexico",
     capacity: 87_000,
+    description: "The most iconic stadium in World Cup history. Scene of Maradona's Hand of God and Goal of the Century. This is where football mythology lives.",
+    surface: "Natural Grass"
   },
   {
     id: "akron",
@@ -102,6 +128,8 @@ export const STADIUMS: Stadium[] = [
     city: "Guadalajara",
     country: "Mexico",
     capacity: 49_850,
+    description: "Guadalajara's modern arena, nestled in the Bosque de la Primavera nature reserve.",
+    surface: "Natural Grass"
   },
   {
     id: "bbva",
@@ -109,6 +137,8 @@ export const STADIUMS: Stadium[] = [
     city: "Monterrey",
     country: "Mexico",
     capacity: 53_500,
+    description: "Monterrey's mountain-ringed stadium, the Cerro de la Silla as backdrop for every match.",
+    surface: "Natural Grass"
   },
 
   // ── Canada (2) ────────────────────────────────────────────────────────────
@@ -118,6 +148,8 @@ export const STADIUMS: Stadium[] = [
     city: "Vancouver",
     country: "Canada",
     capacity: 54_500,
+    description: "Vancouver's domed stadium where the Pacific Northwest meets the world.",
+    surface: "Artificial Turf"
   },
   {
     id: "bmo",
@@ -125,7 +157,9 @@ export const STADIUMS: Stadium[] = [
     city: "Toronto",
     country: "Canada",
     capacity: 45_500,
-  },
+    description: "Toronto's compact, electric stadium — Canada's home of football in their defining World Cup moment.",
+    surface: "Natural Grass"
+  }
 ];
 
 // ─── Derived lookups ─────────────────────────────────────────────────────────
