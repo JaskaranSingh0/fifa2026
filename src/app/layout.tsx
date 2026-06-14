@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import SiteNav from "@/components/SiteNav";
+import CustomCursor from "@/components/CustomCursor";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -38,7 +40,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body
-        className="antialiased overflow-hidden"
+        className="antialiased"
         style={{ 
           background: "#050505", 
           margin: 0, 
@@ -47,6 +49,8 @@ export default function RootLayout({
         } as React.CSSProperties}
         suppressHydrationWarning
       >
+        <CustomCursor />
+        <SiteNav />
         {children}
       </body>
     </html>

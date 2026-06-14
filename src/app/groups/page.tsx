@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { GROUPS } from "@/lib/data/groups";
-import { getTeam } from "@/lib/data/teams";
 import TeamLogo from "@/components/TeamLogo";
 
 export default function GroupsPage() {
@@ -28,8 +27,8 @@ export default function GroupsPage() {
 
   return (
     <div
-      className="min-h-screen bg-[#050505] overflow-y-auto"
-      style={{ fontFamily: "var(--font-inter, 'Inter', sans-serif)" }}
+      className="bg-[#050505]"
+      style={{ minHeight: '100vh', fontFamily: "var(--font-inter, 'Inter', sans-serif)" }}
     >
       <div
         className="mx-auto"
@@ -40,31 +39,7 @@ export default function GroupsPage() {
         }}
       >
         {/* HEADER */}
-        <header style={{ paddingTop: "clamp(2.5rem, 6vw, 5rem)" }}>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            style={{ marginBottom: "clamp(2rem, 4vw, 3.5rem)" }}
-          >
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 group focus-visible:outline-none"
-              style={{
-                textDecoration: "none",
-                fontSize: "0.65rem",
-                fontWeight: 400,
-                letterSpacing: "0.16em",
-                color: "rgba(255,255,255,0.25)",
-                textTransform: "uppercase",
-                transition: "color 0.25s ease",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.6)")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.25)")}
-            >
-              ← Home
-            </Link>
-          </motion.div>
+        <header style={{ paddingTop: "clamp(4rem, 7vw, 6rem)" }}>
 
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -114,12 +89,12 @@ export default function GroupsPage() {
         </header>
 
         {/* GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16 mt-16 md:mt-24">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-24 mt-16 md:mt-24">
           {GROUPS.map((staticGroup, i) => {
             const groupData = liveGroups.find((g) => g.letter === staticGroup.letter);
             
             return (
-              <motion.div
+               <motion.div
                 key={staticGroup.letter}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -129,36 +104,61 @@ export default function GroupsPage() {
                   delay: Math.min(i * 0.05, 0.3),
                   ease: [0.25, 0.46, 0.45, 0.94],
                 }}
-                className="flex flex-col"
+                className="flex flex-col relative"
+                style={{
+                  background: 'radial-gradient(circle at 0% 50%, rgba(255,255,255,0.015) 0%, transparent 70%)'
+                }}
               >
+                {/* Watermark Letter */}
+                <h2
+                  style={{
+                    position: "absolute",
+                    top: "-2rem",
+                    right: "-1rem",
+                    left: "auto",
+                    zIndex: 0,
+                    pointerEvents: "none",
+                    fontSize: "clamp(8rem, 15vw, 14rem)",
+                    fontWeight: 900,
+                    color: "rgba(255,255,255,0.04)",
+                    lineHeight: 1,
+                    margin: 0,
+                  }}
+                >
+                  {staticGroup.letter}
+                </h2>
+
+                {/* Group Label Row */}
                 <div
                   style={{
                     borderBottom: "1px solid rgba(255,255,255,0.1)",
                     paddingBottom: "1rem",
                     marginBottom: "1rem",
+                    position: "relative",
+                    zIndex: 1,
                   }}
                 >
-                  <h2
+                  <span
                     style={{
-                      fontSize: "2.5rem",
-                      fontWeight: 800,
-                      letterSpacing: "0.05em",
-                      color: "rgba(255,255,255,0.9)",
-                      lineHeight: 1,
+                      fontSize: "0.6rem",
+                      fontWeight: 600,
+                      letterSpacing: "0.3em",
+                      color: "rgba(255,255,255,0.2)",
+                      textTransform: "uppercase",
                     }}
                   >
-                    {staticGroup.letter}
-                  </h2>
+                    GROUP {staticGroup.letter}
+                  </span>
                 </div>
 
                 {loading ? (
-                  <div className="flex flex-col gap-4 py-4">
+                  <div className="flex flex-col gap-4 py-4 relative z-10">
                     <div style={{ color: "rgba(255,255,255,0.06)", fontSize: "1.2rem", letterSpacing: "2px" }}>░░░░░░░░░░░░░░░░░░</div>
                     <div style={{ color: "rgba(255,255,255,0.06)", fontSize: "1.2rem", letterSpacing: "2px" }}>░░░░░░░░░░░░░░░░░░</div>
                     <div style={{ color: "rgba(255,255,255,0.06)", fontSize: "1.2rem", letterSpacing: "2px" }}>░░░░░░░░░░░░░░░░░░</div>
                   </div>
                 ) : (
-                  <ul className="flex flex-col gap-0 relative">
+                  <ul className="flex flex-col gap-0 relative z-10">
                     {/* Header Row */}
                     <li
                       className="group flex items-center justify-between"
@@ -171,22 +171,26 @@ export default function GroupsPage() {
                         <div />
                         <div />
                         <div />
-                        <div className="text-right text-[0.6rem] tracking-widest text-white/20 uppercase">P</div>
-                        <div className="text-right text-[0.6rem] tracking-widest text-white/20 uppercase">W</div>
-                        <div className="text-right text-[0.6rem] tracking-widest text-white/20 uppercase">D</div>
-                        <div className="text-right text-[0.6rem] tracking-widest text-white/20 uppercase">L</div>
-                        <div className="text-right text-[0.6rem] tracking-widest text-white/20 uppercase">GD</div>
-                        <div className="text-right text-[0.6rem] tracking-widest text-white/20 uppercase">PTS</div>
+                        <div className="text-right uppercase" style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.35)" }}>P</div>
+                        <div className="text-right uppercase" style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.35)" }}>W</div>
+                        <div className="text-right uppercase" style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.35)" }}>D</div>
+                        <div className="text-right uppercase" style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.35)" }}>L</div>
+                        <div className="text-right uppercase" style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.35)" }}>GD</div>
+                        <div className="text-right uppercase" style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.35)" }}>PTS</div>
                       </div>
                     </li>
                     {groupData?.teams.map((teamData: any, j: number) => {
                       const pos = j + 1;
                       const borderLeft =
-                        pos <= 2
-                          ? "2px solid rgba(255,255,255,0.3)"
+                        pos === 1
+                          ? "3px solid rgba(255,255,255,0.5)"
+                          : pos === 2
+                          ? "3px solid rgba(255,255,255,0.25)"
                           : pos === 3
-                          ? "2px solid rgba(255,255,255,0.08)"
-                          : "2px solid transparent";
+                          ? "3px solid rgba(255,255,255,0.08)"
+                          : "none";
+                      
+                      const paddingLeft = pos <= 3 ? "12px" : "15px";
 
                       return (
                         <li
@@ -196,8 +200,8 @@ export default function GroupsPage() {
                             padding: "0.75rem 0",
                             borderBottom: "1px solid rgba(255,255,255,0.03)",
                             borderLeft,
-                            paddingLeft: "12px",
-                            marginLeft: "-14px",
+                            paddingLeft,
+                            marginLeft: pos <= 3 ? "-15px" : "-15px",
                             transition: "background 0.3s ease",
                           }}
                         >
@@ -212,13 +216,14 @@ export default function GroupsPage() {
                               className="uppercase"
                               style={{
                                 fontSize: "1rem",
-                                fontWeight: 600,
+                                fontWeight: 700,
                                 letterSpacing: "0.08em",
-                                color: "rgba(255,255,255,0.8)",
+                                color: "rgba(255,255,255,0.9)",
                                 transition: "color 0.3s ease",
                                 whiteSpace: "nowrap",
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
+                                maxWidth: "120px"
                               }}
                             >
                               {teamData.name}
@@ -228,8 +233,8 @@ export default function GroupsPage() {
                             <div className="text-right text-xs tabular-nums text-white/60">{teamData.drawn}</div>
                             <div className="text-right text-xs tabular-nums text-white/60">{teamData.lost}</div>
                             <div className="text-right text-xs tabular-nums text-white/60">{teamData.gd > 0 ? `+${teamData.gd}` : teamData.gd}</div>
-                            <div className="text-right text-xs tabular-nums font-bold" style={{ color: teamData.played > 0 ? "#ffffff" : "rgba(255,255,255,0.2)" }}>
-                              {teamData.played > 0 ? teamData.points : "-"}
+                            <div className="text-right tabular-nums" style={{ fontSize: teamData.points > 0 ? "1rem" : "0.75rem", fontWeight: teamData.points > 0 ? 800 : 700, color: teamData.points > 0 ? "#ffffff" : "rgba(255,255,255,0.2)" }}>
+                              {teamData.played > 0 ? teamData.points : "0"}
                             </div>
                           </div>
                         </li>

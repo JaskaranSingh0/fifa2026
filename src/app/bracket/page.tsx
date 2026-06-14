@@ -25,8 +25,9 @@ function formatMatchDate(isoString: string) {
   return isoString;
 }
 
-function isPlaceholder(code: string) {
-  // e.g. "W50", "L60", "1A", "2B"
+function isPlaceholder(code: string, name: string) {
+  if (!name) return true;
+  if (/TBD|Winner|Loser/i.test(name)) return true;
   return !/^[A-Z]{3}$/.test(code) || code === "TBD";
 }
 
@@ -62,10 +63,36 @@ export default function BracketPage() {
     return liveMatches.find((m) => m.stage === TournamentStage.THIRD_PLACE);
   }, [liveMatches]);
 
+  // Helper for rendering match scores
+  const renderScore = (score: number | undefined, status: string) => {
+    if (status === "FINISHED" && score !== undefined) {
+      return <span style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>{score}</span>;
+    }
+    return <span style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.15)" }}>—</span>;
+  };
+
+  const renderStatus = (status: string) => {
+    if (status === "LIVE") {
+      return (
+        <span className="flex items-center gap-2" style={{ color: "#ff2a2a" }}>
+          <span className="w-1.5 h-1.5 rounded-full bg-[#ff2a2a] animate-pulse"></span>
+          LIVE
+        </span>
+      );
+    }
+    if (status === "FINISHED") {
+      return <span>FINISHED</span>;
+    }
+    return null; // Don't show anything for UPCOMING
+  };
+
   return (
     <div
-      className="min-h-screen bg-[#050505] overflow-y-auto"
-      style={{ fontFamily: "var(--font-inter, 'Inter', sans-serif)" }}
+      className="bg-[#050505]"
+      style={{
+        minHeight: "100vh",
+        fontFamily: "var(--font-inter, 'Inter', sans-serif)",
+      }}
     >
       <div
         className="mx-auto"
@@ -76,31 +103,7 @@ export default function BracketPage() {
         }}
       >
         {/* HEADER */}
-        <header style={{ paddingTop: "clamp(2.5rem, 6vw, 5rem)" }}>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            style={{ marginBottom: "clamp(2rem, 4vw, 3.5rem)" }}
-          >
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 group focus-visible:outline-none"
-              style={{
-                textDecoration: "none",
-                fontSize: "0.65rem",
-                fontWeight: 400,
-                letterSpacing: "0.16em",
-                color: "rgba(255,255,255,0.25)",
-                textTransform: "uppercase",
-                transition: "color 0.25s ease",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.6)")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.25)")}
-            >
-              ← Home
-            </Link>
-          </motion.div>
+        <header style={{ paddingTop: "clamp(4rem, 7vw, 6rem)" }}>
 
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -151,13 +154,20 @@ export default function BracketPage() {
 
         {/* BRACKET HORIZONTAL SCROLL */}
         <div
-          className="mt-16 md:mt-24 overflow-x-auto pb-12 scrollbar-none"
-          style={{ width: "100%", maskImage: "linear-gradient(to right, black 85%, transparent 100%)", WebkitMaskImage: "linear-gradient(to right, black 85%, transparent 100%)" }}
+          className="mt-16 md:mt-24 pb-12 scrollbar-none"
+          style={{
+            width: "100%",
+            overflowX: "auto",
+            overflowY: "visible",
+            WebkitOverflowScrolling: "touch",
+            maskImage: "linear-gradient(to right, black 85%, transparent 100%)",
+            WebkitMaskImage: "linear-gradient(to right, black 85%, transparent 100%)"
+          }}
         >
           {loading ? (
-            <div className="flex gap-16 min-w-max">
+            <div className="flex gap-20 min-w-max">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex flex-col gap-6" style={{ width: "280px" }}>
+                <div key={i} className="flex flex-col gap-6" style={{ width: "360px" }}>
                   <div style={{ color: "rgba(255,255,255,0.06)", fontSize: "1.2rem", letterSpacing: "2px" }}>░░░░░░░░░░░░░░░░░░</div>
                   <div style={{ color: "rgba(255,255,255,0.06)", fontSize: "1.2rem", letterSpacing: "2px" }}>░░░░░░░░░░░░░░░░░░</div>
                   <div style={{ color: "rgba(255,255,255,0.06)", fontSize: "1.2rem", letterSpacing: "2px" }}>░░░░░░░░░░░░░░░░░░</div>
@@ -165,7 +175,7 @@ export default function BracketPage() {
               ))}
             </div>
           ) : (
-            <div className="flex gap-16 min-w-max">
+            <div className="flex gap-20 min-w-max">
               {STAGES.map((stageDef, i) => {
                 const stageMatches = knockoutMatches.filter((m) => m.stage === stageDef.id);
                 if (stageMatches.length === 0) return null;
@@ -177,15 +187,15 @@ export default function BracketPage() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.6, delay: i * 0.15 }}
                     className="flex flex-col gap-6"
-                    style={{ width: "280px" }}
+                    style={{ width: "360px" }}
                   >
                     <h2
                       className="mb-4"
                       style={{
-                        fontSize: "0.75rem",
-                        fontWeight: 600,
-                        letterSpacing: "0.2em",
-                        color: "rgba(255,255,255,0.4)",
+                        fontSize: "0.7rem",
+                        fontWeight: 700,
+                        letterSpacing: "0.3em",
+                        color: "rgba(255,255,255,0.5)",
                         textTransform: "uppercase",
                         borderBottom: "1px solid rgba(255,255,255,0.1)",
                         paddingBottom: "12px",
@@ -194,109 +204,101 @@ export default function BracketPage() {
                       {stageDef.label}
                     </h2>
 
-                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-col">
                       {stageMatches.map((match) => {
-                        const homePlaceholder = isPlaceholder(match.home.code);
-                        const awayPlaceholder = isPlaceholder(match.away.code);
+                        const homePlaceholder = isPlaceholder(match.home.code, match.home.name);
+                        const awayPlaceholder = isPlaceholder(match.away.code, match.away.name);
                         
-                        let borderStyle = "1px solid rgba(255,255,255,0.05)";
+                        let borderStyle = "1px solid rgba(255,255,255,0.04)";
+                        let borderLeftStyle = "none";
                         if (match.status === "FINISHED" && match.homeScore !== undefined && match.awayScore !== undefined) {
                           const winnerCode = match.homeScore > match.awayScore ? match.home.code : match.away.code;
                           const branding = getTeamBranding(winnerCode);
-                          borderStyle = `1px solid rgba(255,255,255,0.05)`; // default
-                          borderStyle = borderStyle.replace('1px solid', '');
-                          borderStyle = `1px solid rgba(255,255,255,0.05); border-left: 2px solid color-mix(in srgb, ${branding.primary} 60%, transparent)`;
+                          borderLeftStyle = `2px solid color-mix(in srgb, ${branding.primary} 60%, transparent)`;
                         }
 
+                        const statusNode = renderStatus(match.status);
+
                         return (
-                          <div key={match.id} className="flex flex-col gap-1">
+                          <div key={match.id} className="flex flex-col" style={{ marginBottom: "1.5rem" }}>
                             <Link
                               href={`/matches/${match.id}`}
                               className="group flex flex-col focus-visible:outline-none relative"
                               style={{
-                                background: "rgba(255,255,255,0.02)",
-                                padding: "1rem",
+                                padding: "1.2rem 0",
+                                borderBottom: borderStyle,
+                                borderLeft: borderLeftStyle,
+                                paddingLeft: borderLeftStyle !== 'none' ? '0.8rem' : '0',
                                 textDecoration: "none",
                                 transition: "all 0.3s ease",
-                                ...(match.status === "FINISHED" && match.homeScore !== undefined && match.awayScore !== undefined
-                                  ? {
-                                      border: "1px solid rgba(255,255,255,0.05)",
-                                      borderLeft: `2px solid color-mix(in srgb, ${getTeamBranding(match.homeScore > match.awayScore ? match.home.code : match.away.code).primary} 60%, transparent)`
-                                    }
-                                  : { border: "1px solid rgba(255,255,255,0.05)" })
                               }}
                             >
+                              <div className="flex justify-between items-center" style={{ marginBottom: "0.75rem" }}>
+                                <div style={{ fontSize: "0.6rem", letterSpacing: "0.15em", color: "rgba(255,255,255,0.25)", textTransform: "uppercase" }}>
+                                  {formatMatchDate(match.date)}
+                                </div>
+                                {statusNode && (
+                                  <div style={{ fontSize: "0.55rem", letterSpacing: "0.1em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase" }}>
+                                    {statusNode}
+                                  </div>
+                                )}
+                              </div>
+                              
                               <div className="flex flex-col gap-3">
                                 {/* Home */}
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-3">
                                     {homePlaceholder ? null : <TeamLogo code={match.home.code} size={20} />}
                                     <span
-                                      style={{
-                                        fontSize: "0.85rem",
-                                        fontWeight: homePlaceholder ? 400 : 600,
-                                        fontStyle: homePlaceholder ? "italic" : "normal",
-                                        color: homePlaceholder ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.9)",
-                                        letterSpacing: "0.05em",
-                                      }}
+                                      style={
+                                        homePlaceholder
+                                          ? {
+                                              fontSize: "0.85rem",
+                                              fontStyle: "italic",
+                                              color: "rgba(255,255,255,0.2)",
+                                              letterSpacing: "0.1em"
+                                            }
+                                          : {
+                                              fontSize: "0.95rem",
+                                              fontWeight: 600,
+                                              letterSpacing: "0.03em",
+                                              color: "rgba(255,255,255,0.9)",
+                                            }
+                                      }
                                     >
                                       {homePlaceholder ? "TBD" : match.home.name}
                                     </span>
                                   </div>
-                                  <span
-                                    style={{
-                                      fontSize: "0.85rem",
-                                      color: "rgba(255,255,255,0.5)",
-                                    }}
-                                  >
-                                    {match.homeScore ?? "-"}
-                                  </span>
+                                  {renderScore(match.homeScore, match.status)}
                                 </div>
                                 {/* Away */}
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-3">
                                     {awayPlaceholder ? null : <TeamLogo code={match.away.code} size={20} />}
                                     <span
-                                      style={{
-                                        fontSize: "0.85rem",
-                                        fontWeight: awayPlaceholder ? 400 : 600,
-                                        fontStyle: awayPlaceholder ? "italic" : "normal",
-                                        color: awayPlaceholder ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.9)",
-                                        letterSpacing: "0.05em",
-                                      }}
+                                      style={
+                                        awayPlaceholder
+                                          ? {
+                                              fontSize: "0.85rem",
+                                              fontStyle: "italic",
+                                              color: "rgba(255,255,255,0.2)",
+                                              letterSpacing: "0.1em"
+                                            }
+                                          : {
+                                              fontSize: "0.95rem",
+                                              fontWeight: 600,
+                                              letterSpacing: "0.03em",
+                                              color: "rgba(255,255,255,0.9)",
+                                            }
+                                      }
                                     >
                                       {awayPlaceholder ? "TBD" : match.away.name}
                                     </span>
                                   </div>
-                                  <span
-                                    style={{
-                                      fontSize: "0.85rem",
-                                      color: "rgba(255,255,255,0.5)",
-                                    }}
-                                  >
-                                    {match.awayScore ?? "-"}
-                                  </span>
+                                  {renderScore(match.awayScore, match.status)}
                                 </div>
                               </div>
-                              {/* Match Info */}
-                              <div
-                                className="mt-4 pt-3 flex justify-between"
-                                style={{
-                                  borderTop: "1px solid rgba(255,255,255,0.05)",
-                                  fontSize: "0.6rem",
-                                  color: "rgba(255,255,255,0.25)",
-                                  letterSpacing: "0.1em",
-                                  textTransform: "uppercase",
-                                }}
-                              >
-                                <span>M{match.matchNumber}</span>
-                                <span>{match.status}</span>
-                              </div>
                             </Link>
-                            {/* Date outside the card */}
-                            <div style={{ fontSize: "0.55rem", letterSpacing: "0.1em", color: "rgba(255,255,255,0.2)", textAlign: "center", marginTop: "4px", textTransform: "uppercase" }}>
-                              {formatMatchDate(match.date)}
-                            </div>
                           </div>
                         );
                       })}
@@ -315,94 +317,101 @@ export default function BracketPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
             className="mt-8 border-t border-[rgba(255,255,255,0.05)] pt-8 flex flex-col gap-4"
-            style={{ width: "280px" }}
+            style={{ width: "360px" }}
           >
             <h2
               className="mb-2"
               style={{
-                fontSize: "0.65rem",
-                fontWeight: 600,
-                letterSpacing: "0.2em",
-                color: "rgba(255,255,255,0.3)",
+                fontSize: "0.7rem",
+                fontWeight: 700,
+                letterSpacing: "0.3em",
+                color: "rgba(255,255,255,0.5)",
                 textTransform: "uppercase",
               }}
             >
               Third Place Match
             </h2>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1" style={{ marginBottom: "1.5rem" }}>
               <Link
                 href={`/matches/${thirdPlaceMatch.id}`}
                 className="group flex flex-col focus-visible:outline-none"
                 style={{
-                  background: "rgba(255,255,255,0.02)",
-                  padding: "1rem",
+                  padding: "1.2rem 0",
+                  borderBottom: "1px solid rgba(255,255,255,0.04)",
                   textDecoration: "none",
                   transition: "all 0.3s ease",
                   ...(thirdPlaceMatch.status === "FINISHED" && thirdPlaceMatch.homeScore !== undefined && thirdPlaceMatch.awayScore !== undefined
                     ? {
-                        border: "1px solid rgba(255,255,255,0.05)",
-                        borderLeft: `2px solid color-mix(in srgb, ${getTeamBranding(thirdPlaceMatch.homeScore > thirdPlaceMatch.awayScore ? thirdPlaceMatch.home.code : thirdPlaceMatch.away.code).primary} 60%, transparent)`
+                        borderLeft: `2px solid color-mix(in srgb, ${getTeamBranding(thirdPlaceMatch.homeScore > thirdPlaceMatch.awayScore ? thirdPlaceMatch.home.code : thirdPlaceMatch.away.code).primary} 60%, transparent)`,
+                        paddingLeft: '0.8rem'
                       }
-                    : { border: "1px solid rgba(255,255,255,0.05)" })
+                    : {})
                 }}
               >
+                <div className="flex justify-between items-center" style={{ marginBottom: "0.75rem" }}>
+                  <div style={{ fontSize: "0.6rem", letterSpacing: "0.15em", color: "rgba(255,255,255,0.25)", textTransform: "uppercase" }}>
+                    {formatMatchDate(thirdPlaceMatch.date)}
+                  </div>
+                  {renderStatus(thirdPlaceMatch.status) && (
+                    <div style={{ fontSize: "0.55rem", letterSpacing: "0.1em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase" }}>
+                      {renderStatus(thirdPlaceMatch.status)}
+                    </div>
+                  )}
+                </div>
+                
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      {isPlaceholder(thirdPlaceMatch.home.code) ? null : <TeamLogo code={thirdPlaceMatch.home.code} size={20} />}
+                      {isPlaceholder(thirdPlaceMatch.home.code, thirdPlaceMatch.home.name) ? null : <TeamLogo code={thirdPlaceMatch.home.code} size={20} />}
                       <span
-                        style={{
-                          fontSize: "0.85rem",
-                          fontWeight: isPlaceholder(thirdPlaceMatch.home.code) ? 400 : 600,
-                          fontStyle: isPlaceholder(thirdPlaceMatch.home.code) ? "italic" : "normal",
-                          color: isPlaceholder(thirdPlaceMatch.home.code) ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.9)",
-                          letterSpacing: "0.05em",
-                        }}
+                        style={
+                          isPlaceholder(thirdPlaceMatch.home.code, thirdPlaceMatch.home.name)
+                            ? {
+                                fontSize: "0.85rem",
+                                fontStyle: "italic",
+                                color: "rgba(255,255,255,0.2)",
+                                letterSpacing: "0.1em"
+                              }
+                            : {
+                                fontSize: "0.95rem",
+                                fontWeight: 600,
+                                letterSpacing: "0.03em",
+                                color: "rgba(255,255,255,0.9)",
+                              }
+                        }
                       >
-                        {isPlaceholder(thirdPlaceMatch.home.code) ? "TBD" : thirdPlaceMatch.home.name}
+                        {isPlaceholder(thirdPlaceMatch.home.code, thirdPlaceMatch.home.name) ? "TBD" : thirdPlaceMatch.home.name}
                       </span>
                     </div>
-                    <span style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.5)" }}>
-                      {thirdPlaceMatch.homeScore ?? "-"}
-                    </span>
+                    {renderScore(thirdPlaceMatch.homeScore, thirdPlaceMatch.status)}
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      {isPlaceholder(thirdPlaceMatch.away.code) ? null : <TeamLogo code={thirdPlaceMatch.away.code} size={20} />}
+                      {isPlaceholder(thirdPlaceMatch.away.code, thirdPlaceMatch.away.name) ? null : <TeamLogo code={thirdPlaceMatch.away.code} size={20} />}
                       <span
-                        style={{
-                          fontSize: "0.85rem",
-                          fontWeight: isPlaceholder(thirdPlaceMatch.away.code) ? 400 : 600,
-                          fontStyle: isPlaceholder(thirdPlaceMatch.away.code) ? "italic" : "normal",
-                          color: isPlaceholder(thirdPlaceMatch.away.code) ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.9)",
-                          letterSpacing: "0.05em",
-                        }}
+                        style={
+                          isPlaceholder(thirdPlaceMatch.away.code, thirdPlaceMatch.away.name)
+                            ? {
+                                fontSize: "0.85rem",
+                                fontStyle: "italic",
+                                color: "rgba(255,255,255,0.2)",
+                                letterSpacing: "0.1em"
+                              }
+                            : {
+                                fontSize: "0.95rem",
+                                fontWeight: 600,
+                                letterSpacing: "0.03em",
+                                color: "rgba(255,255,255,0.9)",
+                              }
+                        }
                       >
-                        {isPlaceholder(thirdPlaceMatch.away.code) ? "TBD" : thirdPlaceMatch.away.name}
+                        {isPlaceholder(thirdPlaceMatch.away.code, thirdPlaceMatch.away.name) ? "TBD" : thirdPlaceMatch.away.name}
                       </span>
                     </div>
-                    <span style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.5)" }}>
-                      {thirdPlaceMatch.awayScore ?? "-"}
-                    </span>
+                    {renderScore(thirdPlaceMatch.awayScore, thirdPlaceMatch.status)}
                   </div>
                 </div>
-                <div
-                  className="mt-4 pt-3 flex justify-between"
-                  style={{
-                    borderTop: "1px solid rgba(255,255,255,0.05)",
-                    fontSize: "0.6rem",
-                    color: "rgba(255,255,255,0.25)",
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  <span>M{thirdPlaceMatch.matchNumber}</span>
-                  <span>{thirdPlaceMatch.status}</span>
-                </div>
               </Link>
-              <div style={{ fontSize: "0.55rem", letterSpacing: "0.1em", color: "rgba(255,255,255,0.2)", textAlign: "center", marginTop: "4px", textTransform: "uppercase" }}>
-                {formatMatchDate(thirdPlaceMatch.date)}
-              </div>
             </div>
           </motion.div>
         )}

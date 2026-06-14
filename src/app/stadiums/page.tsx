@@ -2,9 +2,28 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { STADIUMS } from "@/lib/data/stadiums";
 import { MATCHES } from "@/lib/data/matches";
+
+const stadiumCityMap: Record<string, string[]> = {
+  'metlife': ['East Rutherford', 'New York'],
+  'sofi': ['Los Angeles', 'Inglewood'],
+  'att': ['Dallas', 'Arlington'],
+  'nrg': ['Houston'],
+  'hard-rock': ['Miami'],
+  'lumen': ['Seattle'],
+  'arrowhead': ['Kansas City'],
+  'mercedes-benz': ['Atlanta'],
+  'lincoln': ['Philadelphia'],
+  'gillette': ['Foxborough', 'Boston'],
+  'boa': ['Charlotte'],
+  'azteca': ['Mexico City'],
+  'akron': ['Guadalajara'],
+  'bbva': ['Monterrey'],
+  'bc-place': ['Vancouver'],
+  'bmo': ['Toronto'],
+};
 
 export default function StadiumsPage() {
   const [hoveredStadium, setHoveredStadium] = useState<string | null>(null);
@@ -18,8 +37,8 @@ export default function StadiumsPage() {
 
   return (
     <div
-      className="min-h-screen bg-[#050505] overflow-y-auto"
-      style={{ fontFamily: "var(--font-inter, 'Inter', sans-serif)" }}
+      className="bg-[#050505]"
+      style={{ minHeight: '100vh', fontFamily: "var(--font-inter, 'Inter', sans-serif)", background: 'linear-gradient(to bottom, rgba(255,255,255,0.02) 0%, #050505 400px)' }}
     >
       {/* Dynamic Background glow based on hovered stadium (optional subtle effect) */}
       <div
@@ -40,31 +59,7 @@ export default function StadiumsPage() {
         }}
       >
         {/* HEADER */}
-        <header style={{ paddingTop: "clamp(2.5rem, 6vw, 5rem)" }}>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            style={{ marginBottom: "clamp(2rem, 4vw, 3.5rem)" }}
-          >
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 group focus-visible:outline-none"
-              style={{
-                textDecoration: "none",
-                fontSize: "0.65rem",
-                fontWeight: 400,
-                letterSpacing: "0.16em",
-                color: "rgba(255,255,255,0.25)",
-                textTransform: "uppercase",
-                transition: "color 0.25s ease",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.6)")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.25)")}
-            >
-              ← Home
-            </Link>
-          </motion.div>
+        <header style={{ paddingTop: "clamp(4rem, 7vw, 6rem)" }}>
 
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -125,15 +120,21 @@ export default function StadiumsPage() {
             >
               {/* Country Header */}
               <div
-                className="mb-8 border-b border-[rgba(255,255,255,0.1)] pb-4 flex items-end justify-between"
+                className="mb-8 flex items-end justify-between"
+                style={{
+                  borderTop: "2px solid rgba(255,255,255,0.15)",
+                  paddingTop: "1.5rem",
+                  paddingBottom: "1rem",
+                  borderBottom: "1px solid rgba(255,255,255,0.1)",
+                }}
               >
                 <h2
                   style={{
-                    fontSize: "0.8rem",
-                    fontWeight: 600,
-                    letterSpacing: "0.2em",
+                    fontSize: "clamp(0.6rem, 1vw, 0.8rem)",
+                    fontWeight: 700,
+                    letterSpacing: "0.35em",
                     textTransform: "uppercase",
-                    color: "rgba(255,255,255,0.4)",
+                    color: "rgba(255,255,255,0.5)",
                   }}
                 >
                   {country}
@@ -156,15 +157,27 @@ export default function StadiumsPage() {
                   const isHovered = hoveredStadium === stadium.id;
                   const isAnyHovered = hoveredStadium !== null;
 
-                  const matchCount = MATCHES.filter(m => m.stadium.toLowerCase().includes(stadium.name.toLowerCase())).length;
-                  const countLabel = stadium.id === 'metlife' ? 'FINAL' : `${matchCount} MATCHES`;
+                  const matchCount = MATCHES.filter(m => 
+                    stadiumCityMap[stadium.id]?.some(city => 
+                      m.city?.toLowerCase().includes(city.toLowerCase()) ||
+                      m.stadium?.toLowerCase().includes(city.toLowerCase())
+                    )
+                  ).length;
+                  
+                  let countLabel = "";
+                  if (matchCount > 0) {
+                    countLabel = `${matchCount} MATCHES`;
+                  }
+                  if (stadium.id === 'metlife') {
+                    countLabel = countLabel ? `FINAL · ${countLabel}` : 'FINAL';
+                  }
 
                   return (
                     <div
                       key={stadium.id}
                       onMouseEnter={() => setHoveredStadium(stadium.id)}
                       onMouseLeave={() => setHoveredStadium(null)}
-                      className="group relative flex flex-col md:flex-row md:items-start justify-between py-6 md:py-8 border-b border-[rgba(255,255,255,0.03)] cursor-default"
+                      className="group relative flex flex-col md:flex-row md:items-start justify-between py-8 md:py-10 border-b border-[rgba(255,255,255,0.03)] cursor-default"
                       style={{
                         opacity: isAnyHovered ? (isHovered ? 1 : 0.2) : 1,
                         transition: "opacity 0.4s ease",
@@ -175,10 +188,10 @@ export default function StadiumsPage() {
                         <span
                           className="uppercase"
                           style={{
-                            fontSize: "clamp(1.5rem, 3vw, 2.5rem)",
+                            fontSize: "clamp(2rem, 4vw, 3.5rem)",
                             fontWeight: 800,
                             letterSpacing: "0.02em",
-                            color: isHovered ? "#ffffff" : "rgba(255,255,255,0.85)",
+                            color: isHovered ? "#ffffff" : "rgba(255,255,255,0.6)",
                             lineHeight: 1,
                             transition: "color 0.4s ease, transform 0.4s ease",
                             transform: isHovered ? "translateX(10px)" : "translateX(0)",
@@ -193,41 +206,57 @@ export default function StadiumsPage() {
                           <span
                             className="uppercase"
                             style={{
-                              fontSize: "0.7rem",
+                              fontSize: "0.75rem",
                               fontWeight: 400,
-                              letterSpacing: "0.15em",
-                              color: "rgba(0,209,255,0.8)",
+                              letterSpacing: "0.2em",
+                              color: "rgba(255,255,255,0.35)",
                             }}
                           >
                             {stadium.city}
                           </span>
-                          {isHovered && (
-                            <>
-                              <span style={{ color: "rgba(255,255,255,0.15)" }}>·</span>
-                              <span
-                                className="uppercase"
-                                style={{
-                                  fontSize: "0.6rem",
-                                  fontWeight: 400,
-                                  letterSpacing: "0.15em",
-                                  color: "rgba(255,255,255,0.4)",
-                                }}
+                          <AnimatePresence>
+                            {isHovered && (
+                              <motion.div
+                                initial={{ opacity: 0, x: -5 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -5 }}
+                                transition={{ duration: 0.3 }}
+                                className="flex items-center gap-3"
                               >
-                                {stadium.surface}
-                              </span>
-                            </>
-                          )}
+                                <span style={{ color: "rgba(255,255,255,0.15)" }}>·</span>
+                                <span
+                                  className="uppercase"
+                                  style={{
+                                    fontSize: "0.6rem",
+                                    fontWeight: 400,
+                                    letterSpacing: "0.15em",
+                                    color: "rgba(255,255,255,0.4)",
+                                  }}
+                                >
+                                  {stadium.surface}
+                                </span>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
-                        {isHovered && (
-                          <p style={{
-                            fontSize: '0.7rem', fontWeight: 300, letterSpacing: '0.05em',
-                            color: 'rgba(255,255,255,0.35)', marginTop: '0.5rem',
-                            maxWidth: '480px', lineHeight: 1.6,
-                            transform: 'translateX(10px)', transition: 'all 0.4s ease'
-                          }}>
-                            {stadium.description}
-                          </p>
-                        )}
+                        <AnimatePresence>
+                          {isHovered && (
+                            <motion.p
+                              initial={{ opacity: 0, y: 4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 4 }}
+                              transition={{ duration: 0.3 }}
+                              style={{
+                                fontSize: '0.7rem', fontWeight: 300, letterSpacing: '0.05em',
+                                color: 'rgba(255,255,255,0.35)', marginTop: '0.5rem',
+                                maxWidth: '480px', lineHeight: 1.6,
+                                transform: 'translateX(10px)'
+                              }}
+                            >
+                              {stadium.description}
+                            </motion.p>
+                          )}
+                        </AnimatePresence>
                       </div>
 
                       {/* Capacity & Matches */}
@@ -247,7 +276,7 @@ export default function StadiumsPage() {
                           <span
                             className="tabular-nums"
                             style={{
-                              fontSize: "clamp(1rem, 2vw, 1.5rem)",
+                              fontSize: "clamp(1.5rem, 2.5vw, 2.5rem)",
                               fontWeight: 300,
                               letterSpacing: "0.05em",
                               color: isHovered ? "#ffffff" : "rgba(255,255,255,0.3)",

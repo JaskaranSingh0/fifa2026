@@ -132,7 +132,7 @@ function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) 
         className="block focus-visible:outline-none group"
         style={{
           textDecoration: "none",
-          padding: "clamp(1.2rem, 2vw, 1.8rem) 0",
+          padding: "clamp(1.6rem, 2.5vw, 2.2rem) 0",
           borderBottom: "1px solid rgba(255,255,255,0.06)",
           willChange: "transform",
         }}
@@ -150,9 +150,13 @@ function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) 
             <span
               style={{
                 fontSize: "0.6rem",
-                fontWeight: 400,
+                fontWeight: isFinished ? 500 : 400,
                 letterSpacing: "0.16em",
-                color: isLive ? "rgba(0,209,255,0.4)" : "rgba(255,255,255,0.2)",
+                color: isLive 
+                  ? "rgba(255,0,0,0.7)" 
+                  : isFinished 
+                  ? "rgba(255,255,255,0.35)" 
+                  : "rgba(255,255,255,0.2)",
                 textTransform: "uppercase",
               }}
             >
@@ -192,7 +196,7 @@ function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) 
           <div
             className="flex-1 flex items-center justify-end gap-3 md:gap-4"
             style={{
-              opacity: homeDimmed ? 0.3 : 1,
+              opacity: homeDimmed ? 0.35 : 1,
               transition: "opacity 0.3s ease",
             }}
           >
@@ -202,12 +206,12 @@ function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) 
                 fontSize: "clamp(0.85rem, 1.8vw, 1.55rem)",
                 letterSpacing: "0.08em",
                 lineHeight: 1.1,
-                color: "#ffffff",
+                color: homeDimmed ? "rgba(255,255,255,0.2)" : (isFinished && match.homeScore !== match.awayScore ? "#ffffff" : "#ffffff"),
               }}
             >
               {match.home.name}
             </span>
-            <TeamLogo code={match.home.code} size={28} />
+            <TeamLogo code={match.home.code} size={homeDimmed ? 28 : (isFinished ? 40 : 36)} />
           </div>
 
           {/* Score / Time block — center */}
@@ -216,53 +220,40 @@ function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) 
             style={{ minWidth: "clamp(50px, 8vw, 90px)" }}
           >
             {isFinished || isLive ? (
-              <div className="flex flex-col items-center">
-                <span
-                  className="tabular-nums font-light flex gap-2"
-                  style={{
-                    fontSize: "clamp(0.85rem, 1.8vw, 1.55rem)",
-                    letterSpacing: "0.12em",
-                    color: isLive ? "#ffffff" : "rgba(255,255,255,0.8)",
-                  }}
-                >
-                  <span
-                    className={flashHome ? "score-flash" : ""}
-                    style={{ "--team-primary": homeBranding.primary } as React.CSSProperties}
-                  >
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                <span className="tabular-nums font-bold flex gap-2" style={{
+                  fontSize: "clamp(1rem, 2.2vw, 1.8rem)",
+                  letterSpacing: "0.06em",
+                  color: isLive ? "#ffffff" : "#ffffff",
+                }}>
+                  <span className={flashHome ? "score-flash" : ""} style={{ "--team-primary": homeBranding.primary } as React.CSSProperties}>
                     {match.homeScore}
                   </span>
-                  <span>—</span>
-                  <span
-                    className={flashAway ? "score-flash" : ""}
-                    style={{ "--team-primary": awayBranding.primary } as React.CSSProperties}
-                  >
+                  <span style={{ opacity: 0.3 }}>—</span>
+                  <span className={flashAway ? "score-flash" : ""} style={{ "--team-primary": awayBranding.primary } as React.CSSProperties}>
                     {match.awayScore}
                   </span>
                 </span>
+                {isFinished && (
+                  <span style={{ fontSize: '0.5rem', letterSpacing: '0.25em', color: 'rgba(255,255,255,0.25)', fontWeight: 500 }}>
+                    FT
+                  </span>
+                )}
                 {isLive && match.liveData && (
-                  <span
-                    style={{
-                      fontSize: "0.6rem",
-                      fontWeight: 700,
-                      color: "#00D1FF",
-                      marginTop: "2px",
-                      letterSpacing: "0.05em",
-                    }}
-                  >
+                  <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#FF0000', letterSpacing: '0.05em' }}>
                     {match.liveData.currentMinute}'
                   </span>
                 )}
               </div>
             ) : (
-              <span
-                style={{
-                  fontSize: "0.6rem",
-                  letterSpacing: "0.12em",
-                  color: "rgba(255,255,255,0.25)",
-                }}
-              >
-                vs
-              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                <span style={{ fontSize: '0.7rem', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>
+                  vs
+                </span>
+                <span style={{ fontSize: '0.55rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.2)' }}>
+                  {match.time?.split(' ')[0]}
+                </span>
+              </div>
             )}
           </div>
 
@@ -270,18 +261,18 @@ function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) 
           <div
             className="flex-1 flex items-center justify-start gap-3 md:gap-4"
             style={{
-              opacity: awayDimmed ? 0.3 : 1,
+              opacity: awayDimmed ? 0.35 : 1,
               transition: "opacity 0.3s ease",
             }}
           >
-            <TeamLogo code={match.away.code} size={28} />
+            <TeamLogo code={match.away.code} size={awayDimmed ? 28 : (isFinished ? 40 : 36)} />
             <span
               className="text-left uppercase font-bold"
               style={{
                 fontSize: "clamp(0.85rem, 1.8vw, 1.55rem)",
                 letterSpacing: "0.08em",
                 lineHeight: 1.1,
-                color: "#ffffff",
+                color: awayDimmed ? "rgba(255,255,255,0.2)" : (isFinished && match.homeScore !== match.awayScore ? "#ffffff" : "#ffffff"),
               }}
             >
               {match.away.name}
@@ -289,21 +280,7 @@ function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) 
           </div>
         </div>
 
-        {/* FT badge for finished matches */}
-        {isFinished && (
-          <div className="mt-2 text-center">
-            <span
-              style={{
-                fontSize: "0.5rem",
-                fontWeight: 500,
-                letterSpacing: "0.2em",
-                color: "rgba(255,255,255,0.15)",
-              }}
-            >
-              FT
-            </span>
-          </div>
-        )}
+
       </Link>
     </motion.div>
   );
@@ -353,8 +330,8 @@ export default function MatchesPage() {
 
   return (
     <div
-      className="fixed inset-0 bg-[#050505] overflow-y-auto"
-      style={{ fontFamily: "var(--font-inter, 'Inter', sans-serif)" }}
+      className="bg-[#050505]"
+      style={{ minHeight: '100vh', fontFamily: "var(--font-inter, 'Inter', sans-serif)", paddingTop: '44px' }}
     >
       <style>{`
         @keyframes scoreFlash {
@@ -374,7 +351,11 @@ export default function MatchesPage() {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="w-full bg-[#111111] border-b border-[rgba(255,255,255,0.1)] overflow-hidden"
+            className="w-full overflow-hidden"
+            style={{ 
+              background: 'rgba(255,0,0,0.04)',
+              borderBottom: '1px solid rgba(255,0,0,0.15)'
+            }}
           >
             <div className="mx-auto flex items-center gap-8 py-3 px-4 overflow-x-auto whitespace-nowrap" style={{ width: "min(80%, 1200px)", minWidth: "320px" }}>
               <span className="text-[0.6rem] font-bold tracking-widest text-[#FF0000] uppercase shrink-0 flex items-center gap-2">
@@ -410,33 +391,7 @@ export default function MatchesPage() {
         {/* ══════════════════════════════════════════════════════════════════
             EDITORIAL HEADER
         ═══════════════════════════════════════════════════════════════════ */}
-        <header style={{ paddingTop: "clamp(2.5rem, 6vw, 5rem)" }}>
-          {/* Back arrow */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            style={{ marginBottom: "clamp(2rem, 4vw, 3.5rem)" }}
-          >
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 group focus-visible:outline-none"
-              style={{
-                textDecoration: "none",
-                fontSize: "0.65rem",
-                fontWeight: 400,
-                letterSpacing: "0.16em",
-                color: "rgba(255,255,255,0.25)",
-                textTransform: "uppercase",
-                transition: "color 0.25s ease",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.6)")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.25)")}
-              aria-label="Back to home"
-            >
-              ← Home
-            </Link>
-          </motion.div>
+        <header style={{ paddingTop: "clamp(4rem, 7vw, 6rem)" }}>
 
           {/* MATCHES — the title */}
           <motion.h1
@@ -670,7 +625,7 @@ export default function MatchesPage() {
                   <section
                     key={date}
                     aria-label={`Matches on ${month} ${day}`}
-                    style={{ marginTop: "clamp(3rem, 6vw, 5rem)" }}
+                    style={{ marginTop: "clamp(4rem, 8vw, 7rem)" }}
                   >
                     {/* ── MASSIVE DATE HEADER ──────────────── */}
                     <motion.div
@@ -682,23 +637,26 @@ export default function MatchesPage() {
                         ease: [0.25, 0.46, 0.45, 0.94],
                       }}
                       style={{
-                        marginBottom: "clamp(1rem, 2vw, 2rem)",
+                        marginBottom: "clamp(1.5rem, 3vw, 2.5rem)",
                         paddingBottom: "clamp(0.8rem, 1.5vw, 1.2rem)",
                         borderBottom: "1px solid rgba(255,255,255,0.06)",
                       }}
                     >
                       <h2
                         style={{
-                          fontSize: "clamp(2rem, 5vw, 4rem)",
-                          fontWeight: 800,
-                          letterSpacing: "0.04em",
+                          fontSize: "clamp(3.5rem, 8vw, 7rem)",
+                          fontWeight: 900,
+                          letterSpacing: "0.02em",
                           textTransform: "uppercase",
                           color: "#ffffff",
-                          lineHeight: 1,
-                          opacity: 0.85,
+                          lineHeight: 0.9,
+                          opacity: 1,
                         }}
                       >
-                        {month} {day}
+                        <span style={{ display: 'block', fontSize: 'clamp(0.6rem, 1vw, 0.75rem)', letterSpacing: '0.3em', fontWeight: 400, opacity: 0.3, marginBottom: '0.5rem' }}>
+                          {month.toUpperCase()}
+                        </span>
+                        {day}
                       </h2>
                     </motion.div>
 

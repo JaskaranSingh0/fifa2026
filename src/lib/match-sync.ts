@@ -1,58 +1,66 @@
-import { fetchFromApiFootball, fetchFromFootballData, NormalizedMatch } from './football-api';
+import { fetchFromApiFootball, fetchFromFootballData, fetchFromESPN, NormalizedMatch } from './football-api';
 import { prisma } from './prisma';
 
 // Maps football-data.org team name variants → names stored in our DB (from seed)
 const TEAM_NAME_MAP: Record<string, string> = {
   'Czechia': 'Czech Republic',
   'Bosnia-Herzegovina': 'Bosnia & Herzegovina',
+  'Bosnia and Herzegovina': 'Bosnia & Herzegovina',
   'United States': 'USA',
-  'Curaçao': 'Curacao',
+  'Curaçao': 'Curaçao',
+  'Curacao': 'Curaçao',
   'IR Iran': 'Iran',
+  'Iran': 'Iran',
   'Korea Republic': 'South Korea',
+  'South Korea': 'South Korea',
   'Côte d\'Ivoire': 'Ivory Coast',
+  'Ivory Coast': 'Ivory Coast',
   'China PR': 'China',
   'Trinidad and Tobago': 'Trinidad & Tobago',
+  'DR Congo': 'DR Congo',
+  'Türkiye': 'Turkey',
+  'Cabo Verde': 'Cape Verde',
 };
 
-function normalizeTeamName(name: string): string {
+export function normalizeTeamName(name: string): string {
   return TEAM_NAME_MAP[name] ?? name;
 }
 
 export async function syncMatches(): Promise<{ updated: number, source: string }> {
-  const [apfData, afdData] = await Promise.all([
+  const [apfData, afdData, espnData] = await Promise.all([
     fetchFromApiFootball(),
-    fetchFromFootballData()
+    fetchFromFootballData(),
+    fetchFromESPN(),
   ]);
   
   // Build a map keyed by normalized team pair string
   const mergedMap = new Map<string, NormalizedMatch>();
   
-  // First insert all apfData (PRIMARY source)
-  for (const match of apfData) {
-    const dateStr = match.date.substring(0, 10);
-    const key = (match.homeTeam === 'TBD' || match.awayTeam === 'TBD')
-      ? `${match.source}-${match.externalId}`
-      : `${match.homeTeam}|${match.awayTeam}|${dateStr}`;
-    mergedMap.set(key, match);
-  }
-  
-  // Merge football-data entries
-  for (const match of afdData) {
-    const dateStr = match.date.substring(0, 10);
+  // ESPN is now primary source — most reliable for live WC 2026 data
+  // football-data.org is secondary — used for FINISHED result confirmation
+  // Insert ESPN data first into mergedMap, then overlay football-data.org
+
+  // First: ESPN
+  for (const match of espnData) {
     const normalizedHome = normalizeTeamName(match.homeTeam);
     const normalizedAway = normalizeTeamName(match.awayTeam);
-    const key = (normalizedHome === 'TBD' || normalizedAway === 'TBD')
-      ? `${match.source}-${match.externalId}`
-      : `${normalizedHome}|${normalizedAway}|${dateStr}`;
-    
-    if (!mergedMap.has(key)) {
+    const dateStr = match.date.substring(0, 10);
+    const key = `${normalizedHome}|${normalizedAway}|${dateStr}`;
+    mergedMap.set(key, { ...match, homeTeam: normalizedHome, awayTeam: normalizedAway });
+  }
+
+  // Second: football-data.org — override only if it has FINISHED status (more authoritative for final scores)
+  for (const match of afdData) {
+    const normalizedHome = normalizeTeamName(match.homeTeam);
+    const normalizedAway = normalizeTeamName(match.awayTeam);
+    const dateStr = match.date.substring(0, 10);
+    const key = `${normalizedHome}|${normalizedAway}|${dateStr}`;
+    const existing = mergedMap.get(key);
+    if (!existing) {
       mergedMap.set(key, { ...match, homeTeam: normalizedHome, awayTeam: normalizedAway });
-    } else {
-      const existing = mergedMap.get(key)!;
-      // Override status if API-Football says SCHEDULED but football-data has an active status
-      if (existing.status === 'SCHEDULED' && (match.status === 'LIVE' || match.status === 'FINISHED')) {
-        mergedMap.set(key, match);
-      }
+    } else if (match.status === 'FINISHED') {
+      // football-data.org confirmed finish overrides ESPN
+      mergedMap.set(key, { ...match, homeTeam: normalizedHome, awayTeam: normalizedAway });
     }
   }
   
@@ -98,5 +106,5 @@ export async function syncMatches(): Promise<{ updated: number, source: string }
     }
   }
   
-  return { updated: updatedCount, source: 'api-football+football-data' };
+  return { updated: updatedCount, source: 'api-football+football-data+espn' };
 }

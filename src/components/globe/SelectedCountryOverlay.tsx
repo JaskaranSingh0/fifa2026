@@ -21,6 +21,8 @@ interface Props {
  * Shows: country name + GROUP/RANK + EXPLORE TEAM button + Back to Globe
  * During transition: name scales up via GSAP, buttons fade out
  */
+import { GROUPS } from "@/lib/data/groups";
+
 export default function SelectedCountryOverlay({
   country,
   isTransitioning,
@@ -30,6 +32,9 @@ export default function SelectedCountryOverlay({
   const nameRef = useRef<HTMLHeadingElement>(null);
   const metaRef = useRef<HTMLDivElement>(null);
   const buttonsRef = useRef<HTMLDivElement>(null);
+
+  const teamGroup = GROUPS.find(g => g.teams.includes(country.code));
+  const dynamicGroup = teamGroup?.letter ?? country.group;
 
   // ── GSAP transition: name grows, meta + buttons fade ──────────────
   useEffect(() => {
@@ -95,9 +100,9 @@ export default function SelectedCountryOverlay({
             className="mt-6 flex space-x-8 justify-center"
             style={{ opacity: 0.7 }}
           >
-            {country.group && (
+            {dynamicGroup && (
               <span className="text-white text-sm tracking-[0.3em] uppercase">
-                GROUP {country.group}
+                GROUP {dynamicGroup}
               </span>
             )}
             {country.ranking && (

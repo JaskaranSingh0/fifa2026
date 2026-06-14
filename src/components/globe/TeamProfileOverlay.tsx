@@ -52,10 +52,12 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
         const mData = await mRes.json();
 
         // Find group
-        const myGroup = (gData.groups || []).find((g: any) => 
-          g.teams.some((t: any) => t.code === profile.code)
-        );
-        setGroupData(myGroup);
+        import('@/lib/data/groups').then(({ GROUPS }) => {
+          const teamGroup = GROUPS.find(g => g.teams.includes(profile.code));
+          const groupLetter = teamGroup?.letter ?? null;
+          const myGroup = (gData.groups || []).find((g: any) => g.letter === groupLetter);
+          setGroupData(myGroup);
+        });
 
         // Find matches
         const myMatches = (mData.matches || []).filter((m: any) => 
@@ -126,6 +128,7 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
           width: "min(72%, 960px)",
           minWidth: "320px",
           paddingBottom: "8rem",
+          WebkitOverflowScrolling: "touch",
         }}
       >
         {/* ── BACK ──────────────────────────────────────────────────────── */}
@@ -195,9 +198,9 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
         <p
           data-animate
           style={{
-            fontSize: "clamp(1rem, 1.6vw, 1.25rem)",
+            fontSize: "clamp(1.05rem, 1.7vw, 1.3rem)",
             fontWeight: 300,
-            lineHeight: 1.7,
+            lineHeight: 1.8,
             color: "rgba(255,255,255,0.55)",
             maxWidth: "640px",
             marginBottom: "clamp(3rem, 6vw, 5rem)",
@@ -239,7 +242,7 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
                 style={{
                   fontSize: "0.6rem",
                   fontWeight: 400,
-                  letterSpacing: "0.16em",
+                  letterSpacing: "0.18em",
                   textTransform: "uppercase",
                   color: "rgba(255,255,255,0.2)",
                   marginBottom: "0.6rem",
@@ -249,8 +252,8 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
               </div>
               <div
                 style={{
-                  fontSize: "clamp(0.85rem, 1.3vw, 1.05rem)",
-                  fontWeight: 500,
+                  fontSize: "clamp(0.9rem, 1.4vw, 1.1rem)",
+                  fontWeight: 600,
                   color: stat.isAccent ? "var(--team-primary)" : "#ffffff",
                   lineHeight: 1.3,
                 }}
@@ -281,14 +284,13 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
             >
               <h2
                 style={{
-                  fontSize: "clamp(1.5rem, 3.5vw, 2.5rem)",
+                  fontSize: "clamp(1.2rem, 2.5vw, 2rem)",
                   fontWeight: 800,
-                  letterSpacing: "0.06em",
+                  letterSpacing: "0.08em",
                   textTransform: "uppercase",
-                  color: "var(--team-primary)",
+                  color: "rgba(255,255,255,0.9)",
                   lineHeight: 1,
                   marginBottom: "clamp(1.5rem, 3vw, 2.5rem)",
-                  opacity: 0.85,
                 }}
               >
                 GROUP {groupData.letter}
@@ -356,14 +358,13 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
             >
               <h2
                 style={{
-                  fontSize: "clamp(1.5rem, 3.5vw, 2.5rem)",
+                  fontSize: "clamp(1.2rem, 2.5vw, 2rem)",
                   fontWeight: 800,
-                  letterSpacing: "0.06em",
+                  letterSpacing: "0.08em",
                   textTransform: "uppercase",
-                  color: "var(--team-primary)",
+                  color: "rgba(255,255,255,0.9)",
                   lineHeight: 1,
                   marginBottom: "clamp(1.5rem, 3vw, 2.5rem)",
-                  opacity: 0.85,
                 }}
               >
                 ROAD TO 2026
@@ -390,7 +391,7 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
                       <li
                         className="group flex items-center justify-between"
                         style={{
-                          padding: "1rem 0",
+                          padding: "1.2rem 0",
                           borderBottom: "1px solid rgba(255,255,255,0.03)",
                           transition: "background 0.3s ease",
                         }}
@@ -405,7 +406,7 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
                               <div
                                 className="uppercase"
                                 style={{
-                                  fontSize: "0.9rem",
+                                  fontSize: "1rem",
                                   fontWeight: 600,
                                   letterSpacing: "0.08em",
                                   color: "rgba(255,255,255,0.8)",
