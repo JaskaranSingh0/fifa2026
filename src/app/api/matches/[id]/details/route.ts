@@ -78,8 +78,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
     if (!match) return NextResponse.json({ error: 'Match not found' }, { status: 404 });
 
-    // Find ESPN event ID using stored externalId or by matching team names + date
-    let espnEventId = match.externalId?.replace('espn-', '') ?? null;
+    // Find ESPN event ID using stored externalId (if it's an ESPN ID) or by matching team names + date
+    let espnEventId = match.externalId?.startsWith('espn-') ? match.externalId.replace('espn-', '') : null;
     if (!espnEventId) {
       espnEventId = await fetchESPNEventId(match.homeTeam, match.awayTeam, match.date);
     }

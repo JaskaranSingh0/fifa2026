@@ -32,6 +32,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.local.example
+!.env.example
 
 # vercel
 .vercel
@@ -52,9 +54,16 @@ generate_handoff.js
 parse.js
 patch.js
 test-results/
+claude_context.txt
+create_dump.ps1
+*_output.txt
+
+# Scratch Files
+scratch-*
 
 # Diagnostic Scripts
 scripts/audit-live.ts
 scripts/clean-foreign-matches.ts
 scripts/debug-api-response.ts
 scripts/verify-seed.ts
+scripts/diagnostic*
