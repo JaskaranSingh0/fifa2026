@@ -82,7 +82,7 @@ export default function TeamsExperience() {
   const resolvedProfile: TeamProfile | null = selectedCountry
     ? teamProfile ?? {
         code: selectedCountry.code,
-        logo: `/logos/${selectedCountry.code}.png`,
+        logo: `/logos/${selectedCountry.code.toLowerCase()}.png`,
         flag: "🏳️",
         fifaRanking: selectedCountry.ranking ?? 0,
         confederation: "",

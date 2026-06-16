@@ -1,66 +1,12 @@
-// useLiveMatches.ts — Client-side hook that polls /api/matches for live data.
+// useLiveMatches.ts — match-list helpers for the live (MatchWithScore) shape.
 //
-// Usage:
-//   const { matches, isLoading, lastUpdated } = useLiveMatches(30000);
-//
-// Polls every `intervalMs` (default 30s). Returns merged match data.
+// The polling hook that previously lived here was removed in favour of
+// useRealtimeMatches (30s poll + Supabase Realtime). These pure helpers mirror
+// filterMatches / groupMatchesByDate in matches-data.ts but operate on the
+// MatchWithScore shape returned by /api/matches, and are consumed by /matches.
 
-"use client";
-
-import { useState, useEffect, useCallback, useRef } from "react";
 import type { MatchWithScore } from "@/app/api/matches/route";
-import { MatchStatus, TournamentStage } from "@/lib/data/matches";
-
-export interface UseLiveMatchesResult {
-  matches: MatchWithScore[];
-  isLoading: boolean;
-  error: string | null;
-  lastUpdated: string | null;
-  refetch: () => Promise<void>;
-}
-
-export function useLiveMatches(intervalMs: number = 30000): UseLiveMatchesResult {
-  const [matches, setMatches] = useState<MatchWithScore[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  const mountedRef = useRef(true);
-
-  const fetchMatches = useCallback(async () => {
-    try {
-      const res = await fetch("/api/matches", { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-
-      if (mountedRef.current) {
-        setMatches(data.matches);
-        setLastUpdated(data.updatedAt);
-        setError(null);
-        setIsLoading(false);
-      }
-    } catch (err) {
-      if (mountedRef.current) {
-        setError(err instanceof Error ? err.message : "Failed to fetch matches");
-        setIsLoading(false);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    mountedRef.current = true;
-    fetchMatches();
-
-    const interval = setInterval(fetchMatches, intervalMs);
-    return () => {
-      mountedRef.current = false;
-      clearInterval(interval);
-    };
-  }, [fetchMatches, intervalMs]);
-
-  return { matches, isLoading, error, lastUpdated, refetch: fetchMatches };
-}
-
-// ── Utility: filter & group (mirrors matches-data.ts but for MatchWithScore) ──
+import { TournamentStage } from "@/lib/data/matches";
 
 export function filterLiveMatches(
   matches: MatchWithScore[],

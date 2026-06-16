@@ -6,13 +6,21 @@
  * Navigation gateway. Not a content page.
  * Fits inside a single 100vh screen — no scrolling.
  *
- * INTRO SEQUENCE (6 phases, ~5 seconds total):
- *   Phase 1 (0–1s)    → Screen dark, handful of particles visible
- *   Phase 2 (1–2.2s)  → More particles materialise (stars appearing)
- *   Phase 3 (2.2–3.2s)→ Particle motion begins, universe comes alive
- *   Phase 4 (3.2–4s)  → Welcome text fades in
- *   Phase 5 (4–5.2s)  → Nav items appear sequentially
- *   Phase 6 (5.4s+)   → Full idle state, all interactions active
+ * THREE-STAGE EXPERIENCE (phase: 'gate' → 'warp' → 'universe'):
+ *   gate     → Title card + "26" particle morph; ENTER EXPERIENCE / Skip
+ *   warp     → WarpTunnel star-streak transition (~3.5s, skippable)
+ *   universe → Particle universe + center navigation
+ *
+ * Returning visitors (sessionStorage 'wc2026_entered') skip straight to 'universe'.
+ *
+ * UNIVERSE INTRO TIMELINE (requestAnimationFrame, ms from universe start):
+ *   →1400ms  Particles materialise   (uIntroProgress 0→1)
+ *   →1800ms  Particle motion begins  (state → IDLE)
+ *   →2200ms  Welcome text fades in
+ *   →2700ms  Nav items appear sequentially
+ *   →3000ms  Full idle — all interactions active
+ *
+ * prefers-reduced-motion short-circuits the timeline and reveals everything at once.
  */
 
 import React, {
@@ -33,6 +41,16 @@ import { ParticleState } from "@/lib/particle-system";
 // Dynamically import the WebGL canvas — avoids SSR issues with Three.js
 const ParticleBackground = dynamic(
   () => import("@/components/ParticleBackground"),
+  { ssr: false }
+);
+
+const GateParticlesDynamic = dynamic(
+  () => import("@/components/GateParticles"),
+  { ssr: false }
+);
+
+const WarpTunnelDynamic = dynamic(
+  () => import("@/components/WarpTunnel"),
   { ssr: false }
 );
 
@@ -184,11 +202,41 @@ function NavPortal({
 // ---------------------------------------------------------------------------
 
 export default function HomePage() {
+  const [phase, setPhase] = useState<'gate' | 'warp' | 'universe'>('gate');
   const [navState, setNavState] = useState<ParticleState>(ParticleState.INTRO);
   const [introProgress, setIntroProgress] = useState(0);
   const [showWelcome, setShowWelcome] = useState(false);
   const [showNav, setShowNav] = useState(false);
   const [introComplete, setIntroComplete] = useState(false);
+  const [particlesAssembled, setParticlesAssembled] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && sessionStorage.getItem('wc2026_entered') === 'true') {
+      setPhase('universe');
+    }
+  }, []);
+
+  // Start assembling 600ms after gate appears
+  useEffect(() => {
+    if (phase !== 'gate') return;
+    const t = setTimeout(() => setParticlesAssembled(true), 600);
+    return () => clearTimeout(t);
+  }, [phase]);
+
+  const handleEnter = useCallback(() => {
+    if (typeof window !== 'undefined') sessionStorage.setItem('wc2026_entered', 'true');
+    setParticlesAssembled(false); // scatter particles on exit
+    setPhase('warp');
+  }, []);
+
+  const handleSkip = useCallback(() => {
+    if (typeof window !== 'undefined') sessionStorage.setItem('wc2026_entered', 'true');
+    setPhase('universe');
+  }, []);
+
+  const handleWarpComplete = useCallback(() => {
+    setPhase('universe');
+  }, []);
 
   const startTime = useRef<number | null>(null);
   const animFrameRef = useRef<number | null>(null);
@@ -248,6 +296,8 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    if (phase !== 'universe') return; // Don't start until gate is dismissed
+
     if (reducedMotion) {
       // Skip intro — show everything immediately
       setIntroProgress(1);
@@ -265,7 +315,7 @@ export default function HomePage() {
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [reducedMotion, driveIntro]);
+  }, [reducedMotion, driveIntro, phase]);
 
   // ---------------------------------------------------------------------------
   // Nav interaction handlers
@@ -290,6 +340,159 @@ export default function HomePage() {
       className="fixed inset-0 overflow-hidden bg-[#050505]"
       style={{ width: "100dvw", height: "100dvh" }}
     >
+      <AnimatePresence>
+        {phase === 'gate' && (
+          <motion.div
+            key="gate"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6, ease: 'easeInOut' }}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 50,
+              background: '#050505',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              gap: '0',
+            }}
+          >
+            {/* Particle canvas plays behind gate at very low opacity */}
+            <div style={{ position: 'absolute', inset: 0, opacity: 0.15, pointerEvents: 'none' }}>
+              <ParticleBackground
+                navState={ParticleState.IDLE}
+                mousePos={{ x: 0.5, y: 0.5 }}
+                clickPos={null}
+                introProgress={1}
+                reducedMotion={false}
+              />
+            </div>
+
+            {/* GateParticles — "26" forming behind the text */}
+            <div style={{
+              position: 'absolute',
+              bottom: '15%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: 'min(600px, 90vw)',
+              height: 'min(300px, 40vh)',
+              opacity: 0.35,  // subtle — behind the text
+              pointerEvents: 'none',
+            }}>
+              <GateParticlesDynamic assembled={particlesAssembled} />
+            </div>
+
+            {/* Title composition */}
+            <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', userSelect: 'none' }}>
+              
+              {/* Tiny label */}
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                style={{
+                  fontSize: '0.6rem', letterSpacing: '0.4em',
+                  color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase',
+                  marginBottom: '2rem', fontWeight: 400,
+                }}
+              >
+                USA · MEXICO · CANADA · 2026
+              </motion.p>
+
+              {/* MASSIVE title — staggered lines */}
+              {['FIFA', 'WORLD CUP', '2026'].map((line, i) => (
+                <motion.div
+                  key={line}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.9, delay: 0.3 + i * 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  style={{
+                    fontSize: line === 'FIFA' 
+                      ? 'clamp(4rem, 14vw, 12rem)'
+                      : line === 'WORLD CUP'
+                      ? 'clamp(2rem, 7vw, 6rem)'
+                      : 'clamp(3rem, 10vw, 9rem)',
+                    fontWeight: 900,
+                    letterSpacing: line === 'FIFA' ? '0.1em' : '0.08em',
+                    lineHeight: 0.9,
+                    color: line === '2026' ? 'rgba(255,255,255,0.15)' : '#ffffff',
+                    textTransform: 'uppercase',
+                    display: 'block',
+                  }}
+                >
+                  {line}
+                </motion.div>
+              ))}
+
+              {/* Thin separator */}
+              <motion.div
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: 1.2, delay: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+                style={{
+                  height: '1px', background: 'rgba(255,255,255,0.1)',
+                  margin: '2.5rem auto', width: '80px', transformOrigin: 'center',
+                }}
+              />
+
+              {/* ENTER EXPERIENCE button */}
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 1.0 }}
+                onClick={handleEnter}
+                style={{
+                  background: 'none', border: '1px solid rgba(255,255,255,0.2)',
+                  borderRadius: '100px', cursor: 'pointer',
+                  padding: '0.75rem 2rem',
+                  display: 'inline-flex', alignItems: 'center', gap: '0.75rem',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.6)';
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
+                  e.currentTarget.style.background = 'none';
+                }}
+              >
+                {/* Play triangle */}
+                <svg width="10" height="12" viewBox="0 0 10 12" fill="rgba(255,255,255,0.7)">
+                  <path d="M0 0L10 6L0 12V0Z" />
+                </svg>
+                <span style={{
+                  fontSize: '0.65rem', letterSpacing: '0.3em',
+                  color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', fontWeight: 500,
+                }}>
+                  ENTER EXPERIENCE
+                </span>
+              </motion.button>
+            </div>
+
+            {/* Skip button — bottom right */}
+            <motion.button
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 1.5 }}
+              onClick={handleSkip}
+              style={{
+                position: 'absolute', bottom: '2rem', right: '2rem',
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: '0.55rem', letterSpacing: '0.2em',
+                color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase',
+                transition: 'color 0.25s ease',
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.2)'}
+            >
+              Skip ›
+            </motion.button>
+          </motion.div>
+        )}
+
+        {phase === 'warp' && (
+          <WarpTunnelDynamic onComplete={handleWarpComplete} />
+        )}
+      </AnimatePresence>
 
       {/* ── WebGL Particle Universe ────────────────────────────────────────── */}
       <ParticleBackground
@@ -301,86 +504,94 @@ export default function HomePage() {
       />
 
       {/* ── Welcome Text (top-right desktop / top-center mobile) ────────────── */}
-      <WelcomeText isVisible={showWelcome} reducedMotion={reducedMotion} />
+      {phase === 'universe' && (
+        <WelcomeText isVisible={showWelcome} reducedMotion={reducedMotion} />
+      )}
 
       {/* ── Year Badge — top left ─────────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={showWelcome ? { opacity: 1 } : { opacity: 0 }}
-        transition={{ duration: 1.2, ease: "easeOut", delay: 0.4 }}
-        className="absolute z-20 bottom-6 right-6 md:bottom-8 md:right-8 lg:right-12 pointer-events-none select-none"
-      >
-        <span
-          className="text-white uppercase tracking-widest"
-          style={{
-            fontFamily: "var(--font-inter, 'Inter', sans-serif)",
-            fontSize: "clamp(0.55rem, 0.9vw, 0.7rem)",
-            fontWeight: 300,
-            opacity: 0.58,
-            letterSpacing: "0.18em",
-          }}
+      {phase === 'universe' && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={showWelcome ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ duration: 1.2, ease: "easeOut", delay: 0.4 }}
+          className="absolute z-20 bottom-6 right-6 md:bottom-8 md:right-8 lg:right-12 pointer-events-none select-none"
         >
-          FIFA · World Cup · 2026
-        </span>
-      </motion.div>
+          <span
+            className="text-white uppercase tracking-widest"
+            style={{
+              fontFamily: "var(--font-inter, 'Inter', sans-serif)",
+              fontSize: "clamp(0.55rem, 0.9vw, 0.7rem)",
+              fontWeight: 300,
+              opacity: 0.58,
+              letterSpacing: "0.18em",
+            }}
+          >
+            FIFA · World Cup · 2026
+          </span>
+        </motion.div>
+      )}
 
       {/* ── Center Navigation ─────────────────────────────────────────────── */}
-      <div className="absolute inset-0 flex items-center justify-center z-20">
-        <AnimatePresence>
-          {showNav && (
-            <motion.nav
-              key="main-nav"
-              role="navigation"
-              aria-label="Main navigation"
-              initial="hidden"
-              animate="visible"
-              variants={{
-                hidden: {},
-                visible: {
-                  transition: {
-                    staggerChildren: reducedMotion ? 0 : 0.11,
+      {phase === 'universe' && (
+        <div className="absolute inset-0 flex items-center justify-center z-20">
+          <AnimatePresence>
+            {showNav && (
+              <motion.nav
+                key="main-nav"
+                role="navigation"
+                aria-label="Main navigation"
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  hidden: {},
+                  visible: {
+                    transition: {
+                      staggerChildren: reducedMotion ? 0 : 0.11,
+                    },
                   },
-                },
-              }}
-              className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8 lg:gap-10 w-full px-8"
-            >
-              {NAV_ITEMS.map((item, index) => (
-                <NavPortal
-                  key={item.label}
-                  label={item.label}
-                  href={item.href}
-                  navState={item.state}
-                  onNavHover={handleNavHover}
-                  onNavLeave={handleNavLeave}
-                  reducedMotion={reducedMotion}
-                  introComplete={introComplete}
-                  siblingRefs={siblingRefs}
-                  myIndex={index}
-                />
-              ))}
-            </motion.nav>
-          )}
-        </AnimatePresence>
-      </div>
+                }}
+                className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8 lg:gap-10 w-full px-8"
+              >
+                {NAV_ITEMS.map((item, index) => (
+                  <NavPortal
+                    key={item.label}
+                    label={item.label}
+                    href={item.href}
+                    navState={item.state}
+                    onNavHover={handleNavHover}
+                    onNavLeave={handleNavLeave}
+                    reducedMotion={reducedMotion}
+                    introComplete={introComplete}
+                    siblingRefs={siblingRefs}
+                    myIndex={index}
+                  />
+                ))}
+              </motion.nav>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
 
       {/* ── Bottom vertical accent line ───────────────────────────────────── */}
-      <motion.div
-        initial={{ scaleY: 0, opacity: 0 }}
-        animate={showWelcome ? { scaleY: 1, opacity: 1 } : {}}
-        transition={{
-          duration: 1.6,
-          ease: [0.25, 0.46, 0.45, 0.94],
-          delay: 0.6,
-        }}
-        className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10 pointer-events-none"
-        style={{
-          width: "1px",
-          height: "56px",
-          background: "linear-gradient(to top, rgba(0,209,255,0.35), transparent)",
-          transformOrigin: "bottom center",
-        }}
-        aria-hidden="true"
-      />
+      {phase === 'universe' && (
+        <motion.div
+          initial={{ scaleY: 0, opacity: 0 }}
+          animate={showWelcome ? { scaleY: 1, opacity: 1 } : {}}
+          transition={{
+            duration: 1.6,
+            ease: [0.25, 0.46, 0.45, 0.94],
+            delay: 0.6,
+          }}
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10 pointer-events-none"
+          style={{
+            width: "1px",
+            height: "56px",
+            background: "linear-gradient(to top, rgba(0,209,255,0.35), transparent)",
+            transformOrigin: "bottom center",
+          }}
+          aria-hidden="true"
+        />
+      )}
     </main>
   );
 }

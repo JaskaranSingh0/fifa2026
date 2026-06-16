@@ -41,7 +41,7 @@ const p = (name: string, number: number, position: Position, club: string): Play
 export const TEAM_PROFILES: Record<string, TeamProfile> = {
   ARG: {
     code: "ARG",
-    logo: "/logos/ARG.png",
+    logo: "/logos/arg.png",
     flag: "🇦🇷",
     fifaRanking: 1,
     confederation: "CONMEBOL",
@@ -73,7 +73,7 @@ export const TEAM_PROFILES: Record<string, TeamProfile> = {
 
   FRA: {
     code: "FRA",
-    logo: "/logos/FRA.png",
+    logo: "/logos/fra.png",
     flag: "🇫🇷",
     fifaRanking: 2,
     confederation: "UEFA",
@@ -105,7 +105,7 @@ export const TEAM_PROFILES: Record<string, TeamProfile> = {
 
   BRA: {
     code: "BRA",
-    logo: "/logos/BRA.png",
+    logo: "/logos/bra.png",
     flag: "🇧🇷",
     fifaRanking: 5,
     confederation: "CONMEBOL",
@@ -136,7 +136,7 @@ export const TEAM_PROFILES: Record<string, TeamProfile> = {
 
   ENG: {
     code: "ENG",
-    logo: "/logos/ENG.png",
+    logo: "/logos/eng.png",
     flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
     fifaRanking: 3,
     confederation: "UEFA",
@@ -167,7 +167,7 @@ export const TEAM_PROFILES: Record<string, TeamProfile> = {
 
   ESP: {
     code: "ESP",
-    logo: "/logos/ESP.png",
+    logo: "/logos/esp.png",
     flag: "🇪🇸",
     fifaRanking: 8,
     confederation: "UEFA",
@@ -197,7 +197,7 @@ export const TEAM_PROFILES: Record<string, TeamProfile> = {
 
   GER: {
     code: "GER",
-    logo: "/logos/GER.png",
+    logo: "/logos/ger.png",
     flag: "🇩🇪",
     fifaRanking: 16,
     confederation: "UEFA",
@@ -227,7 +227,7 @@ export const TEAM_PROFILES: Record<string, TeamProfile> = {
 
   POR: {
     code: "POR",
-    logo: "/logos/POR.png",
+    logo: "/logos/por.png",
     flag: "🇵🇹",
     fifaRanking: 7,
     confederation: "UEFA",
@@ -256,7 +256,7 @@ export const TEAM_PROFILES: Record<string, TeamProfile> = {
 
   NED: {
     code: "NED",
-    logo: "/logos/NED.png",
+    logo: "/logos/ned.png",
     flag: "🇳🇱",
     fifaRanking: 6,
     confederation: "UEFA",
@@ -284,7 +284,7 @@ export const TEAM_PROFILES: Record<string, TeamProfile> = {
 
   USA: {
     code: "USA",
-    logo: "/logos/USA.png",
+    logo: "/logos/usa.png",
     flag: "🇺🇸",
     fifaRanking: 11,
     confederation: "CONCACAF",
@@ -314,7 +314,7 @@ export const TEAM_PROFILES: Record<string, TeamProfile> = {
 
   MEX: {
     code: "MEX",
-    logo: "/logos/MEX.png",
+    logo: "/logos/mex.png",
     flag: "🇲🇽",
     fifaRanking: 15,
     confederation: "CONCACAF",
@@ -343,7 +343,7 @@ export const TEAM_PROFILES: Record<string, TeamProfile> = {
 
   CAN: {
     code: "CAN",
-    logo: "/logos/CAN.png",
+    logo: "/logos/can.png",
     flag: "🇨🇦",
     fifaRanking: 48,
     confederation: "CONCACAF",
@@ -372,7 +372,7 @@ export const TEAM_PROFILES: Record<string, TeamProfile> = {
 
   URU: {
     code: "URU",
-    logo: "/logos/URU.png",
+    logo: "/logos/uru.png",
     flag: "🇺🇾",
     fifaRanking: 11,
     confederation: "CONMEBOL",
@@ -401,7 +401,7 @@ export const TEAM_PROFILES: Record<string, TeamProfile> = {
 
   COL: {
     code: "COL",
-    logo: "/logos/COL.png",
+    logo: "/logos/col.png",
     flag: "🇨🇴",
     fifaRanking: 14,
     confederation: "CONMEBOL",
@@ -430,7 +430,7 @@ export const TEAM_PROFILES: Record<string, TeamProfile> = {
 
   MAR: {
     code: "MAR",
-    logo: "/logos/MAR.png",
+    logo: "/logos/mar.png",
     flag: "🇲🇦",
     fifaRanking: 12,
     confederation: "CAF",
@@ -458,7 +458,7 @@ export const TEAM_PROFILES: Record<string, TeamProfile> = {
 
   JPN: {
     code: "JPN",
-    logo: "/logos/JPN.png",
+    logo: "/logos/jpn.png",
     flag: "🇯🇵",
     fifaRanking: 18,
     confederation: "AFC",
@@ -486,7 +486,7 @@ export const TEAM_PROFILES: Record<string, TeamProfile> = {
 
   SEN: {
     code: "SEN",
-    logo: "/logos/SEN.png",
+    logo: "/logos/sen.png",
     flag: "🇸🇳",
     fifaRanking: 17,
     confederation: "CAF",
@@ -514,7 +514,7 @@ export const TEAM_PROFILES: Record<string, TeamProfile> = {
 
   BEL: {
     code: "BEL",
-    logo: "/logos/BEL.png",
+    logo: "/logos/bel.png",
     flag: "🇧🇪",
     fifaRanking: 4,
     confederation: "UEFA",
@@ -542,7 +542,7 @@ export const TEAM_PROFILES: Record<string, TeamProfile> = {
 
   CRO: {
     code: "CRO",
-    logo: "/logos/CRO.png",
+    logo: "/logos/cro.png",
     flag: "🇭🇷",
     fifaRanking: 10,
     confederation: "UEFA",

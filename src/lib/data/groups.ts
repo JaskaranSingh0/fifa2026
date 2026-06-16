@@ -16,7 +16,7 @@ export const GROUPS: Group[] = [
   { name: "Group H", letter: "H", teams: ["ESP", "CPV", "KSA", "URU"] },
   { name: "Group I", letter: "I", teams: ["FRA", "SEN", "IRQ", "NOR"] },
   { name: "Group J", letter: "J", teams: ["ARG", "ALG", "AUT", "JOR"] },
-  { name: "Group K", letter: "K", teams: ["POR", "DR ", "UZB", "COL"] },
+  { name: "Group K", letter: "K", teams: ["POR", "COD", "UZB", "COL"] },
   { name: "Group L", letter: "L", teams: ["ENG", "CRO", "GHA", "PAN"] },
 ];
 export function getGroupForTeam(code: string): Group | undefined {
