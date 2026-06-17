@@ -1,8 +1,9 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any -- presentational view over loosely-typed match + ESPN-derived JSON */
 
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { TEAM_BRANDING } from "@/lib/data/team-branding";
 
 const formatMatchDate = (dateStr: string) => {
@@ -156,7 +157,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
                 {/* Minute Marker */}
                 <div className="w-24 shrink-0 flex items-center justify-center gap-2">
                   <div className="h-px bg-[rgba(255,255,255,0.1)] flex-1" />
-                  <span className="text-xs text-[rgba(255,255,255,0.3)]">{g.minute}'</span>
+                  <span className="text-xs text-[rgba(255,255,255,0.3)]">{g.minute}&apos;</span>
                   <div className="h-px bg-[rgba(255,255,255,0.1)] flex-1" />
                 </div>
 

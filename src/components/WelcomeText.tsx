@@ -19,8 +19,8 @@ import { motion, AnimatePresence } from "framer-motion";
 // Phrase sequence — first phrase is the anchor, rest cycle after
 // ---------------------------------------------------------------------------
 const PHRASES = [
-  "Welcome to the World of Football",
   "48 Nations. One Dream.",
+  "Welcome to the World of Football",
   "The Greatest Tournament on Earth.",
   "For Those Who Live the Game.",
   "Beyond the Final Whistle.",

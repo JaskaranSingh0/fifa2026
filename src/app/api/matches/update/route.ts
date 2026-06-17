@@ -26,10 +26,10 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ success: true, match });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Match update error:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Invalid request" },
+      { success: false, error: error instanceof Error ? error.message : "Invalid request" },
       { status: 400 }
     );
   }

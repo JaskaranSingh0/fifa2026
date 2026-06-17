@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import SiteNav from "@/components/SiteNav";
 import CustomCursor from "@/components/CustomCursor";
+import FilmGrain from "@/components/FilmGrain";
+import MusicProvider from "@/components/music/MusicProvider";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -49,9 +51,12 @@ export default function RootLayout({
         } as React.CSSProperties}
         suppressHydrationWarning
       >
-        <CustomCursor />
-        <SiteNav />
-        {children}
+        <MusicProvider>
+          <CustomCursor />
+          <FilmGrain />
+          <SiteNav />
+          {children}
+        </MusicProvider>
       </body>
     </html>
   );

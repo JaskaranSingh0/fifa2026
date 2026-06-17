@@ -42,6 +42,7 @@ import { useRealtimeMatches } from "@/hooks/useRealtimeMatches";
 import type { MatchWithScore } from "@/app/api/matches/route";
 import TeamLogo from "@/components/TeamLogo";
 import LiveIndicator from "@/components/LiveIndicator";
+import RevealText from "@/components/RevealText";
 import { getTeamBranding } from "@/lib/data/team-branding";
 
 // ---------------------------------------------------------------------------
@@ -241,7 +242,7 @@ function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) 
                 )}
                 {isLive && match.liveData && (
                   <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#FF0000', letterSpacing: '0.05em' }}>
-                    {match.liveData.currentMinute}'
+                    {match.liveData.currentMinute}&apos;
                   </span>
                 )}
               </div>
@@ -372,7 +373,7 @@ export default function MatchesPage() {
                     {m.homeScore} - {m.awayScore}
                   </span>
                   <span className="font-semibold text-white">{m.away.name}</span>
-                  <span className="text-[0.65rem] text-white/50">{m.liveData?.currentMinute}'</span>
+                  <span className="text-[0.65rem] text-white/50">{m.liveData?.currentMinute}&apos;</span>
                 </div>
               ))}
             </div>
@@ -394,10 +395,8 @@ export default function MatchesPage() {
         <header style={{ paddingTop: "clamp(4rem, 7vw, 6rem)" }}>
 
           {/* MATCHES — the title */}
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+          <RevealText
+            text="Matches"
             style={{
               fontSize: "clamp(3rem, 8vw, 7rem)",
               fontWeight: 800,
@@ -407,9 +406,7 @@ export default function MatchesPage() {
               lineHeight: 0.9,
               marginBottom: "clamp(1rem, 2vw, 1.5rem)",
             }}
-          >
-            Matches
-          </motion.h1>
+          />
 
           {/* Subtitle — count + date range */}
           <motion.div

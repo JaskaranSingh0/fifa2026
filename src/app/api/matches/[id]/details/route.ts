@@ -1,8 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- ESPN summary is untyped third-party JSON; `any` is the pragmatic boundary type for this adapter. */
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { normalizeTeamName } from '@/lib/match-sync';
 
 // ESPN team name → our stored team name normalization
 const ESPN_NAME_MAP: Record<string, string> = {
@@ -24,11 +24,6 @@ function normalizeESPN(name: string): string {
 
 async function fetchESPNEventId(homeTeam: string, awayTeam: string, date: Date): Promise<string | null> {
   try {
-    const yyyy = date.getUTCFullYear();
-    const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const dd = String(date.getUTCDate()).padStart(2, '0');
-    const dateStr = `${yyyy}${mm}${dd}`;
-
     // Try current date and adjacent days to handle timezone offsets
     for (const offset of [0, -1, 1]) {
       const d = new Date(date);

@@ -16,7 +16,7 @@ export async function GET() {
   try {
     const result = await syncMatches();
     return NextResponse.json({ success: true, ...result });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ success: false }, { status: 500 });
   }
 }

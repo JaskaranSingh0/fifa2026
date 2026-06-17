@@ -27,7 +27,7 @@ export function normalizeTeamName(name: string): string {
 }
 
 export async function syncMatches(): Promise<{ updated: number, source: string }> {
-  const [apfData, afdData, espnData] = await Promise.all([
+  const [, afdData, espnData] = await Promise.all([
     fetchFromApiFootball(),
     fetchFromFootballData(),
     fetchFromESPN(),

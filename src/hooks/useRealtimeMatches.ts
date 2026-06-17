@@ -73,14 +73,20 @@ export function useRealtimeMatches(initialMatches: MatchWithScore[] = []) {
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "Match" },
         (payload) => {
-          const updated = payload.new as any;
+          const updated = payload.new as {
+            id: string;
+            status: string;
+            homeScore?: number;
+            awayScore?: number;
+            minute?: number;
+          };
           if (!mountedRef.current) return;
           setMatches((prev) =>
             prev.map((m) => {
               if (m.id !== updated.id) return m;
               return {
                 ...m,
-                status: updated.status,
+                status: updated.status as MatchWithScore["status"],
                 homeScore: updated.homeScore ?? m.homeScore,
                 awayScore: updated.awayScore ?? m.awayScore,
                 liveData:

@@ -2,7 +2,7 @@
 // Client components poll this endpoint for updates.
 
 import { NextResponse } from "next/server";
-import { MATCHES, Match, MatchStatus } from "@/lib/data/matches";
+import { MATCHES, MatchStatus } from "@/lib/data/matches";
 import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic"; // Never cache — always serve fresh data
 

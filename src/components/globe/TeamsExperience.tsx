@@ -8,6 +8,7 @@ import { gsap } from "gsap";
 
 import Earth from "./Earth";
 import SpaceDust from "./SpaceDust";
+import GlobeLoader from "./GlobeLoader";
 import SelectedCountryOverlay from "./SelectedCountryOverlay";
 import TeamProfileOverlay from "./TeamProfileOverlay";
 import { globeTeams, GlobeTeamData } from "@/lib/data/globe-teams";
@@ -98,6 +99,9 @@ export default function TeamsExperience() {
 
   return (
     <div className="relative w-full h-screen bg-[#050505] overflow-hidden select-none">
+
+      {/* ── Branded texture-load veil ───────────────────────────────────── */}
+      <GlobeLoader />
 
       {/* ── Globe Canvas ────────────────────────────────────────────────── */}
       <div ref={canvasWrapRef} className="absolute inset-0">

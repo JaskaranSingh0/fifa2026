@@ -66,7 +66,7 @@ function Marker({
         setHovered(true);
         document.body.style.cursor = "pointer";
       }}
-      onPointerOut={(e) => {
+      onPointerOut={() => {
         setHovered(false);
         document.body.style.cursor = "auto";
       }}

@@ -1,13 +1,31 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import { motion } from "framer-motion";
 import { GROUPS } from "@/lib/data/groups";
 import TeamLogo from "@/components/TeamLogo";
+import RevealText from "@/components/RevealText";
+
+interface GroupStandingRow {
+  code: string;
+  name: string;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  gf: number;
+  ga: number;
+  gd: number;
+  points: number;
+}
+interface LiveGroup {
+  letter: string;
+  name: string;
+  teams: GroupStandingRow[];
+}
 
 export default function GroupsPage() {
-  const [liveGroups, setLiveGroups] = useState<any[]>([]);
+  const [liveGroups, setLiveGroups] = useState<LiveGroup[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,10 +59,8 @@ export default function GroupsPage() {
         {/* HEADER */}
         <header style={{ paddingTop: "clamp(4rem, 7vw, 6rem)" }}>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+          <RevealText
+            text="Groups"
             style={{
               fontSize: "clamp(3rem, 8vw, 7rem)",
               fontWeight: 800,
@@ -54,9 +70,7 @@ export default function GroupsPage() {
               lineHeight: 0.9,
               marginBottom: "clamp(1rem, 2vw, 1.5rem)",
             }}
-          >
-            Groups
-          </motion.h1>
+          />
 
           <motion.div
             initial={{ opacity: 0 }}
@@ -179,7 +193,7 @@ export default function GroupsPage() {
                         <div className="text-right uppercase" style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.35)" }}>PTS</div>
                       </div>
                     </li>
-                    {groupData?.teams.map((teamData: any, j: number) => {
+                    {groupData?.teams.map((teamData, j) => {
                       const pos = j + 1;
                       const borderLeft =
                         pos === 1

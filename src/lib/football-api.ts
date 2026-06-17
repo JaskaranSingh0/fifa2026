@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- football-data.org + ESPN responses are untyped third-party JSON */
 export interface NormalizedMatch {
   externalId: string;
   homeTeam: string;
@@ -98,7 +99,7 @@ export async function fetchFromESPN(): Promise<NormalizedMatch[]> {
       }
     }
 
-    return allEvents.map((event: any): NormalizedMatch => {
+    return allEvents.map((event): NormalizedMatch => {
       const competition = event.competitions?.[0];
       const home = competition?.competitors?.find((c: any) => c.homeAway === 'home');
       const away = competition?.competitors?.find((c: any) => c.homeAway === 'away');

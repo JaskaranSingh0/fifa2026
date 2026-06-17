@@ -1,5 +1,4 @@
 // groups.ts
-import { TEAMS } from "./teams";
 export interface Group {
   name: string;
   letter: string;

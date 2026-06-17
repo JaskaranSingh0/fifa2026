@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any -- presentational overlay over fetched group/match JSON */
 
 import React, { useRef, useEffect, useState } from "react";
 import Link from "next/link";
@@ -430,7 +431,7 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
                                 <span className="flex items-center gap-2">
                                   <span className="animate-pulse text-[0.6rem] text-red-500">●</span>
                                   {scoreDisplay}
-                                  <span className="text-[0.6rem] text-red-500 ml-1">{match.liveData?.currentMinute}'</span>
+                                  <span className="text-[0.6rem] text-red-500 ml-1">{match.liveData?.currentMinute}&apos;</span>
                                 </span>
                               ) : (
                                 scoreDisplay

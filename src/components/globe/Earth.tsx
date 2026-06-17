@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
@@ -18,8 +18,7 @@ interface EarthProps {
 
 export default function Earth({ teams, selectedCountry, onSelectCountry }: EarthProps) {
   const earthRef = useRef<THREE.Group>(null);
-  const { size } = useThree();
-  
+
   // Load premium high-res textures
   const [colorMap, nightMap, specularMap, bumpMap, cloudsMap] = useTexture([
     "/textures/earth/earth-blue-marble.jpg",
@@ -61,7 +60,7 @@ export default function Earth({ teams, selectedCountry, onSelectCountry }: Earth
       // Calculate target rotation to center the country
       const targetX = selectedCountry.lat * (Math.PI / 180);
       // Corrected Y calculation to bring the longitude exactly to the +Z (camera)
-      let rawTargetY = -(selectedCountry.lng + 90) * (Math.PI / 180);
+      const rawTargetY = -(selectedCountry.lng + 90) * (Math.PI / 180);
 
       // Find the shortest path for Y rotation
       const currentY = targetRotation.current.y;

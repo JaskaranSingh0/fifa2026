@@ -6,6 +6,11 @@ import { motion } from "framer-motion";
 import { TournamentStage } from "@/lib/data/matches";
 import TeamLogo from "@/components/TeamLogo";
 import { getTeamBranding } from "@/lib/data/team-branding";
+import RevealText from "@/components/RevealText";
+import type { MatchWithScore } from "@/app/api/matches/route";
+
+// status arrives as a plain string from the API — keep it loose
+type UIMatch = Omit<MatchWithScore, "status"> & { status: string };
 
 const STAGES = [
   { id: TournamentStage.ROUND_OF_32, label: "Round of 32" },
@@ -32,7 +37,7 @@ function isPlaceholder(code: string, name: string) {
 }
 
 export default function BracketPage() {
-  const [liveMatches, setLiveMatches] = useState<any[]>([]);
+  const [liveMatches, setLiveMatches] = useState<UIMatch[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -105,10 +110,8 @@ export default function BracketPage() {
         {/* HEADER */}
         <header style={{ paddingTop: "clamp(4rem, 7vw, 6rem)" }}>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+          <RevealText
+            text="Bracket"
             style={{
               fontSize: "clamp(3rem, 8vw, 7rem)",
               fontWeight: 800,
@@ -118,9 +121,7 @@ export default function BracketPage() {
               lineHeight: 0.9,
               marginBottom: "clamp(1rem, 2vw, 1.5rem)",
             }}
-          >
-            Bracket
-          </motion.h1>
+          />
 
           <motion.div
             initial={{ opacity: 0 }}
@@ -209,7 +210,7 @@ export default function BracketPage() {
                         const homePlaceholder = isPlaceholder(match.home.code, match.home.name);
                         const awayPlaceholder = isPlaceholder(match.away.code, match.away.name);
                         
-                        let borderStyle = "1px solid rgba(255,255,255,0.04)";
+                        const borderStyle = "1px solid rgba(255,255,255,0.04)";
                         let borderLeftStyle = "none";
                         if (match.status === "FINISHED" && match.homeScore !== undefined && match.awayScore !== undefined) {
                           const winnerCode = match.homeScore > match.awayScore ? match.home.code : match.away.code;

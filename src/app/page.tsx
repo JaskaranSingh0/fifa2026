@@ -7,8 +7,8 @@
  * Fits inside a single 100vh screen — no scrolling.
  *
  * THREE-STAGE EXPERIENCE (phase: 'gate' → 'warp' → 'universe'):
- *   gate     → Title card + "26" particle morph; ENTER EXPERIENCE / Skip
- *   warp     → WarpTunnel star-streak transition (~3.5s, skippable)
+ *   gate     → Title card over the Earth-horizon glow; ENTER EXPERIENCE / Skip
+ *   warp     → Fullscreen cinematic intro video (IntroVideo), skippable
  *   universe → Particle universe + center navigation
  *
  * Returning visitors (sessionStorage 'wc2026_entered') skip straight to 'universe'.
@@ -35,6 +35,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { gsap } from "gsap";
 
 import WelcomeText from "@/components/WelcomeText";
+import IntroVideo from "@/components/intro/IntroVideo";
+import { useMusic } from "@/components/music/MusicProvider";
 import { useMouseInteraction } from "@/hooks/useMouseInteraction";
 import { ParticleState } from "@/lib/particle-system";
 
@@ -44,15 +46,6 @@ const ParticleBackground = dynamic(
   { ssr: false }
 );
 
-const GateParticlesDynamic = dynamic(
-  () => import("@/components/GateParticles"),
-  { ssr: false }
-);
-
-const WarpTunnelDynamic = dynamic(
-  () => import("@/components/WarpTunnel"),
-  { ssr: false }
-);
 
 // ---------------------------------------------------------------------------
 // Intro timing constants (ms)
@@ -86,8 +79,10 @@ interface NavPortalProps {
   onNavLeave: () => void;
   reducedMotion: boolean;
   introComplete: boolean;
-  /** refs for all sibling links — so we can dim them on hover */
+  /** refs for all sibling links — so we can dim them on hover (read-only here) */
   siblingRefs: React.MutableRefObject<(HTMLAnchorElement | null)[]>;
+  /** parent-owned writer so the child never mutates a prop */
+  registerSibling: (index: number, el: HTMLAnchorElement | null) => void;
   myIndex: number;
 }
 
@@ -100,15 +95,16 @@ function NavPortal({
   reducedMotion,
   introComplete,
   siblingRefs,
+  registerSibling,
   myIndex,
 }: NavPortalProps) {
   const linkRef = useRef<HTMLAnchorElement>(null);
 
-  // Register this element into the shared refs array
+  // Register this element with the parent (no prop mutation)
   useEffect(() => {
-    siblingRefs.current[myIndex] = linkRef.current;
-    return () => { siblingRefs.current[myIndex] = null; };
-  }, [siblingRefs, myIndex]);
+    registerSibling(myIndex, linkRef.current);
+    return () => registerSibling(myIndex, null);
+  }, [registerSibling, myIndex]);
 
   const handleEnter = useCallback(() => {
     if (!introComplete || reducedMotion) return;
@@ -208,7 +204,7 @@ export default function HomePage() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [showNav, setShowNav] = useState(false);
   const [introComplete, setIntroComplete] = useState(false);
-  const [particlesAssembled, setParticlesAssembled] = useState(false);
+  const { start: startMusic } = useMusic();
 
   useEffect(() => {
     if (typeof window !== 'undefined' && sessionStorage.getItem('wc2026_entered') === 'true') {
@@ -216,18 +212,11 @@ export default function HomePage() {
     }
   }, []);
 
-  // Start assembling 600ms after gate appears
-  useEffect(() => {
-    if (phase !== 'gate') return;
-    const t = setTimeout(() => setParticlesAssembled(true), 600);
-    return () => clearTimeout(t);
-  }, [phase]);
-
   const handleEnter = useCallback(() => {
     if (typeof window !== 'undefined') sessionStorage.setItem('wc2026_entered', 'true');
-    setParticlesAssembled(false); // scatter particles on exit
+    startMusic();
     setPhase('warp');
-  }, []);
+  }, [startMusic]);
 
   const handleSkip = useCallback(() => {
     if (typeof window !== 'undefined') sessionStorage.setItem('wc2026_entered', 'true');
@@ -252,6 +241,9 @@ export default function HomePage() {
 
   // Shared refs for GSAP nav sibling animation
   const siblingRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const registerSibling = useCallback((index: number, el: HTMLAnchorElement | null) => {
+    siblingRefs.current[index] = el;
+  }, []);
 
   // ---------------------------------------------------------------------------
   // Intro animation driver — requestAnimationFrame loop
@@ -341,47 +333,44 @@ export default function HomePage() {
       style={{ width: "100dvw", height: "100dvh" }}
     >
       <AnimatePresence>
-        {phase === 'gate' && (
+        {phase !== 'universe' && (
           <motion.div
-            key="gate"
+            key="intro"
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.6, ease: 'easeInOut' }}
+            transition={{ duration: 0.9, ease: 'easeInOut' }}
             style={{
               position: 'fixed', inset: 0, zIndex: 50,
-              background: '#050505',
-              display: 'flex', flexDirection: 'column',
-              alignItems: 'center', justifyContent: 'center',
-              gap: '0',
+              background: '#050505', overflow: 'hidden',
             }}
           >
-            {/* Particle canvas plays behind gate at very low opacity */}
-            <div style={{ position: 'absolute', inset: 0, opacity: 0.15, pointerEvents: 'none' }}>
-              <ParticleBackground
-                navState={ParticleState.IDLE}
-                mousePos={{ x: 0.5, y: 0.5 }}
-                clickPos={null}
-                introProgress={1}
-                reducedMotion={false}
-              />
-            </div>
-
-            {/* GateParticles — "26" forming behind the text */}
-            <div style={{
-              position: 'absolute',
-              bottom: '15%',
-              left: '50%',
+            {/* Earth-horizon glow — blue → teal → green planetary limb */}
+            <div aria-hidden style={{
+              position: 'absolute', left: '50%', bottom: '-32vh',
               transform: 'translateX(-50%)',
-              width: 'min(600px, 90vw)',
-              height: 'min(300px, 40vh)',
-              opacity: 0.35,  // subtle — behind the text
+              width: '170vw', height: '74vh', borderRadius: '50%',
               pointerEvents: 'none',
-            }}>
-              <GateParticlesDynamic assembled={particlesAssembled} />
-            </div>
+              background: 'radial-gradient(ellipse at center, rgba(0,163,255,0.28) 0%, rgba(0,201,167,0.13) 36%, rgba(70,255,170,0.05) 56%, transparent 72%)',
+              filter: 'blur(24px)',
+            }} />
 
-            {/* Title composition */}
-            <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', userSelect: 'none' }}>
+            {/* Cinematic intro video — plays after Enter */}
+            {phase === 'warp' && (
+              <IntroVideo reducedMotion={reducedMotion} onComplete={handleWarpComplete} />
+            )}
+
+            {/* Gate title composition + CTA — fades out as the storm begins */}
+            <motion.div
+              initial={{ opacity: 1 }}
+              animate={{ opacity: phase === 'gate' ? 1 : 0, y: phase === 'gate' ? 0 : -24 }}
+              transition={{ duration: 0.5, ease: 'easeInOut' }}
+              style={{
+                position: 'absolute', inset: 0, zIndex: 2,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                pointerEvents: phase === 'gate' ? 'auto' : 'none',
+              }}
+            >
+              <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', userSelect: 'none' }}>
               
               {/* Tiny label */}
               <motion.p
@@ -421,6 +410,23 @@ export default function HomePage() {
                   {line}
                 </motion.div>
               ))}
+
+              {/* Emotional signature — the project's tagline */}
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1, delay: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
+                style={{
+                  marginTop: '1.75rem',
+                  fontSize: 'clamp(0.7rem, 1.4vw, 1rem)',
+                  fontWeight: 500,
+                  letterSpacing: '0.32em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(255,255,255,0.55)',
+                }}
+              >
+                48 Nations · One Dream
+              </motion.p>
 
               {/* Thin separator */}
               <motion.div
@@ -466,31 +472,28 @@ export default function HomePage() {
                   ENTER EXPERIENCE
                 </span>
               </motion.button>
-            </div>
+              </div>
+            </motion.div>
 
-            {/* Skip button — bottom right */}
+            {/* Skip / Skip Intro — bottom right */}
             <motion.button
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 1.5 }}
-              onClick={handleSkip}
+              transition={{ duration: 0.6, delay: phase === 'gate' ? 1.5 : 0.3 }}
+              onClick={phase === 'gate' ? handleSkip : handleWarpComplete}
               style={{
-                position: 'absolute', bottom: '2rem', right: '2rem',
+                position: 'absolute', bottom: '2rem', right: '2rem', zIndex: 3,
                 background: 'none', border: 'none', cursor: 'pointer',
                 fontSize: '0.55rem', letterSpacing: '0.2em',
-                color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase',
+                color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase',
                 transition: 'color 0.25s ease',
               }}
-              onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
-              onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.2)'}
+              onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.25)'}
             >
-              Skip ›
+              {phase === 'gate' ? 'Skip ›' : 'Skip Intro ›'}
             </motion.button>
           </motion.div>
-        )}
-
-        {phase === 'warp' && (
-          <WarpTunnelDynamic onComplete={handleWarpComplete} />
         )}
       </AnimatePresence>
 
@@ -563,6 +566,7 @@ export default function HomePage() {
                     reducedMotion={reducedMotion}
                     introComplete={introComplete}
                     siblingRefs={siblingRefs}
+                    registerSibling={registerSibling}
                     myIndex={index}
                   />
                 ))}

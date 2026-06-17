@@ -1,6 +1,5 @@
 // matches.ts
 import { TeamData, getTeam } from "./teams";
-import { GROUPS } from "./groups";
 
 export enum MatchStatus { UPCOMING = "UPCOMING", LIVE = "LIVE", FINISHED = "FINISHED", POSTPONED = "POSTPONED" }
 export enum TournamentStage { ALL = "ALL", GROUP_STAGE = "GROUP_STAGE", ROUND_OF_32 = "ROUND_OF_32", ROUND_OF_16 = "ROUND_OF_16", QUARTER_FINALS = "QUARTER_FINALS", SEMI_FINALS = "SEMI_FINALS", THIRD_PLACE = "THIRD_PLACE", FINAL = "FINAL" }

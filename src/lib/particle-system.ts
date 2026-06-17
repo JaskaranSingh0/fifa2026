@@ -352,8 +352,7 @@ export function updateParticles(
   config: ParticleConfig,
   state: ParticleState,
   time: number,
-  delta: number,
-  introProgress: number // 0 → 1 over the intro sequence
+  delta: number
 ): void {
   const { positions, velocities, phases, layers } = data;
   const count = config.count;

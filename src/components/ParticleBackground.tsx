@@ -210,7 +210,7 @@ function ParticleUniverse({
     }
 
     // Run physics simulation
-    updateParticles(data, config, navState, time, clampedDelta * 60, introProgress);
+    updateParticles(data, config, navState, time, clampedDelta * 60);
 
     // Mark position buffer dirty for GPU upload
     const posAttr = pointsRef.current.geometry.getAttribute("position");

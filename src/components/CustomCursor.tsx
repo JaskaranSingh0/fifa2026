@@ -30,11 +30,26 @@ export default function CustomCursor() {
       rafId = requestAnimationFrame(animateRing);
     };
 
+    // Grow + tint the ring over anything interactive
+    const INTERACTIVE = 'a, button, input, [role="tab"], [role="button"], [data-cursor]';
+    const onOver = (e: Event) => {
+      const el = e.target as Element | null;
+      if (el?.closest?.(INTERACTIVE)) ring.classList.add("cursor-ring--active");
+    };
+    const onOut = (e: Event) => {
+      const el = e.target as Element | null;
+      if (el?.closest?.(INTERACTIVE)) ring.classList.remove("cursor-ring--active");
+    };
+
     window.addEventListener("mousemove", onMove, { passive: true });
+    document.addEventListener("mouseover", onOver, { passive: true });
+    document.addEventListener("mouseout", onOut, { passive: true });
     rafId = requestAnimationFrame(animateRing);
 
     return () => {
       window.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseover", onOver);
+      document.removeEventListener("mouseout", onOut);
       cancelAnimationFrame(rafId);
     };
   }, []);

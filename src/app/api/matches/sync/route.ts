@@ -25,10 +25,10 @@ export async function GET(request: Request) {
       source,
       timestamp: new Date().toISOString() 
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Match sync error:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to sync matches" },
+      { success: false, error: error instanceof Error ? error.message : "Failed to sync matches" },
       { status: 500 }
     );
   }

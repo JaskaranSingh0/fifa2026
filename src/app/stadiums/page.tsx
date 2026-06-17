@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { STADIUMS } from "@/lib/data/stadiums";
 import { MATCHES } from "@/lib/data/matches";
+import RevealText from "@/components/RevealText";
 
 const stadiumCityMap: Record<string, string[]> = {
   'metlife': ['East Rutherford', 'New York'],
@@ -61,10 +61,8 @@ export default function StadiumsPage() {
         {/* HEADER */}
         <header style={{ paddingTop: "clamp(4rem, 7vw, 6rem)" }}>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+          <RevealText
+            text="Stadiums"
             style={{
               fontSize: "clamp(3rem, 8vw, 7rem)",
               fontWeight: 800,
@@ -74,9 +72,7 @@ export default function StadiumsPage() {
               lineHeight: 0.9,
               marginBottom: "clamp(1rem, 2vw, 1.5rem)",
             }}
-          >
-            Stadiums
-          </motion.h1>
+          />
 
           <motion.div
             initial={{ opacity: 0 }}
@@ -153,7 +149,7 @@ export default function StadiumsPage() {
 
               {/* Venues */}
               <div className="flex flex-col">
-                {venues.map((stadium, i) => {
+                {venues.map((stadium) => {
                   const isHovered = hoveredStadium === stadium.id;
                   const isAnyHovered = hoveredStadium !== null;
 
