@@ -81,20 +81,20 @@ export default function GroupsPage() {
             <span
               style={{
                 fontSize: "clamp(0.7rem, 1.1vw, 0.85rem)",
-                fontWeight: 300,
+                fontWeight: 400,
                 letterSpacing: "0.1em",
-                color: "rgba(255,255,255,0.3)",
+                color: "rgba(255,255,255,0.65)",
               }}
             >
               12 Groups
             </span>
-            <span style={{ color: "rgba(255,255,255,0.1)" }}>·</span>
+            <span style={{ color: "rgba(255,255,255,0.3)" }}>·</span>
             <span
               style={{
                 fontSize: "clamp(0.7rem, 1.1vw, 0.85rem)",
-                fontWeight: 300,
+                fontWeight: 400,
                 letterSpacing: "0.1em",
-                color: "rgba(255,255,255,0.2)",
+                color: "rgba(255,255,255,0.55)",
               }}
             >
               48 Nations
@@ -185,12 +185,12 @@ export default function GroupsPage() {
                         <div />
                         <div />
                         <div />
-                        <div className="text-right uppercase" style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.35)" }}>P</div>
-                        <div className="text-right uppercase" style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.35)" }}>W</div>
-                        <div className="text-right uppercase" style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.35)" }}>D</div>
-                        <div className="text-right uppercase" style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.35)" }}>L</div>
-                        <div className="text-right uppercase" style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.35)" }}>GD</div>
-                        <div className="text-right uppercase" style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.35)" }}>PTS</div>
+                        <div className="text-right uppercase" style={{ fontSize: "0.7rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>P</div>
+                        <div className="text-right uppercase" style={{ fontSize: "0.7rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>W</div>
+                        <div className="text-right uppercase" style={{ fontSize: "0.7rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>D</div>
+                        <div className="text-right uppercase" style={{ fontSize: "0.7rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>L</div>
+                        <div className="text-right uppercase" style={{ fontSize: "0.7rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>GD</div>
+                        <div className="text-right uppercase" style={{ fontSize: "0.7rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>PTS</div>
                       </div>
                     </li>
                     {groupData?.teams.map((teamData, j) => {
@@ -262,8 +262,8 @@ export default function GroupsPage() {
         </div>
 
         <div className="mt-12 md:mt-16 border-t border-[rgba(255,255,255,0.05)] pt-6">
-          <p style={{ fontSize: "0.55rem", letterSpacing: "0.1em", color: "rgba(255,255,255,0.2)", textTransform: "uppercase" }}>
-            <span className="inline-block w-2 h-3 bg-[rgba(255,255,255,0.3)] mr-2 align-middle"></span>
+          <p style={{ fontSize: "0.7rem", letterSpacing: "0.14em", color: "rgba(255,255,255,0.6)", textTransform: "uppercase", fontWeight: 500 }}>
+            <span className="inline-block w-1 h-3 bg-[rgba(255,255,255,0.7)] mr-2 align-middle"></span>
             Advances to Round of 32
           </p>
         </div>

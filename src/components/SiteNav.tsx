@@ -63,18 +63,18 @@ export default function SiteNav() {
         aria-label="Back to home"
         style={{
           textDecoration: "none",
-          fontSize: "0.55rem",
+          fontSize: "0.7rem",
           fontWeight: 700,
           letterSpacing: "0.22em",
-          color: "rgba(255,255,255,0.25)",
+          color: "rgba(255,255,255,0.65)",
           textTransform: "uppercase",
           transition: "color 0.25s ease",
           whiteSpace: "nowrap",
         }}
-        onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.7)")}
-        onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.25)")}
+        onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,1)")}
+        onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.65)")}
       >
-        WC <span style={{ opacity: 0.5 }}>·</span> 2026
+        WC <span style={{ opacity: 0.6 }}>·</span> 2026
       </Link>
 
       {/* Right: Section links */}
@@ -94,25 +94,25 @@ export default function SiteNav() {
               aria-current={isActive ? "page" : undefined}
               style={{
                 textDecoration: "none",
-                fontSize: "0.55rem",
-                fontWeight: isActive ? 600 : 400,
+                fontSize: "0.72rem",
+                fontWeight: isActive ? 600 : 500,
                 letterSpacing: "0.18em",
                 textTransform: "uppercase",
-                color: isActive 
-                  ? "rgba(255,255,255,0.9)" 
-                  : "rgba(255,255,255,0.22)",
-                borderBottom: isActive 
-                  ? "1px solid rgba(255,255,255,0.4)" 
+                color: isActive
+                  ? "rgba(255,255,255,1)"
+                  : "rgba(255,255,255,0.65)",
+                borderBottom: isActive
+                  ? "1px solid rgba(255,255,255,0.55)"
                   : "1px solid transparent",
                 paddingBottom: "1px",
                 transition: "color 0.25s ease, border-color 0.25s ease",
                 whiteSpace: "nowrap",
               }}
               onMouseEnter={e => {
-                if (!isActive) e.currentTarget.style.color = "rgba(255,255,255,0.6)";
+                if (!isActive) e.currentTarget.style.color = "rgba(255,255,255,0.95)";
               }}
               onMouseLeave={e => {
-                if (!isActive) e.currentTarget.style.color = "rgba(255,255,255,0.22)";
+                if (!isActive) e.currentTarget.style.color = "rgba(255,255,255,0.65)";
               }}
             >
               {item.label}

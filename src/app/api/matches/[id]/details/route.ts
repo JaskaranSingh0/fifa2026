@@ -16,6 +16,8 @@ const ESPN_NAME_MAP: Record<string, string> = {
   'Curaçao': 'Curaçao',
   'Curacao': 'Curaçao',
   'Cabo Verde': 'Cape Verde',
+  'Congo DR': 'DR Congo',
+  'Democratic Republic of the Congo': 'DR Congo',
 };
 
 function normalizeESPN(name: string): string {
@@ -88,17 +90,27 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     console.log('[ESPN summary keys]:', Object.keys(espn));
     console.log('[ESPN scoringPlays count]:', espn.scoringPlays?.length ?? 0, 'keyEvents:', espn.keyEvents?.length ?? 0, 'plays:', espn.plays?.length ?? 0);
 
-    // Try all possible ESPN paths for goal data
+    // Try all possible ESPN paths for goal data.
+    // As of 2026 ESPN serves goals under header.competitions[].details (the
+    // legacy scoringPlays/plays arrays are now usually absent), so that's the
+    // primary path; the rest are kept as fallbacks for other data states.
     let rawScoringPlays: any[] = [];
 
+    // Path 0 (current): header.competitions[0].details where scoringPlay === true
+    const headerDetails = espn.header?.competitions?.[0]?.details;
+    if (Array.isArray(headerDetails) && headerDetails.length > 0) {
+      rawScoringPlays = headerDetails.filter((d: any) => d.scoringPlay === true);
+    }
+
     // Path 1: direct scoringPlays array
-    if (espn.scoringPlays?.length > 0) {
+    if (rawScoringPlays.length === 0 && espn.scoringPlays?.length > 0) {
       rawScoringPlays = espn.scoringPlays;
     }
 
     // Path 2: keyEvents filtered to goals
     if (rawScoringPlays.length === 0 && espn.keyEvents?.length > 0) {
-      rawScoringPlays = espn.keyEvents.filter((e: any) => 
+      rawScoringPlays = espn.keyEvents.filter((e: any) =>
+        e.scoringPlay === true ||
         e.type?.text?.toLowerCase().includes('goal') ||
         e.scoringType?.displayName?.toLowerCase().includes('goal') ||
         e.type?.id === '99' || e.type?.id === '70'
@@ -110,15 +122,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       rawScoringPlays = espn.plays.filter((p: any) => p.scoringPlay === true);
     }
 
-    // Log what ESPN returned so we can debug
-    console.log(`[ESPN goals] path used: ${espn.scoringPlays?.length > 0 ? 'scoringPlays' : espn.keyEvents?.length > 0 ? 'keyEvents' : 'plays'}, count: ${rawScoringPlays.length}`);
-    console.log('[ESPN raw first goal]:', JSON.stringify(rawScoringPlays[0] ?? null));
-
     const goals = rawScoringPlays.map((play: any) => {
-      // ESPN participants format: [{ athlete: { displayName, id } }, { athlete: { displayName, id } }]
-      // First participant is always scorer, second (if exists) is assist
+      // ESPN participants format: [{ athlete: { displayName, id } }, ...]
+      // First participant is the scorer, second (if any) is the assist.
       const scorerName = play.participants?.[0]?.athlete?.displayName
-        ?? play.participants?.[0]?.displayName  // fallback if no nesting
+        ?? play.participants?.[0]?.displayName
         ?? play.athlete?.displayName
         ?? 'Unknown';
 
@@ -127,18 +135,26 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         ?? null;
 
       const clockStr = play.clock?.displayValue ?? play.period?.clock ?? '';
-      const minute = clockStr 
-        ? clockStr.replace("'", '').trim()
+      const minute = clockStr
+        ? clockStr.replace(/'/g, '').trim()
         : (play.sequenceNumber ? Math.floor(parseInt(play.sequenceNumber) / 60) + '' : '?');
 
       const teamName = play.team?.displayName ?? play.team?.name ?? '';
+
+      // Derive type from the boolean flags ESPN now ships (own goal / penalty),
+      // falling back to the older scoringType / type fields.
+      const type = play.ownGoal
+        ? 'Own Goal'
+        : play.penaltyKick
+        ? 'Penalty'
+        : play.scoringType?.displayName ?? play.type?.text ?? 'Goal';
 
       return {
         minute,
         team: normalizeESPN(teamName),
         scorer: scorerName,
         assist: assistName,
-        type: play.scoringType?.displayName ?? play.type?.text ?? 'Goal',
+        type,
       };
     });
 

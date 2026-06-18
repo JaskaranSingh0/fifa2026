@@ -9,13 +9,7 @@ export interface NormalizedMatch {
   status: 'SCHEDULED' | 'LIVE' | 'FINISHED';
   date: string;
   stage: string;
-  source: 'api-football' | 'football-data' | 'espn';
-}
-
-export async function fetchFromApiFootball(): Promise<NormalizedMatch[]> {
-  // API-Football free tier does not cover FIFA World Cup 2026 fixtures.
-  // football-data.org is the sole active data source for WC 2026 match sync.
-  return [];
+  source: 'football-data' | 'espn';
 }
 
 export async function fetchFromFootballData(): Promise<NormalizedMatch[]> {

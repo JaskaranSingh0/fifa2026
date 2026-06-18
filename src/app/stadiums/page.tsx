@@ -264,7 +264,7 @@ export default function StadiumsPage() {
                               fontSize: "0.6rem",
                               fontWeight: 600,
                               letterSpacing: "0.15em",
-                              color: stadium.id === 'metlife' ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.15)",
+                              color: stadium.id === 'metlife' ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.4)",
                             }}
                           >
                             {countLabel}
@@ -275,7 +275,7 @@ export default function StadiumsPage() {
                               fontSize: "clamp(1.5rem, 2.5vw, 2.5rem)",
                               fontWeight: 300,
                               letterSpacing: "0.05em",
-                              color: isHovered ? "#ffffff" : "rgba(255,255,255,0.3)",
+                              color: isHovered ? "#ffffff" : "rgba(255,255,255,0.6)",
                               transition: "color 0.4s ease",
                             }}
                           >
@@ -285,10 +285,10 @@ export default function StadiumsPage() {
                         <span
                           className="block uppercase"
                           style={{
-                            fontSize: "0.55rem",
-                            fontWeight: 400,
+                            fontSize: "0.58rem",
+                            fontWeight: 500,
                             letterSpacing: "0.2em",
-                            color: "rgba(255,255,255,0.15)",
+                            color: "rgba(255,255,255,0.45)",
                             marginTop: "4px",
                           }}
                         >

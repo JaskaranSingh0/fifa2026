@@ -98,7 +98,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
     return (
       <main className="min-h-screen bg-[#050505] flex items-center justify-center">
         <div className="text-center">
-          <p style={{ fontSize: "0.7rem", letterSpacing: "0.18em", color: "rgba(255,255,255,0.25)", textTransform: "uppercase" }}>
+          <p style={{ fontSize: "0.7rem", letterSpacing: "0.18em", color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>
             Match not found
           </p>
           <button
@@ -321,12 +321,12 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
                   style={{
                     background: 'none', border: 'none', cursor: 'pointer',
                     fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase',
-                    color: 'rgba(255,255,255,0.25)', padding: '0.75rem 0',
+                    color: 'rgba(255,255,255,0.5)', padding: '0.75rem 0',
                     transition: 'color 0.2s ease',
                     width: '100%', textAlign: 'left'
                   }}
                   onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.25)')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
                 >
                   {showFullBenchHome ? '↑ Show Less' : `+ ${homeLineup.bench.length - BENCH_LIMIT} More`}
                 </button>
@@ -390,12 +390,12 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
                   style={{
                     background: 'none', border: 'none', cursor: 'pointer',
                     fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase',
-                    color: 'rgba(255,255,255,0.25)', padding: '0.75rem 0',
+                    color: 'rgba(255,255,255,0.5)', padding: '0.75rem 0',
                     transition: 'color 0.2s ease',
                     width: '100%', textAlign: 'right'
                   }}
                   onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.25)')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
                 >
                   {showFullBenchAway ? '↑ Show Less' : `+ ${awayLineup.bench.length - BENCH_LIMIT} More`}
                 </button>

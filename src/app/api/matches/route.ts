@@ -4,6 +4,7 @@
 import { NextResponse } from "next/server";
 import { MATCHES, MatchStatus } from "@/lib/data/matches";
 import { prisma } from "@/lib/prisma";
+import { syncIfStale } from "@/lib/match-sync";
 export const dynamic = "force-dynamic"; // Never cache — always serve fresh data
 
 export interface MatchWithScore {
@@ -31,6 +32,9 @@ export interface MatchWithScore {
 
 export async function GET() {
   try {
+    // Keep the DB fresh on any match-data load (throttled to ~30s).
+    await syncIfStale();
+
     const dbMatches = await prisma.match.findMany();
 
     const merged = MATCHES.map((match) => {

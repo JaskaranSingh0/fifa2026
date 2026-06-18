@@ -1,4 +1,4 @@
-import { fetchFromApiFootball, fetchFromFootballData, fetchFromESPN, NormalizedMatch } from './football-api';
+import { fetchFromFootballData, fetchFromESPN, NormalizedMatch } from './football-api';
 import { prisma } from './prisma';
 
 // Maps football-data.org team name variants → names stored in our DB (from seed)
@@ -18,8 +18,13 @@ const TEAM_NAME_MAP: Record<string, string> = {
   'China PR': 'China',
   'Trinidad and Tobago': 'Trinidad & Tobago',
   'DR Congo': 'DR Congo',
+  'Congo DR': 'DR Congo',
+  'Democratic Republic of the Congo': 'DR Congo',
   'Türkiye': 'Turkey',
+  'Turkiye': 'Turkey',
   'Cabo Verde': 'Cape Verde',
+  'Republic of Ireland': 'Ireland',
+  'Korea DPR': 'North Korea',
 };
 
 export function normalizeTeamName(name: string): string {
@@ -27,8 +32,7 @@ export function normalizeTeamName(name: string): string {
 }
 
 export async function syncMatches(): Promise<{ updated: number, source: string }> {
-  const [, afdData, espnData] = await Promise.all([
-    fetchFromApiFootball(),
+  const [afdData, espnData] = await Promise.all([
     fetchFromFootballData(),
     fetchFromESPN(),
   ]);
@@ -106,5 +110,24 @@ export async function syncMatches(): Promise<{ updated: number, source: string }
     }
   }
   
-  return { updated: updatedCount, source: 'api-football+football-data+espn' };
+  return { updated: updatedCount, source: 'football-data+espn' };
+}
+
+// Module-level throttle shared across read endpoints so any page that loads
+// match data keeps the DB fresh — without hammering the upstream APIs.
+let lastSyncAt = 0;
+
+/**
+ * Run a sync only if the last one was more than `minIntervalMs` ago.
+ * Safe to await from GET routes: returns instantly when within the window.
+ */
+export async function syncIfStale(minIntervalMs = 30_000): Promise<void> {
+  const now = Date.now();
+  if (now - lastSyncAt < minIntervalMs) return;
+  lastSyncAt = now;
+  try {
+    await syncMatches();
+  } catch (err) {
+    console.error('[syncIfStale] sync failed:', err);
+  }
 }

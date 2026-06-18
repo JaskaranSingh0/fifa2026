@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { GROUPS } from '@/lib/data/groups';
 import { TEAMS, getTeam } from '@/lib/data/teams';
+import { syncIfStale } from '@/lib/match-sync';
 
 interface TeamStanding {
   code: string;
@@ -18,6 +19,9 @@ interface TeamStanding {
 
 export async function GET() {
   try {
+    // Refresh results before computing standings (throttled to ~30s).
+    await syncIfStale();
+
     const matches = await prisma.match.findMany({
       where: { stage: 'GROUP_STAGE', status: { in: ['FINISHED'] } }
     });

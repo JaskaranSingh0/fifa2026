@@ -150,14 +150,14 @@ function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) 
             {/* Stage / Group */}
             <span
               style={{
-                fontSize: "0.6rem",
-                fontWeight: isFinished ? 500 : 400,
+                fontSize: "0.65rem",
+                fontWeight: isFinished ? 600 : 500,
                 letterSpacing: "0.16em",
-                color: isLive 
-                  ? "rgba(255,0,0,0.7)" 
-                  : isFinished 
-                  ? "rgba(255,255,255,0.35)" 
-                  : "rgba(255,255,255,0.2)",
+                color: isLive
+                  ? "rgba(255,0,0,0.85)"
+                  : isFinished
+                  ? "rgba(255,255,255,0.6)"
+                  : "rgba(255,255,255,0.55)",
                 textTransform: "uppercase",
               }}
             >
@@ -167,10 +167,10 @@ function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) 
             {/* Time */}
             <span
               style={{
-                fontSize: "0.6rem",
-                fontWeight: 400,
+                fontSize: "0.65rem",
+                fontWeight: 500,
                 letterSpacing: "0.12em",
-                color: "rgba(255,255,255,0.15)",
+                color: "rgba(255,255,255,0.5)",
               }}
             >
               {match.time}
@@ -181,10 +181,10 @@ function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) 
           <span
             className="hidden md:block"
             style={{
-              fontSize: "0.6rem",
-              fontWeight: 300,
+              fontSize: "0.65rem",
+              fontWeight: 400,
               letterSpacing: "0.1em",
-              color: "rgba(255,255,255,0.15)",
+              color: "rgba(255,255,255,0.45)",
             }}
           >
             {match.stadium}, {match.city}
@@ -236,7 +236,7 @@ function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) 
                   </span>
                 </span>
                 {isFinished && (
-                  <span style={{ fontSize: '0.5rem', letterSpacing: '0.25em', color: 'rgba(255,255,255,0.25)', fontWeight: 500 }}>
+                  <span style={{ fontSize: '0.55rem', letterSpacing: '0.25em', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
                     FT
                   </span>
                 )}
@@ -418,27 +418,27 @@ export default function MatchesPage() {
             <span
               style={{
                 fontSize: "clamp(0.7rem, 1.1vw, 0.85rem)",
-                fontWeight: 300,
+                fontWeight: 400,
                 letterSpacing: "0.1em",
-                color: "rgba(255,255,255,0.3)",
+                color: "rgba(255,255,255,0.65)",
               }}
             >
               {totalMatches} Matches
             </span>
-            <span style={{ color: "rgba(255,255,255,0.1)" }}>·</span>
+            <span style={{ color: "rgba(255,255,255,0.3)" }}>·</span>
             <span
               style={{
                 fontSize: "clamp(0.7rem, 1.1vw, 0.85rem)",
-                fontWeight: 300,
+                fontWeight: 400,
                 letterSpacing: "0.1em",
-                color: "rgba(255,255,255,0.2)",
+                color: "rgba(255,255,255,0.55)",
               }}
             >
               {dateRange}
             </span>
             {liveCount > 0 && (
               <>
-                <span style={{ color: "rgba(255,255,255,0.1)" }}>·</span>
+                <span style={{ color: "rgba(255,255,255,0.3)" }}>·</span>
                 <span
                   className="flex items-center gap-1.5"
                   style={{
@@ -529,19 +529,19 @@ export default function MatchesPage() {
                     border: "none",
                     cursor: "pointer",
                     padding: "4px 0",
-                    fontSize: "0.68rem",
-                    fontWeight: isActive ? 600 : 400,
+                    fontSize: "0.72rem",
+                    fontWeight: isActive ? 600 : 500,
                     letterSpacing: "0.14em",
                     textTransform: "uppercase",
-                    color: isActive ? "#ffffff" : "rgba(255,255,255,0.2)",
-                    borderBottom: isActive ? "1px solid rgba(255,255,255,0.5)" : "1px solid transparent",
+                    color: isActive ? "#ffffff" : "rgba(255,255,255,0.6)",
+                    borderBottom: isActive ? "1px solid rgba(255,255,255,0.7)" : "1px solid transparent",
                     transition: "all 0.25s ease",
                   }}
                   onMouseEnter={(e) => {
-                    if (!isActive) e.currentTarget.style.color = "rgba(255,255,255,0.5)";
+                    if (!isActive) e.currentTarget.style.color = "rgba(255,255,255,0.95)";
                   }}
                   onMouseLeave={(e) => {
-                    if (!isActive) e.currentTarget.style.color = "rgba(255,255,255,0.2)";
+                    if (!isActive) e.currentTarget.style.color = "rgba(255,255,255,0.6)";
                   }}
                 >
                   {STAGE_LABELS_SHORT[stage]}

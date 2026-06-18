@@ -73,7 +73,7 @@ export default function BracketPage() {
     if (status === "FINISHED" && score !== undefined) {
       return <span style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>{score}</span>;
     }
-    return <span style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.15)" }}>—</span>;
+    return <span style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.35)" }}>—</span>;
   };
 
   const renderStatus = (status: string) => {
@@ -235,7 +235,7 @@ export default function BracketPage() {
                               }}
                             >
                               <div className="flex justify-between items-center" style={{ marginBottom: "0.75rem" }}>
-                                <div style={{ fontSize: "0.6rem", letterSpacing: "0.15em", color: "rgba(255,255,255,0.25)", textTransform: "uppercase" }}>
+                                <div style={{ fontSize: "0.65rem", letterSpacing: "0.15em", color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>
                                   {formatMatchDate(match.date)}
                                 </div>
                                 {statusNode && (
@@ -350,7 +350,7 @@ export default function BracketPage() {
                 }}
               >
                 <div className="flex justify-between items-center" style={{ marginBottom: "0.75rem" }}>
-                  <div style={{ fontSize: "0.6rem", letterSpacing: "0.15em", color: "rgba(255,255,255,0.25)", textTransform: "uppercase" }}>
+                  <div style={{ fontSize: "0.65rem", letterSpacing: "0.15em", color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>
                     {formatMatchDate(thirdPlaceMatch.date)}
                   </div>
                   {renderStatus(thirdPlaceMatch.status) && (

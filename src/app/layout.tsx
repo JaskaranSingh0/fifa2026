@@ -1,9 +1,20 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import SiteNav from "@/components/SiteNav";
 import CustomCursor from "@/components/CustomCursor";
 import FilmGrain from "@/components/FilmGrain";
 import MusicProvider from "@/components/music/MusicProvider";
+
+// Inter: self-hosted via next/font (zero CLS, no FOIT) — the typeface the whole
+// design assumes. Exposed as the `--font-inter` CSS variable that components
+// already reference.
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -36,19 +47,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      </head>
+    <html lang="en" className={inter.variable}>
       <body
         className="antialiased"
-        style={{ 
-          background: "#050505", 
-          margin: 0, 
+        style={{
+          background: "#050505",
+          margin: 0,
           padding: 0,
-          "--font-inter": "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-        } as React.CSSProperties}
+        }}
         suppressHydrationWarning
       >
         <MusicProvider>
