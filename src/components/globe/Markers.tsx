@@ -5,6 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
 import { GlobeTeamData } from "@/lib/data/globe-teams";
+import { getTeam } from "@/lib/data/teams";
 
 interface MarkersProps {
   teams: GlobeTeamData[];
@@ -83,11 +84,20 @@ function Marker({
         <meshBasicMaterial color="#ffffff" transparent opacity={0.3} depthWrite={false} />
       </mesh>
 
-      {/* Label */}
-      {(hovered || isSelected) && !isSelected && (
-        <Html distanceFactor={10} zIndexRange={[100, 0]} className="pointer-events-none">
-          <div className="text-white text-xs tracking-[0.2em] font-light uppercase ml-3 mt-[-10px] drop-shadow-md whitespace-nowrap">
-            {team.name}
+      {/* Hover: floating team logo with a 3D/depth pop */}
+      {hovered && !isSelected && (
+        <Html center distanceFactor={8} zIndexRange={[100, 0]} style={{ pointerEvents: "none" }}>
+          <div className="globe-marker-logo">
+            <div className="globe-marker-logo-3d" style={{ background: getTeam(team.code).colors[0] }}>
+              <span className="globe-marker-logo-code">{team.code}</span>
+              <img
+                src={`/logos/${team.code.toLowerCase()}.png`}
+                alt=""
+                className="globe-marker-logo-img"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0"; }}
+              />
+            </div>
+            <span className="globe-marker-name">{team.name}</span>
           </div>
         </Html>
       )}
