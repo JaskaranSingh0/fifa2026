@@ -38,6 +38,9 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
   const squadGroups = groupSquadByPosition(profile.squad);
   const contentRef = useRef<HTMLDivElement>(null);
   const branding = getTeamBranding(profile.code);
+  // ESPN kit colour covers all 48 teams; fall back to the curated branding.
+  const teamPrimary = profile.kitPrimary || branding.primary;
+  const teamSecondary = profile.kitSecondary || branding.secondary;
 
   const [groupData, setGroupData] = useState<any>(null);
   const [matches, setMatches] = useState<any[]>([]);
@@ -118,8 +121,8 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
       style={{
         background: `radial-gradient(circle at top, color-mix(in srgb, var(--team-primary) 8%, transparent) 0%, #050505 100%)`,
         fontFamily: "var(--font-inter, 'Inter', sans-serif)",
-        "--team-primary": branding.primary,
-        "--team-secondary": branding.secondary,
+        "--team-primary": teamPrimary,
+        "--team-secondary": teamSecondary,
       } as React.CSSProperties}
     >
       <div
@@ -176,6 +179,18 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
           <span style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }}>
             {profile.flag}
           </span>
+
+          {/* Kit colours */}
+          {(profile.kitPrimary || profile.kitSecondary) && (
+            <span style={{ display: "flex", gap: "6px", marginLeft: "10px", alignItems: "center" }}>
+              {profile.kitPrimary && (
+                <span title="Kit colour" style={{ width: 18, height: 18, borderRadius: "50%", background: profile.kitPrimary, boxShadow: "0 0 0 1px rgba(255,255,255,0.25)" }} />
+              )}
+              {profile.kitSecondary && profile.kitSecondary !== profile.kitPrimary && (
+                <span title="Kit colour" style={{ width: 18, height: 18, borderRadius: "50%", background: profile.kitSecondary, boxShadow: "0 0 0 1px rgba(255,255,255,0.25)" }} />
+              )}
+            </span>
+          )}
         </div>
 
         {/* ── NATION NAME ───────────────────────────────────────────────── */}
@@ -187,6 +202,7 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
             letterSpacing: "0.04em",
             textTransform: "uppercase",
             color: "#ffffff",
+            textShadow: "0 0 60px color-mix(in srgb, var(--team-primary) 35%, transparent)",
             lineHeight: 0.9,
             marginTop: "clamp(1rem, 2vw, 2rem)",
             marginBottom: "clamp(2rem, 4vw, 3rem)",
@@ -194,6 +210,24 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
         >
           {teamName}
         </h1>
+
+        {/* ── NICKNAME ──────────────────────────────────────────────────── */}
+        {profile.nickname && (
+          <p
+            data-animate
+            style={{
+              marginTop: "-1.5rem",
+              marginBottom: "clamp(2rem, 4vw, 3rem)",
+              fontSize: "clamp(0.8rem, 1.4vw, 1rem)",
+              fontWeight: 600,
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              color: "var(--team-primary)",
+            }}
+          >
+            {profile.nickname}
+          </p>
+        )}
 
         {/* ── DESCRIPTION ───────────────────────────────────────────────── */}
         <p
@@ -230,39 +264,45 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
             marginBottom: "clamp(3rem, 6vw, 5rem)",
           }}
         >
-          {[
-            { label: "FIFA Ranking", value: `#${profile.fifaRanking}`, isAccent: true },
-            { label: "Coach", value: profile.coach },
+          {([
+            { label: "FIFA Ranking", value: profile.fifaRanking ? `#${profile.fifaRanking}` : "", accent: true },
+            { label: "Confederation", value: profile.confederation },
+            { label: "Head Coach", value: profile.coach },
             { label: "Captain", value: profile.captain },
+            { label: "Star Player", value: profile.starPlayer ?? "", accent: true },
             { label: "World Cup Titles", value: profile.titles.toString() },
-            { label: "Appearances", value: profile.worldCupAppearances.toString() },
+            { label: "Appearances", value: profile.worldCupAppearances ? profile.worldCupAppearances.toString() : "" },
             { label: "Best Finish", value: profile.bestFinish },
-          ].map((stat) => (
-            <div key={stat.label}>
-              <div
-                style={{
-                  fontSize: "0.6rem",
-                  fontWeight: 400,
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.2)",
-                  marginBottom: "0.6rem",
-                }}
-              >
-                {stat.label}
+            { label: "Home Stadium", value: profile.homeStadium ?? "" },
+            { label: "Qualified Via", value: profile.qualification ?? "" },
+          ] as { label: string; value: string; accent?: boolean }[])
+            .filter((s) => s.value && s.value.trim() !== "" && s.value !== "—")
+            .map((stat) => (
+              <div key={stat.label}>
+                <div
+                  style={{
+                    fontSize: "0.6rem",
+                    fontWeight: 500,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "rgba(255,255,255,0.38)",
+                    marginBottom: "0.6rem",
+                  }}
+                >
+                  {stat.label}
+                </div>
+                <div
+                  style={{
+                    fontSize: "clamp(0.9rem, 1.4vw, 1.1rem)",
+                    fontWeight: 600,
+                    color: stat.accent ? "var(--team-primary)" : "#ffffff",
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {stat.value}
+                </div>
               </div>
-              <div
-                style={{
-                  fontSize: "clamp(0.9rem, 1.4vw, 1.1rem)",
-                  fontWeight: 600,
-                  color: stat.isAccent ? "var(--team-primary)" : "#ffffff",
-                  lineHeight: 1.3,
-                }}
-              >
-                {stat.value}
-              </div>
-            </div>
-          ))}
+            ))}
         </div>
 
         {/* ── SEPARATOR ─────────────────────────────────────────────────── */}

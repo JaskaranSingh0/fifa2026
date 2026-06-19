@@ -11,6 +11,7 @@ const POLL_INTERVAL = 30_000;        // Always poll /api/matches every 30s
 export function useRealtimeMatches(initialMatches: MatchWithScore[] = []) {
   const [matches, setMatches] = useState<MatchWithScore[]>(initialMatches);
   const [isLive, setIsLive] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const mountedRef = useRef(true);
   const syncTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -25,6 +26,8 @@ export function useRealtimeMatches(initialMatches: MatchWithScore[] = []) {
       }
     } catch (err) {
       console.error("[matches] fetch failed:", err);
+    } finally {
+      if (mountedRef.current) setLoaded(true);
     }
   }, []);
 
@@ -116,5 +119,5 @@ export function useRealtimeMatches(initialMatches: MatchWithScore[] = []) {
     startTimers(hasLive);
   }, [matches, startTimers]);
 
-  return { matches, isLive };
+  return { matches, isLive, loaded };
 }

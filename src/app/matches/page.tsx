@@ -22,7 +22,7 @@
  *   - Typography-first hierarchy
  */
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { gsap } from "gsap";
@@ -32,6 +32,7 @@ import {
   MatchStatus,
   STAGE_LABELS_SHORT,
   formatDateEditorial,
+  formatLocalKickoff,
 } from "@/lib/matches-data";
 
 import {
@@ -173,7 +174,7 @@ function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) 
                 color: "rgba(255,255,255,0.5)",
               }}
             >
-              {match.time}
+              {formatLocalKickoff(match.date, match.time)}
             </span>
           </div>
 
@@ -251,8 +252,8 @@ function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) 
                 <span style={{ fontSize: '0.7rem', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>
                   vs
                 </span>
-                <span style={{ fontSize: '0.55rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.2)' }}>
-                  {match.time?.split(' ')[0]}
+                <span style={{ fontSize: '0.55rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.45)' }}>
+                  {formatLocalKickoff(match.date, match.time)}
                 </span>
               </div>
             )}
@@ -295,7 +296,7 @@ export default function MatchesPage() {
   const [activeStage, setActiveStage] = useState<TournamentStage>(TournamentStage.ALL);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { matches: allMatches } = useRealtimeMatches();
+  const { matches: allMatches, loaded } = useRealtimeMatches();
 
   const totalMatches = allMatches.length;
 
@@ -328,6 +329,31 @@ export default function MatchesPage() {
   let runningIndex = 0;
 
   const liveMatches = useMemo(() => allMatches.filter(m => m.status === MatchStatus.LIVE), [allMatches]);
+
+  // On first load (default view), jump to the live match — or the next upcoming
+  // fixture — instead of starting on the oldest, long-finished match.
+  const didScrollRef = useRef(false);
+  useEffect(() => {
+    if (!loaded || didScrollRef.current || allMatches.length === 0) return;
+    if (searchQuery || activeStage !== TournamentStage.ALL) return; // default view only
+    didScrollRef.current = true;
+    const today = new Date().toISOString().slice(0, 10);
+    const sorted = [...allMatches].sort((a, b) => a.date.localeCompare(b.date));
+    const target =
+      allMatches.find((m) => m.status === MatchStatus.LIVE)?.date ??
+      sorted.find((m) => m.date >= today)?.date ??
+      sorted[sorted.length - 1]?.date;
+    if (!target) return;
+    // The date sections mount behind AnimatePresence mode="wait" (after the
+    // loading skeleton finishes exiting), so retry until the element exists.
+    let tries = 0;
+    const tryScroll = () => {
+      const el = document.getElementById(`md-${target}`);
+      if (el) { el.scrollIntoView({ block: "start" }); return; }
+      if (tries++ < 60) requestAnimationFrame(tryScroll);
+    };
+    requestAnimationFrame(tryScroll);
+  }, [loaded, allMatches, searchQuery, activeStage]);
 
   return (
     <div
@@ -555,7 +581,28 @@ export default function MatchesPage() {
             MATCH LIST — grouped by date
         ═══════════════════════════════════════════════════════════════════ */}
         <AnimatePresence mode="wait">
-          {filtered.length === 0 ? (
+          {!loaded ? (
+            <motion.div
+              key="loading"
+              className="animate-pulse"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              aria-busy="true"
+            >
+              {[0, 1].map((i) => (
+                <section key={i} style={{ marginTop: i ? "clamp(4rem, 8vw, 7rem)" : "clamp(2rem, 4vw, 3rem)" }}>
+                  <div style={{ height: "clamp(3rem, 7vw, 6rem)", width: i ? "50%" : "35%", background: "rgba(255,255,255,0.05)", borderRadius: "4px", marginBottom: "2rem" }} />
+                  {[0, 1, 2].map((j) => (
+                    <div key={j} style={{ padding: "clamp(1.6rem, 2.5vw, 2.2rem) 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                      <div style={{ height: "1.4rem", width: "62%", margin: "0 auto", background: "rgba(255,255,255,0.04)", borderRadius: "3px" }} />
+                    </div>
+                  ))}
+                </section>
+              ))}
+            </motion.div>
+          ) : filtered.length === 0 ? (
             <motion.div
               key="empty"
               initial={{ opacity: 0, y: 12 }}
@@ -621,8 +668,9 @@ export default function MatchesPage() {
                 return (
                   <section
                     key={date}
+                    id={`md-${date}`}
                     aria-label={`Matches on ${month} ${day}`}
-                    style={{ marginTop: "clamp(4rem, 8vw, 7rem)" }}
+                    style={{ marginTop: "clamp(4rem, 8vw, 7rem)", scrollMarginTop: "64px" }}
                   >
                     {/* ── MASSIVE DATE HEADER ──────────────── */}
                     <motion.div

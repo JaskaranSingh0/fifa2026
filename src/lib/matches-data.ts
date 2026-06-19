@@ -35,6 +35,23 @@ export function formatDateEditorial(isoDate: string): { month: string; day: stri
   return { month, day };
 }
 
+/**
+ * Convert a match's official date + "HH:MM UTC±H" kickoff string into the
+ * viewer's LOCAL time (e.g. "7:00 PM"). Client-side; falls back to the raw
+ * string if it can't be parsed.
+ */
+export function formatLocalKickoff(isoDate: string, timeStr: string): string {
+  if (!timeStr) return "";
+  const m = timeStr.match(/(\d{1,2}):(\d{2})\s*UTC\s*([+-]\d{1,2})/i);
+  if (!m) return timeStr;
+  const [, hh, mm, off] = m;
+  const sign = off.startsWith("-") ? "-" : "+";
+  const offHrs = String(Math.abs(parseInt(off, 10))).padStart(2, "0");
+  const d = new Date(`${isoDate}T${hh.padStart(2, "0")}:${mm}:00${sign}${offHrs}:00`);
+  if (isNaN(d.getTime())) return timeStr;
+  return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
 /** Get the tournament date range as a formatted string */
 export function getTournamentDateRange(matches: Match[]): string {
   if (!matches || matches.length === 0) return "";

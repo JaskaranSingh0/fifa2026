@@ -41,8 +41,8 @@ import { useMouseInteraction } from "@/hooks/useMouseInteraction";
 import { ParticleState } from "@/lib/particle-system";
 
 // Dynamically import the WebGL canvas — avoids SSR issues with Three.js
-const ParticleBackground = dynamic(
-  () => import("@/components/ParticleBackground"),
+const PassingWeb = dynamic(
+  () => import("@/components/PassingWeb"),
   { ssr: false }
 );
 
@@ -237,7 +237,7 @@ export default function HomePage() {
   // Keep refs in sync
   useEffect(() => { navStateRef.current = navState; }, [navState]);
 
-  const { mousePos, clickPos, reducedMotion } = useMouseInteraction();
+  const { mousePos, reducedMotion } = useMouseInteraction();
 
   // Shared refs for GSAP nav sibling animation
   const siblingRefs = useRef<(HTMLAnchorElement | null)[]>([]);
@@ -497,13 +497,12 @@ export default function HomePage() {
         )}
       </AnimatePresence>
 
-      {/* ── WebGL Particle Universe ────────────────────────────────────────── */}
-      <ParticleBackground
-        navState={navState}
+      {/* ── Passing-web universe (flow-field nodes + connection lines) ─────── */}
+      <PassingWeb
         mousePos={mousePos}
-        clickPos={clickPos}
         introProgress={introProgress}
         reducedMotion={reducedMotion}
+        boost={navState !== ParticleState.IDLE && navState !== ParticleState.INTRO ? 1 : 0}
       />
 
       {/* ── Welcome Text (top-right desktop / top-center mobile) ────────────── */}

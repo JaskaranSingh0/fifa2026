@@ -14,6 +14,7 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Gitignored throwaway diagnostic / context-export / scratch scripts (not app code)
     "scripts/diagnostic*",
+    "scripts/gen-profiles.ts",
     "scripts/debug-api-response.ts",
     "scripts/audit-live.ts",
     "scripts/clean-foreign-matches.ts",

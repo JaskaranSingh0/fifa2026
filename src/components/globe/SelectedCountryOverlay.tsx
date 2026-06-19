@@ -4,6 +4,10 @@ import React, { useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { gsap } from "gsap";
 import { GlobeTeamData } from "@/lib/data/globe-teams";
+import { GROUPS } from "@/lib/data/groups";
+import { getTeamBranding } from "@/lib/data/team-branding";
+import { getTeamProfile } from "@/lib/data/team-profiles";
+import TeamLogo from "@/components/TeamLogo";
 
 interface Props {
   country: GlobeTeamData;
@@ -13,62 +17,44 @@ interface Props {
 }
 
 /**
- * SelectedCountryOverlay
+ * SelectedCountryOverlay — the editorial card that appears once the globe spins
+ * a country to centre. Pure presentation; the state machine lives in
+ * TeamsExperience.
  *
- * Pure presentation layer — no overlay state.
- * State machine lives in TeamsExperience.
- *
- * Shows: country name + GROUP/RANK + EXPLORE TEAM button + Back to Globe
- * During transition: name scales up via GSAP, buttons fade out
+ * Identity treatment: the nation's crest sits above its name, the scene is
+ * tinted with the team's brand colour (so Argentina feels sky-blue, Brazil
+ * gold-green…), and a soft dark scrim keeps the type legible over the bright
+ * globe. During the EXPLORE transition the name scales up while everything
+ * else fades.
  */
-import { GROUPS } from "@/lib/data/groups";
-
 export default function SelectedCountryOverlay({
   country,
   isTransitioning,
   onExploreTeam,
   onClose,
 }: Props) {
+  const crestRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLHeadingElement>(null);
   const metaRef = useRef<HTMLDivElement>(null);
   const buttonsRef = useRef<HTMLDivElement>(null);
 
-  const teamGroup = GROUPS.find(g => g.teams.includes(country.code));
+  const teamGroup = GROUPS.find((g) => g.teams.includes(country.code));
   const dynamicGroup = teamGroup?.letter ?? country.group;
 
-  // ── GSAP transition: name grows, meta + buttons fade ──────────────
+  const profile = getTeamProfile(country.code);
+  // ESPN kit colour covers all 48; fall back to curated branding. Matches the
+  // colour used on the explore page so the two views stay consistent.
+  const primary = profile?.kitPrimary || getTeamBranding(country.code).primary;
+  const titles = profile?.titles ?? 0;
+
+  // ── GSAP transition: name grows, the rest fades ──────────────────────
   useEffect(() => {
     if (!isTransitioning) return;
-
     const tl = gsap.timeline();
-
-    // Step 1: Country name scales up
-    if (nameRef.current) {
-      tl.to(nameRef.current, {
-        scale: 1.4,
-        duration: 0.8,
-        ease: "expo.out",
-      }, 0);
-    }
-
-    // Step 2: Meta info fades
-    if (metaRef.current) {
-      tl.to(metaRef.current, {
-        opacity: 0,
-        duration: 0.4,
-        ease: "power2.in",
-      }, 0);
-    }
-
-    // Step 3: Buttons fade
-    if (buttonsRef.current) {
-      tl.to(buttonsRef.current, {
-        opacity: 0,
-        duration: 0.3,
-        ease: "power2.in",
-      }, 0);
-    }
-
+    if (nameRef.current) tl.to(nameRef.current, { scale: 1.4, duration: 0.8, ease: "expo.out" }, 0);
+    if (crestRef.current) tl.to(crestRef.current, { opacity: 0, duration: 0.4, ease: "power2.in" }, 0);
+    if (metaRef.current) tl.to(metaRef.current, { opacity: 0, duration: 0.4, ease: "power2.in" }, 0);
+    if (buttonsRef.current) tl.to(buttonsRef.current, { opacity: 0, duration: 0.3, ease: "power2.in" }, 0);
     return () => { tl.kill(); };
   }, [isTransitioning]);
 
@@ -80,46 +66,97 @@ export default function SelectedCountryOverlay({
       transition={{ duration: 0.8, ease: "easeOut" }}
       className="absolute inset-0 pointer-events-none flex flex-col items-center justify-between py-12 z-20"
     >
-      {/* Country name */}
-      <div className="flex-1 flex flex-col justify-center items-center mt-32">
-        <div className="text-center">
+      {/* Legibility scrim */}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: "radial-gradient(ellipse 55% 40% at 50% 44%, rgba(0,0,0,0.58) 0%, transparent 70%)" }}
+      />
+      {/* Team-colour identity glow */}
+      <div aria-hidden className="absolute inset-0 pointer-events-none flex items-center justify-center">
+        <div
+          style={{
+            width: "min(80vw, 900px)",
+            height: "46vh",
+            borderRadius: "50%",
+            background: `radial-gradient(ellipse, ${primary}26 0%, transparent 65%)`,
+            filter: "blur(50px)",
+          }}
+        />
+      </div>
+
+      {/* Identity block */}
+      <div className="flex-1 flex flex-col justify-center items-center mt-32 relative">
+        <div className="text-center flex flex-col items-center">
+          {/* Crest */}
+          <div ref={crestRef} className="mb-6 relative flex items-center justify-center">
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                width: 104,
+                height: 104,
+                borderRadius: "50%",
+                background: `radial-gradient(circle, ${primary}66 0%, transparent 70%)`,
+                filter: "blur(6px)",
+              }}
+            />
+            <span
+              style={{
+                position: "relative",
+                display: "flex",
+                borderRadius: "50%",
+                boxShadow: `0 8px 24px rgba(0,0,0,0.6), 0 0 0 1px ${primary}66`,
+              }}
+            >
+              <TeamLogo code={country.code} size={68} />
+            </span>
+          </div>
+
+          {/* Name */}
           <h1
             ref={nameRef}
             className="text-white font-light tracking-[0.2em] uppercase"
-            style={{
-              fontSize: "clamp(3rem, 8vw, 8rem)",
-              lineHeight: 0.9,
-            }}
+            style={{ fontSize: "clamp(3rem, 8vw, 8rem)", lineHeight: 0.9 }}
           >
             {country.name}
           </h1>
 
-          {/* Meta: group + ranking */}
-          <div
-            ref={metaRef}
-            className="mt-6 flex space-x-8 justify-center"
-            style={{ opacity: 0.7 }}
-          >
-            {dynamicGroup && (
-              <span className="text-white text-sm tracking-[0.3em] uppercase">
-                GROUP {dynamicGroup}
-              </span>
+          {/* Accent + epithet + group/rank */}
+          <div ref={metaRef} className="flex flex-col items-center gap-4 mt-7">
+            <div style={{ width: 64, height: 1, background: `linear-gradient(to right, transparent, ${primary}, transparent)` }} />
+
+            {titles > 0 && (
+              <div className="flex items-center gap-2">
+                <span style={{ color: "#FFD75E", fontSize: "0.85rem", letterSpacing: "0.1em" }}>{"★".repeat(titles)}</span>
+                <span
+                  className="uppercase"
+                  style={{ color: "rgba(255,255,255,0.85)", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.22em" }}
+                >
+                  {titles}× World Champion{titles > 1 ? "s" : ""}
+                </span>
+              </div>
             )}
-            {country.ranking && (
-              <span className="text-white text-sm tracking-[0.3em] uppercase">
-                &nbsp;RANK {country.ranking}
-              </span>
-            )}
+
+            <div className="flex items-center gap-6">
+              {dynamicGroup && (
+                <span className="uppercase" style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.8rem", letterSpacing: "0.28em", fontWeight: 500 }}>
+                  Group {dynamicGroup}
+                </span>
+              )}
+              {country.ranking && (
+                <span className="uppercase" style={{ fontSize: "0.8rem", letterSpacing: "0.22em", fontWeight: 600 }}>
+                  <span style={{ color: primary }}>#{country.ranking}</span>
+                  <span style={{ color: "rgba(255,255,255,0.45)", marginLeft: "0.45em", fontWeight: 400, letterSpacing: "0.2em" }}>FIFA</span>
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Bottom: EXPLORE TEAM + Back to Globe */}
-      <div
-        ref={buttonsRef}
-        className="flex flex-col items-center gap-6 pointer-events-auto pb-8"
-      >
-        {/* EXPLORE TEAM */}
+      <div ref={buttonsRef} className="flex flex-col items-center gap-6 pointer-events-auto pb-8">
         <motion.button
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -127,29 +164,28 @@ export default function SelectedCountryOverlay({
           onClick={onExploreTeam}
           style={{
             background: "none",
-            border: "1px solid rgba(255,255,255,0.15)",
+            border: `1px solid ${primary}59`,
             cursor: "pointer",
             padding: "14px 40px",
             fontSize: "0.7rem",
             fontWeight: 500,
             letterSpacing: "0.22em",
             textTransform: "uppercase",
-            color: "rgba(255,255,255,0.6)",
+            color: "rgba(255,255,255,0.75)",
             transition: "all 0.35s ease",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.4)";
+            e.currentTarget.style.borderColor = primary;
             e.currentTarget.style.color = "#ffffff";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
-            e.currentTarget.style.color = "rgba(255,255,255,0.6)";
+            e.currentTarget.style.borderColor = `${primary}59`;
+            e.currentTarget.style.color = "rgba(255,255,255,0.75)";
           }}
         >
           Explore Team
         </motion.button>
 
-        {/* Back to Globe */}
         <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -166,12 +202,12 @@ export default function SelectedCountryOverlay({
             fontWeight: 400,
             letterSpacing: "0.2em",
             textTransform: "uppercase",
-            color: "rgba(255,255,255,0.25)",
+            color: "rgba(255,255,255,0.45)",
             transition: "color 0.25s ease",
             padding: 0,
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.5)")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.25)")}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.85)")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.45)")}
         >
           Back to Globe
         </motion.button>
