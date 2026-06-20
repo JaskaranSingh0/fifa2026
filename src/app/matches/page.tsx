@@ -65,7 +65,7 @@ const STAGES = [
 // Match Entry — typography composition, not a card
 // ---------------------------------------------------------------------------
 
-function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) {
+const MatchEntry = React.memo(function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) {
   const linkRef = React.useRef<HTMLAnchorElement>(null);
   const [flashHome, setFlashHome] = useState(false);
   const [flashAway, setFlashAway] = useState(false);
@@ -121,8 +121,8 @@ function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) 
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        duration: 0.5,
-        delay: Math.min(index * 0.03, 0.4),
+        duration: 0.4,
+        delay: Math.min(index * 0.012, 0.18),
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
     >
@@ -286,6 +286,104 @@ function MatchEntry({ match, index }: { match: MatchWithScore; index: number }) 
       </Link>
     </motion.div>
   );
+}, (prev, next) =>
+  // Skip re-render on the 30s poll / sync refetch unless this match actually
+  // changed — keeps live updates from re-rendering all 104 rows.
+  prev.index === next.index &&
+  prev.match.id === next.match.id &&
+  prev.match.status === next.match.status &&
+  prev.match.homeScore === next.match.homeScore &&
+  prev.match.awayScore === next.match.awayScore &&
+  prev.match.liveData?.currentMinute === next.match.liveData?.currentMinute
+);
+
+// ---------------------------------------------------------------------------
+// Jump-to-now pill — floating affordance that snaps back to the live / next
+// match. Appears only when that match's section has scrolled off screen, and
+// stays out of the way during the on-load auto-scroll settle window.
+// ---------------------------------------------------------------------------
+
+function JumpToNowPill({ date, live }: { date: string; live: boolean }) {
+  const [show, setShow] = useState(false);
+  const [armed, setArmed] = useState(false);
+
+  // Hold off until the on-load auto-scroll has finished, so the pill doesn't
+  // flash while we're already gliding toward the target.
+  useEffect(() => {
+    const t = setTimeout(() => setArmed(true), 1600);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Show the pill only while the target section is off screen.
+  useEffect(() => {
+    let io: IntersectionObserver | null = null;
+    let raf = 0;
+    const attach = () => {
+      const el = document.getElementById(`md-${date}`);
+      if (!el) { raf = requestAnimationFrame(attach); return; } // section mounts late
+      io = new IntersectionObserver(
+        ([entry]) => setShow(!entry.isIntersecting),
+        { rootMargin: "-72px 0px -55% 0px" }
+      );
+      io.observe(el);
+    };
+    raf = requestAnimationFrame(attach);
+    return () => { if (raf) cancelAnimationFrame(raf); io?.disconnect(); };
+  }, [date]);
+
+  const jumpToTarget = () => {
+    const el = document.getElementById(`md-${date}`);
+    if (!el) return;
+    const y = Math.max(0, el.getBoundingClientRect().top + window.scrollY - 72);
+    window.scrollTo({ top: y, behavior: "smooth" });
+  };
+
+  return (
+    <AnimatePresence>
+      {show && armed && (
+        <motion.button
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 16 }}
+          transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+          onClick={jumpToTarget}
+          aria-label={live ? "Jump to the live match" : "Jump to the next match"}
+          style={{
+            position: "fixed",
+            right: "clamp(1rem, 3vw, 2rem)",
+            bottom: "clamp(1rem, 3vw, 2rem)",
+            zIndex: 60,
+            display: "flex",
+            alignItems: "center",
+            gap: "0.6rem",
+            padding: "0.7rem 1.1rem",
+            borderRadius: "999px",
+            cursor: "pointer",
+            background: "rgba(8,8,8,0.72)",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            border: live ? "1px solid rgba(255,0,0,0.45)" : "1px solid rgba(255,255,255,0.14)",
+            color: "#ffffff",
+            fontSize: "0.62rem",
+            fontWeight: 600,
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
+            boxShadow: "0 8px 30px rgba(0,0,0,0.5)",
+          }}
+        >
+          {live ? (
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF0000] opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FF0000]" />
+            </span>
+          ) : (
+            <span style={{ fontSize: "0.8rem", lineHeight: 1 }}>↓</span>
+          )}
+          {live ? "Live now" : "Next match"}
+        </motion.button>
+      )}
+    </AnimatePresence>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -330,30 +428,75 @@ export default function MatchesPage() {
 
   const liveMatches = useMemo(() => allMatches.filter(m => m.status === MatchStatus.LIVE), [allMatches]);
 
-  // On first load (default view), jump to the live match — or the next upcoming
-  // fixture — instead of starting on the oldest, long-finished match.
-  const didScrollRef = useRef(false);
-  useEffect(() => {
-    if (!loaded || didScrollRef.current || allMatches.length === 0) return;
-    if (searchQuery || activeStage !== TournamentStage.ALL) return; // default view only
-    didScrollRef.current = true;
+  // The match to spotlight on this page: the live one, else the next upcoming,
+  // else the last. Drives both the on-load auto-scroll and the floating pill.
+  const jump = useMemo(() => {
+    if (allMatches.length === 0) return null;
     const today = new Date().toISOString().slice(0, 10);
     const sorted = [...allMatches].sort((a, b) => a.date.localeCompare(b.date));
-    const target =
-      allMatches.find((m) => m.status === MatchStatus.LIVE)?.date ??
+    const live = allMatches.find((m) => m.status === MatchStatus.LIVE);
+    const date =
+      live?.date ??
       sorted.find((m) => m.date >= today)?.date ??
       sorted[sorted.length - 1]?.date;
-    if (!target) return;
-    // The date sections mount behind AnimatePresence mode="wait" (after the
-    // loading skeleton finishes exiting), so retry until the element exists.
-    let tries = 0;
-    const tryScroll = () => {
-      const el = document.getElementById(`md-${target}`);
-      if (el) { el.scrollIntoView({ block: "start" }); return; }
-      if (tries++ < 60) requestAnimationFrame(tryScroll);
+    return date ? { date, live: !!live } : null;
+  }, [allMatches]);
+
+  // On first load (default view), jump to the live match — or the next upcoming
+  // fixture — instead of starting on the oldest, long-finished match.
+  //
+  // A single scrollIntoView isn't enough: the list mounts late (behind the
+  // loading skeleton's exit), the Inter font swaps in and reflows the huge date
+  // headers, and the live ticker can expand above the list — each shifts the
+  // target after we'd have scrolled. So we re-align every frame for ~1.2s, then
+  // stop. We bail the instant the user scrolls (programmatic scrollTo fires
+  // neither wheel/touch nor keydown, so we never cancel ourselves). The loop is
+  // self-terminating and stored in a ref, so the 30s poll re-rendering
+  // `allMatches` can't abort it mid-flight.
+  const didScrollRef = useRef(false);
+  const scrollCleanupRef = useRef<(() => void) | null>(null);
+  useEffect(() => () => scrollCleanupRef.current?.(), []);
+  useEffect(() => {
+    if (!loaded || didScrollRef.current || !jump) return;
+    if (searchQuery || activeStage !== TournamentStage.ALL) return; // default view only
+    didScrollRef.current = true;
+
+    const target = jump.date;
+
+    const NAV_OFFSET = 72; // clear the fixed SiteNav + a little breathing room
+    let raf = 0;
+    let done = false;
+    const start = performance.now();
+
+    const cleanup = () => {
+      if (done) return;
+      done = true;
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener("wheel", bail);
+      window.removeEventListener("touchmove", bail);
+      window.removeEventListener("keydown", onKey);
     };
-    requestAnimationFrame(tryScroll);
-  }, [loaded, allMatches, searchQuery, activeStage]);
+    const bail = () => cleanup();
+    const onKey = (e: KeyboardEvent) => {
+      if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(e.key)) cleanup();
+    };
+    window.addEventListener("wheel", bail, { passive: true });
+    window.addEventListener("touchmove", bail, { passive: true });
+    window.addEventListener("keydown", onKey);
+
+    const tick = () => {
+      if (done) return;
+      const el = document.getElementById(`md-${target}`);
+      if (el) {
+        const y = Math.max(0, el.getBoundingClientRect().top + window.scrollY - NAV_OFFSET);
+        if (Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y);
+      }
+      if (performance.now() - start < 1200) raf = requestAnimationFrame(tick);
+      else cleanup();
+    };
+    raf = requestAnimationFrame(tick);
+    scrollCleanupRef.current = cleanup;
+  }, [loaded, jump, searchQuery, activeStage]);
 
   return (
     <div
@@ -587,7 +730,7 @@ export default function MatchesPage() {
               className="animate-pulse"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              exit={{ opacity: 0, transition: { duration: 0 } }}
               transition={{ duration: 0.3 }}
               aria-busy="true"
             >
@@ -677,8 +820,8 @@ export default function MatchesPage() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{
-                        duration: 0.6,
-                        delay: Math.min(gi * 0.03, 0.3),
+                        duration: 0.45,
+                        delay: Math.min(gi * 0.015, 0.15),
                         ease: [0.25, 0.46, 0.45, 0.94],
                       }}
                       style={{
@@ -738,6 +881,12 @@ export default function MatchesPage() {
           </p>
         </footer>
       </div>
+
+      {/* Floating jump-to-now affordance (default view only — that's where the
+          target section is guaranteed to be rendered). */}
+      {loaded && jump && activeStage === TournamentStage.ALL && !searchQuery && (
+        <JumpToNowPill date={jump.date} live={jump.live} />
+      )}
     </div>
   );
 }

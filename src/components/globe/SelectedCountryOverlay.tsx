@@ -33,9 +33,7 @@ export default function SelectedCountryOverlay({
   onExploreTeam,
   onClose,
 }: Props) {
-  const crestRef = useRef<HTMLDivElement>(null);
-  const nameRef = useRef<HTMLHeadingElement>(null);
-  const metaRef = useRef<HTMLDivElement>(null);
+  const identityRef = useRef<HTMLDivElement>(null);
   const buttonsRef = useRef<HTMLDivElement>(null);
 
   const teamGroup = GROUPS.find((g) => g.teams.includes(country.code));
@@ -47,13 +45,17 @@ export default function SelectedCountryOverlay({
   const primary = profile?.kitPrimary || getTeamBranding(country.code).primary;
   const titles = profile?.titles ?? 0;
 
-  // ── GSAP transition: name grows, the rest fades ──────────────────────
+  // ── GSAP transition: dive INTO the crest ─────────────────────────────
+  // The whole identity block (crest + name + meta) scales up and fades, as if
+  // the camera pushes through it — continuing the motion into the explore
+  // page's hero, which blooms in the same team colour.
   useEffect(() => {
     if (!isTransitioning) return;
     const tl = gsap.timeline();
-    if (nameRef.current) tl.to(nameRef.current, { scale: 1.4, duration: 0.8, ease: "expo.out" }, 0);
-    if (crestRef.current) tl.to(crestRef.current, { opacity: 0, duration: 0.4, ease: "power2.in" }, 0);
-    if (metaRef.current) tl.to(metaRef.current, { opacity: 0, duration: 0.4, ease: "power2.in" }, 0);
+    if (identityRef.current) {
+      gsap.set(identityRef.current, { transformOrigin: "50% 38%" });
+      tl.to(identityRef.current, { scale: 1.55, opacity: 0, duration: 0.85, ease: "expo.in" }, 0);
+    }
     if (buttonsRef.current) tl.to(buttonsRef.current, { opacity: 0, duration: 0.3, ease: "power2.in" }, 0);
     return () => { tl.kill(); };
   }, [isTransitioning]);
@@ -87,9 +89,9 @@ export default function SelectedCountryOverlay({
 
       {/* Identity block */}
       <div className="flex-1 flex flex-col justify-center items-center mt-32 relative">
-        <div className="text-center flex flex-col items-center">
+        <div ref={identityRef} className="text-center flex flex-col items-center">
           {/* Crest */}
-          <div ref={crestRef} className="mb-6 relative flex items-center justify-center">
+          <div className="mb-6 relative flex items-center justify-center">
             <div
               aria-hidden
               style={{
@@ -115,7 +117,6 @@ export default function SelectedCountryOverlay({
 
           {/* Name */}
           <h1
-            ref={nameRef}
             className="text-white font-light tracking-[0.2em] uppercase"
             style={{ fontSize: "clamp(3rem, 8vw, 8rem)", lineHeight: 0.9 }}
           >
@@ -123,7 +124,7 @@ export default function SelectedCountryOverlay({
           </h1>
 
           {/* Accent + epithet + group/rank */}
-          <div ref={metaRef} className="flex flex-col items-center gap-4 mt-7">
+          <div className="flex flex-col items-center gap-4 mt-7">
             <div style={{ width: 64, height: 1, background: `linear-gradient(to right, transparent, ${primary}, transparent)` }} />
 
             {titles > 0 && (

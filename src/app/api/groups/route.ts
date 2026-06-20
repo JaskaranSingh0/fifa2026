@@ -1,5 +1,5 @@
 export const dynamic = 'force-dynamic';
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { GROUPS } from '@/lib/data/groups';
 import { TEAMS, getTeam } from '@/lib/data/teams';
@@ -19,8 +19,10 @@ interface TeamStanding {
 
 export async function GET() {
   try {
-    // Refresh results before computing standings (throttled to ~30s).
-    await syncIfStale();
+    // Refresh results in the background — don't block standings on the upstream
+    // round-trip. Standings are computed from whatever's in the DB right now;
+    // fresh results land on the next poll (throttled to ~30s).
+    after(async () => { await syncIfStale(); });
 
     const matches = await prisma.match.findMany({
       where: { stage: 'GROUP_STAGE', status: { in: ['FINISHED'] } }

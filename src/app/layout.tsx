@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { MotionConfig } from "framer-motion";
 import "./globals.css";
 import SiteNav from "@/components/SiteNav";
 import CustomCursor from "@/components/CustomCursor";
@@ -57,12 +58,18 @@ export default function RootLayout({
         }}
         suppressHydrationWarning
       >
-        <MusicProvider>
-          <CustomCursor />
-          <FilmGrain />
-          <SiteNav />
-          {children}
-        </MusicProvider>
+        {/* reducedMotion="user" → every framer-motion transform/layout animation
+            (the route curtain, page transitions, globe overlays, match list…)
+            collapses to instant when the visitor asks for reduced motion;
+            opacity fades still play, so nothing disappears jarringly. */}
+        <MotionConfig reducedMotion="user">
+          <MusicProvider>
+            <CustomCursor />
+            <FilmGrain />
+            <SiteNav />
+            {children}
+          </MusicProvider>
+        </MotionConfig>
       </body>
     </html>
   );

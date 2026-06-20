@@ -2,31 +2,14 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { STADIUMS } from "@/lib/data/stadiums";
+import { STADIUMS, Stadium } from "@/lib/data/stadiums";
 import { MATCHES } from "@/lib/data/matches";
 import RevealText from "@/components/RevealText";
-
-const stadiumCityMap: Record<string, string[]> = {
-  'metlife': ['East Rutherford', 'New York'],
-  'sofi': ['Los Angeles', 'Inglewood'],
-  'att': ['Dallas', 'Arlington'],
-  'nrg': ['Houston'],
-  'hard-rock': ['Miami'],
-  'lumen': ['Seattle'],
-  'arrowhead': ['Kansas City'],
-  'mercedes-benz': ['Atlanta'],
-  'lincoln': ['Philadelphia'],
-  'gillette': ['Foxborough', 'Boston'],
-  'boa': ['Charlotte'],
-  'azteca': ['Mexico City'],
-  'akron': ['Guadalajara'],
-  'bbva': ['Monterrey'],
-  'bc-place': ['Vancouver'],
-  'bmo': ['Toronto'],
-};
+import StadiumOverlay from "@/components/stadiums/StadiumOverlay";
 
 export default function StadiumsPage() {
   const [hoveredStadium, setHoveredStadium] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Stadium | null>(null);
 
   // Group stadiums by country
   const grouped = {
@@ -153,27 +136,28 @@ export default function StadiumsPage() {
                   const isHovered = hoveredStadium === stadium.id;
                   const isAnyHovered = hoveredStadium !== null;
 
-                  const matchCount = MATCHES.filter(m => 
-                    stadiumCityMap[stadium.id]?.some(city => 
+                  const matchCount = MATCHES.filter(m =>
+                    stadium.matchCities.some(city =>
                       m.city?.toLowerCase().includes(city.toLowerCase()) ||
                       m.stadium?.toLowerCase().includes(city.toLowerCase())
                     )
                   ).length;
-                  
-                  let countLabel = "";
-                  if (matchCount > 0) {
-                    countLabel = `${matchCount} MATCHES`;
-                  }
-                  if (stadium.id === 'metlife') {
-                    countLabel = countLabel ? `FINAL · ${countLabel}` : 'FINAL';
-                  }
+
+                  const countLabel = matchCount > 0 ? `${matchCount} MATCHES` : "";
 
                   return (
                     <div
                       key={stadium.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Explore ${stadium.name}`}
                       onMouseEnter={() => setHoveredStadium(stadium.id)}
                       onMouseLeave={() => setHoveredStadium(null)}
-                      className="group relative flex flex-col md:flex-row md:items-start justify-between py-8 md:py-10 border-b border-[rgba(255,255,255,0.03)] cursor-default"
+                      onClick={() => setSelected(stadium)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelected(stadium); }
+                      }}
+                      className="group relative flex flex-col md:flex-row md:items-start justify-between py-8 md:py-10 border-b border-[rgba(255,255,255,0.03)] cursor-pointer focus-visible:outline-none"
                       style={{
                         opacity: isAnyHovered ? (isHovered ? 1 : 0.2) : 1,
                         transition: "opacity 0.4s ease",
@@ -209,6 +193,18 @@ export default function StadiumsPage() {
                             }}
                           >
                             {stadium.city}
+                          </span>
+                          <span style={{ color: "rgba(255,255,255,0.15)" }}>·</span>
+                          <span
+                            className="uppercase"
+                            style={{
+                              fontSize: "0.6rem",
+                              fontWeight: 600,
+                              letterSpacing: "0.15em",
+                              color: stadium.accent,
+                            }}
+                          >
+                            {stadium.distinction}
                           </span>
                           <AnimatePresence>
                             {isHovered && (
@@ -251,6 +247,27 @@ export default function StadiumsPage() {
                             >
                               {stadium.description}
                             </motion.p>
+                          )}
+                        </AnimatePresence>
+                        <AnimatePresence>
+                          {isHovered && (
+                            <motion.span
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="uppercase"
+                              style={{
+                                fontSize: "0.6rem",
+                                fontWeight: 600,
+                                letterSpacing: "0.2em",
+                                color: stadium.accent,
+                                marginTop: "0.85rem",
+                                transform: "translateX(10px)",
+                              }}
+                            >
+                              Explore Venue →
+                            </motion.span>
                           )}
                         </AnimatePresence>
                       </div>
@@ -303,6 +320,12 @@ export default function StadiumsPage() {
           ))}
         </div>
       </div>
+
+      <AnimatePresence>
+        {selected && (
+          <StadiumOverlay stadium={selected} onClose={() => setSelected(null)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

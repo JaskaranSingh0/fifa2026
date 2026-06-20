@@ -87,9 +87,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
     const espn = await fetchESPNSummary(espnEventId);
 
-    console.log('[ESPN summary keys]:', Object.keys(espn));
-    console.log('[ESPN scoringPlays count]:', espn.scoringPlays?.length ?? 0, 'keyEvents:', espn.keyEvents?.length ?? 0, 'plays:', espn.plays?.length ?? 0);
-
     // Try all possible ESPN paths for goal data.
     // As of 2026 ESPN serves goals under header.competitions[].details (the
     // legacy scoringPlays/plays arrays are now usually absent), so that's the

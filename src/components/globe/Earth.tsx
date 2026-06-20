@@ -9,6 +9,7 @@ import gsap from "gsap";
 import Atmosphere from "./Atmosphere";
 import Markers from "./Markers";
 import { GlobeTeamData } from "@/lib/data/globe-teams";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 interface EarthProps {
   teams: GlobeTeamData[];
@@ -18,6 +19,7 @@ interface EarthProps {
 
 export default function Earth({ teams, selectedCountry, onSelectCountry }: EarthProps) {
   const earthRef = useRef<THREE.Group>(null);
+  const reducedMotion = usePrefersReducedMotion();
 
   // Load premium high-res textures
   const [colorMap, nightMap, specularMap, bumpMap, cloudsMap] = useTexture([
@@ -67,8 +69,11 @@ export default function Earth({ teams, selectedCountry, onSelectCountry }: Earth
       let diffY = rawTargetY - currentY;
       diffY = Math.atan2(Math.sin(diffY), Math.cos(diffY)); // Normalize to -PI to PI
       
-      // Add a full 360 degree spin (2 * PI) in the positive direction
-      const finalTargetY = currentY + diffY + (Math.PI * 2);
+      // Add a full 360 degree spin (2 * PI) in the positive direction — but
+      // skip the showy extra revolution (and shorten the travel) for visitors
+      // who prefer reduced motion; just ease straight to centre.
+      const spin = reducedMotion ? 0 : Math.PI * 2;
+      const finalTargetY = currentY + diffY + spin;
 
       // Also slightly zoom in when a country is selected
       targetZoom.current = 3.5;
@@ -76,8 +81,8 @@ export default function Earth({ teams, selectedCountry, onSelectCountry }: Earth
       gsap.to(targetRotation.current, {
         x: targetX,
         y: finalTargetY,
-        duration: 2.5,
-        ease: "power3.inOut",
+        duration: reducedMotion ? 0.6 : 2.5,
+        ease: reducedMotion ? "power2.out" : "power3.inOut",
         onUpdate: () => {
           // Instantly sync the velocity to 0 during animation to avoid jumps
           rotationVelocity.current = { x: 0, y: 0 };
@@ -87,7 +92,7 @@ export default function Earth({ teams, selectedCountry, onSelectCountry }: Earth
       // Reset zoom when deselecting
       targetZoom.current = 5;
     }
-  }, [selectedCountry]);
+  }, [selectedCountry, reducedMotion]);
 
   useFrame((_, delta) => {
     if (!earthRef.current) return;
@@ -95,8 +100,8 @@ export default function Earth({ teams, selectedCountry, onSelectCountry }: Earth
     // Smooth Zoom
     camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetZoom.current, 0.1);
 
-    if (autoRotate.current && !isDragging.current) {
-      // Slow, meditative auto-rotation
+    if (autoRotate.current && !isDragging.current && !reducedMotion) {
+      // Slow, meditative auto-rotation (paused under reduced-motion)
       targetRotation.current.y += 0.05 * delta;
     } else if (!isDragging.current && !selectedCountry) {
       // Apply momentum

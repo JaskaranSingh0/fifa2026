@@ -1,7 +1,7 @@
 // api/matches/route.ts — Serves match data merged with live scores.
 // Client components poll this endpoint for updates.
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { MATCHES, MatchStatus } from "@/lib/data/matches";
 import { prisma } from "@/lib/prisma";
 import { syncIfStale } from "@/lib/match-sync";
@@ -32,8 +32,10 @@ export interface MatchWithScore {
 
 export async function GET() {
   try {
-    // Keep the DB fresh on any match-data load (throttled to ~30s).
-    await syncIfStale();
+    // Refresh the DB AFTER responding — never block the page on the upstream
+    // ESPN/football-data round-trip. The seeded matches are returned instantly;
+    // synced scores/status land on the next poll (throttled to ~30s).
+    after(async () => { await syncIfStale(); });
 
     const dbMatches = await prisma.match.findMany();
 

@@ -13,6 +13,7 @@ import SelectedCountryOverlay from "./SelectedCountryOverlay";
 import TeamProfileOverlay from "./TeamProfileOverlay";
 import { globeTeams, GlobeTeamData } from "@/lib/data/globe-teams";
 import { getTeamProfile, TeamProfile } from "@/lib/data/team-profiles";
+import { getTeamBranding } from "@/lib/data/team-branding";
 
 // ---------------------------------------------------------------------------
 // State machine: IDLE → COUNTRY_SELECTED → TEAM_OVERLAY → COUNTRY_SELECTED → IDLE
@@ -79,6 +80,13 @@ export default function TeamsExperience() {
     ? getTeamProfile(selectedCountry.code)
     : null;
 
+  // The team's signature colour — used to tint the transition wash so the hue
+  // carries continuously from the country card into the explore page (which is
+  // itself tinted the same colour). Matches the card/explore palette.
+  const transitionPrimary = selectedCountry
+    ? teamProfile?.kitPrimary || getTeamBranding(selectedCountry.code).primary
+    : "#00d1ff";
+
   // Fallback profile for teams without full data
   const resolvedProfile: TeamProfile | null = selectedCountry
     ? teamProfile ?? {
@@ -127,11 +135,17 @@ export default function TeamsExperience() {
         </Canvas>
       </div>
 
-      {/* ── GSAP dark overlay (used during transition) ───────────────── */}
+      {/* ── GSAP dark overlay (the transition wash) ──────────────────────
+          Tinted with the team colour at its centre over near-black, so the
+          screen blooms into the nation's hue as the globe fades — then the
+          explore page (same hue) resolves on top. */}
       <div
         ref={darkOverlayRef}
         className="absolute inset-0 pointer-events-none z-10"
-        style={{ background: "#050505", opacity: 0 }}
+        style={{
+          background: `radial-gradient(circle at 50% 45%, ${transitionPrimary}33 0%, #050505 62%)`,
+          opacity: 0,
+        }}
       />
 
       {/* ── Country selection overlay ────────────────────────────────── */}

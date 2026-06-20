@@ -5,11 +5,18 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { TEAM_BRANDING } from "@/lib/data/team-branding";
+import TeamLogo from "@/components/TeamLogo";
 
 const formatMatchDate = (dateStr: string) => {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('en-US', { 
-    month: 'long', day: 'numeric', year: 'numeric' 
+  // Parse as LOCAL midnight so the label can't slip to the previous day in
+  // timezones behind UTC (new Date("2026-06-11") would parse as UTC midnight).
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date =
+    Number.isFinite(y) && Number.isFinite(m) && Number.isFinite(d)
+      ? new Date(y, m - 1, d)
+      : new Date(dateStr);
+  return date.toLocaleDateString('en-US', {
+    month: 'long', day: 'numeric', year: 'numeric'
   }).toUpperCase();
 };
 
@@ -463,12 +470,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
               <span style={{ fontSize: '10px', letterSpacing: '0.2em', color: 'rgba(255,255,255,0.3)' }}>
                 {baseMatch.home.code}
               </span>
-              <img 
-                src={`/logos/${baseMatch.home.code.toLowerCase()}.png`} 
-                alt={baseMatch.home.name}
-                style={{ width: '48px', height: '48px', objectFit: 'contain', opacity: 0.9 }}
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-              />
+              <TeamLogo code={baseMatch.home.code} size={56} />
               <span className="text-2xl md:text-3xl tracking-[0.3em] uppercase font-light text-center mt-2">
                 {baseMatch.home.name}
               </span>
@@ -513,12 +515,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
               <span style={{ fontSize: '10px', letterSpacing: '0.2em', color: 'rgba(255,255,255,0.3)' }}>
                 {baseMatch.away.code}
               </span>
-              <img 
-                src={`/logos/${baseMatch.away.code.toLowerCase()}.png`} 
-                alt={baseMatch.away.name}
-                style={{ width: '48px', height: '48px', objectFit: 'contain', opacity: 0.9 }}
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-              />
+              <TeamLogo code={baseMatch.away.code} size={56} />
               <span className="text-2xl md:text-3xl tracking-[0.3em] uppercase font-light text-center mt-2">
                 {baseMatch.away.name}
               </span>

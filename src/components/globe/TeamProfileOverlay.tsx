@@ -113,10 +113,10 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial={{ opacity: 0, scale: 1.04 }}
+      animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       className="fixed inset-0 z-50 overflow-y-auto"
       style={{
         background: `radial-gradient(circle at top, color-mix(in srgb, var(--team-primary) 8%, transparent) 0%, #050505 100%)`,

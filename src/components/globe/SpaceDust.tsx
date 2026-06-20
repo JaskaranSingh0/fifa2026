@@ -3,10 +3,12 @@
 import React, { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 export default function SpaceDust() {
   const pointsRef = useRef<THREE.Points>(null);
-  
+  const reducedMotion = usePrefersReducedMotion();
+
   const particleCount = 1000;
   
   const particles = useMemo(() => {
@@ -29,7 +31,7 @@ export default function SpaceDust() {
   }, [particleCount]);
 
   useFrame((state) => {
-    if (pointsRef.current) {
+    if (pointsRef.current && !reducedMotion) {
       // Extremely subtle motion matching the "cinematic" and "mysterious" feel
       pointsRef.current.rotation.y = state.clock.elapsedTime * 0.02;
       pointsRef.current.rotation.x = state.clock.elapsedTime * 0.01;

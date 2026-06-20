@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { GROUPS } from "@/lib/data/groups";
+import { motion, AnimatePresence } from "framer-motion";
+import { GROUPS, Group } from "@/lib/data/groups";
 import TeamLogo from "@/components/TeamLogo";
 import RevealText from "@/components/RevealText";
+import GroupOverlay from "@/components/groups/GroupOverlay";
 
 interface GroupStandingRow {
   code: string;
@@ -27,20 +28,25 @@ interface LiveGroup {
 export default function GroupsPage() {
   const [liveGroups, setLiveGroups] = useState<LiveGroup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<Group | null>(null);
 
   useEffect(() => {
+    let alive = true;
     const fetchGroups = async () => {
       try {
         const res = await fetch("/api/groups");
         const data = await res.json();
-        setLiveGroups(data.groups || []);
+        if (alive) setLiveGroups(data.groups || []);
       } catch (err) {
         console.error("Failed to fetch groups", err);
       } finally {
-        setLoading(false);
+        if (alive) setLoading(false);
       }
     };
     fetchGroups();
+    // Poll so the background-synced standings appear without a manual refresh.
+    const id = setInterval(fetchGroups, 20000);
+    return () => { alive = false; clearInterval(id); };
   }, []);
 
   return (
@@ -110,6 +116,13 @@ export default function GroupsPage() {
             return (
                <motion.div
                 key={staticGroup.letter}
+                role="button"
+                tabIndex={0}
+                aria-label={`Explore Group ${staticGroup.letter}`}
+                onClick={() => setSelected(staticGroup)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelected(staticGroup); }
+                }}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
@@ -118,7 +131,7 @@ export default function GroupsPage() {
                   delay: Math.min(i * 0.05, 0.3),
                   ease: [0.25, 0.46, 0.45, 0.94],
                 }}
-                className="flex flex-col relative"
+                className="group flex flex-col relative cursor-pointer focus-visible:outline-none"
                 style={{
                   background: 'radial-gradient(circle at 0% 50%, rgba(255,255,255,0.015) 0%, transparent 70%)'
                 }}
@@ -144,6 +157,7 @@ export default function GroupsPage() {
 
                 {/* Group Label Row */}
                 <div
+                  className="flex items-center justify-between"
                   style={{
                     borderBottom: "1px solid rgba(255,255,255,0.1)",
                     paddingBottom: "1rem",
@@ -162,6 +176,17 @@ export default function GroupsPage() {
                     }}
                   >
                     GROUP {staticGroup.letter}
+                  </span>
+                  <span
+                    className="uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{
+                      fontSize: "0.55rem",
+                      fontWeight: 600,
+                      letterSpacing: "0.2em",
+                      color: "rgba(0,209,255,0.7)",
+                    }}
+                  >
+                    Explore →
                   </span>
                 </div>
 
@@ -268,6 +293,16 @@ export default function GroupsPage() {
           </p>
         </div>
       </div>
+
+      <AnimatePresence>
+        {selected && (
+          <GroupOverlay
+            group={selected}
+            standings={liveGroups.find((g) => g.letter === selected.letter)}
+            onClose={() => setSelected(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
