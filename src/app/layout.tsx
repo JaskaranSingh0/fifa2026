@@ -24,6 +24,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"
+  ),
   title: "FIFA World Cup 2026 | Enter the Football Universe",
   description:
     "An immersive interactive experience for the FIFA World Cup 2026. Explore matches, teams, stadiums, groups, and the bracket.",

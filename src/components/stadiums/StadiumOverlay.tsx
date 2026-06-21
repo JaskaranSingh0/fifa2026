@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { Stadium } from "@/lib/data/stadiums";
 import { formatLocalKickoff, formatDateEditorial } from "@/lib/matches-data";
 import TeamLogo from "@/components/TeamLogo";
+import { useModalA11y } from "@/hooks/useModalA11y";
 
 interface Props {
   stadium: Stadium;
@@ -29,13 +30,8 @@ const FLAG: Record<Stadium["country"], string> = {
 export default function StadiumOverlay({ stadium, onClose }: Props) {
   const [matches, setMatches] = useState<any[]>([]);
   const accent = stadium.accent;
-
-  // Close on Escape — a fast way out of the dossier.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  // Dialog a11y: focus trap + restore, body-scroll-lock, Escape to close.
+  const dialogRef = useModalA11y<HTMLDivElement>(onClose);
 
   // Fixtures played at this venue — match on the city/stadium strings the
   // schedule actually uses (stadium.matchCities).
@@ -77,11 +73,16 @@ export default function StadiumOverlay({ stadium, onClose }: Props) {
 
   return (
     <motion.div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${stadium.name} details`}
+      tabIndex={-1}
       initial={{ opacity: 0, scale: 1.04 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed inset-0 z-50 overflow-y-auto"
+      className="fixed inset-0 z-50 overflow-y-auto outline-none"
       style={{
         background: `radial-gradient(circle at 50% 0%, color-mix(in srgb, ${accent} 12%, transparent) 0%, #050505 60%)`,
         fontFamily: "var(--font-inter, 'Inter', sans-serif)",

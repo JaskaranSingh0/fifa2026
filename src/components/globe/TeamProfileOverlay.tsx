@@ -11,6 +11,7 @@ import {
 } from "@/lib/data/team-profiles";
 import { getTeamBranding } from "@/lib/data/team-branding";
 import TeamLogo from "@/components/TeamLogo";
+import { useModalA11y } from "@/hooks/useModalA11y";
 
 interface Props {
   profile: TeamProfile;
@@ -41,6 +42,8 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
   // ESPN kit colour covers all 48 teams; fall back to the curated branding.
   const teamPrimary = profile.kitPrimary || branding.primary;
   const teamSecondary = profile.kitSecondary || branding.secondary;
+  // Dialog a11y: focus trap + restore, body-scroll-lock, Escape to close.
+  const dialogRef = useModalA11y<HTMLDivElement>(onBack);
 
   const [groupData, setGroupData] = useState<any>(null);
   const [matches, setMatches] = useState<any[]>([]);
@@ -113,11 +116,16 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
 
   return (
     <motion.div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${teamName} team profile`}
+      tabIndex={-1}
       initial={{ opacity: 0, scale: 1.04 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed inset-0 z-50 overflow-y-auto"
+      className="fixed inset-0 z-50 overflow-y-auto outline-none"
       style={{
         background: `radial-gradient(circle at top, color-mix(in srgb, var(--team-primary) 8%, transparent) 0%, #050505 100%)`,
         fontFamily: "var(--font-inter, 'Inter', sans-serif)",

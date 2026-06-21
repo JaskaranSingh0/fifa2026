@@ -10,6 +10,7 @@ import { getTeamBranding } from "@/lib/data/team-branding";
 import { getTeamProfile } from "@/lib/data/team-profiles";
 import { formatLocalKickoff, formatDateEditorial } from "@/lib/matches-data";
 import TeamLogo from "@/components/TeamLogo";
+import { useModalA11y } from "@/hooks/useModalA11y";
 
 export interface StandingRow {
   code: string;
@@ -43,12 +44,8 @@ export default function GroupOverlay({ group, standings, onClose }: Props) {
   // Seed nation's colour = the group's identity accent.
   const seed = group.teams[0];
   const accent = getTeamProfile(seed)?.kitPrimary || getTeamBranding(seed).primary;
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  // Dialog a11y: focus trap + restore, body-scroll-lock, Escape to close.
+  const dialogRef = useModalA11y<HTMLDivElement>(onClose);
 
   useEffect(() => {
     let alive = true;
@@ -89,11 +86,16 @@ export default function GroupOverlay({ group, standings, onClose }: Props) {
 
   return (
     <motion.div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Group ${group.letter} details`}
+      tabIndex={-1}
       initial={{ opacity: 0, scale: 1.04 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed inset-0 z-50 overflow-y-auto"
+      className="fixed inset-0 z-50 overflow-y-auto outline-none"
       style={{
         background: `radial-gradient(circle at 50% 0%, color-mix(in srgb, ${accent} 12%, transparent) 0%, #050505 60%)`,
         fontFamily: "var(--font-inter, 'Inter', sans-serif)",

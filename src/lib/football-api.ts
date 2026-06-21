@@ -12,9 +12,26 @@ export interface NormalizedMatch {
   source: 'football-data' | 'espn';
 }
 
+const FETCH_TIMEOUT_MS = 8000;
+
+/**
+ * fetch + a hard timeout. The background sync runs via `after()` on read routes;
+ * without this an unresponsive upstream could keep a serverless invocation alive
+ * indefinitely. Aborts after `ms` and lets the caller's catch return [].
+ */
+async function fetchWithTimeout(url: string, init: RequestInit = {}, ms = FETCH_TIMEOUT_MS): Promise<Response> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function fetchFromFootballData(): Promise<NormalizedMatch[]> {
   try {
-    const res = await fetch('https://api.football-data.org/v4/competitions/WC/matches?season=2026', {
+    const res = await fetchWithTimeout('https://api.football-data.org/v4/competitions/WC/matches?season=2026', {
       headers: {
         'X-Auth-Token': process.env.FOOTBALL_DATA_API_KEY || ''
       }
@@ -74,7 +91,7 @@ export async function fetchFromESPN(): Promise<NormalizedMatch[]> {
     // Fetch all dates in parallel
     const responses = await Promise.all(
       dateStrings.map(dateStr =>
-        fetch(
+        fetchWithTimeout(
           `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${dateStr}`,
           { next: { revalidate: 60 } }
         ).then(r => r.ok ? r.json() : { events: [] }).catch(() => ({ events: [] }))

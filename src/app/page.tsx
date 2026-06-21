@@ -36,6 +36,7 @@ import { gsap } from "gsap";
 
 import WelcomeText from "@/components/WelcomeText";
 import IntroVideo from "@/components/intro/IntroVideo";
+import LiveNowBadge from "@/components/LiveNowBadge";
 import { useMusic } from "@/components/music/MusicProvider";
 import { useMouseInteraction } from "@/hooks/useMouseInteraction";
 import { ParticleState } from "@/lib/particle-system";
@@ -530,6 +531,18 @@ export default function HomePage() {
           >
             FIFA · World Cup · 2026
           </span>
+        </motion.div>
+      )}
+
+      {/* ── Live pulse — only renders when a match is live ─────────────────── */}
+      {phase === 'universe' && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={showWelcome ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
+          className="absolute z-20 top-6 left-6 md:top-8 md:left-8"
+        >
+          <LiveNowBadge />
         </motion.div>
       )}
 

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import LiveNowBadge from "@/components/LiveNowBadge";
 
 const NAV_ITEMS = [
   { label: "MATCHES",  href: "/matches"  },
@@ -57,7 +58,8 @@ export default function SiteNav() {
         transition: "background 0.4s ease, backdrop-filter 0.4s ease, border-color 0.4s ease",
       }}
     >
-      {/* Left: Brand mark */}
+      {/* Left: Brand mark + live pulse */}
+      <div style={{ display: "flex", alignItems: "center", gap: "clamp(0.75rem, 2vw, 1.25rem)" }}>
       <Link
         href="/"
         aria-label="Back to home"
@@ -76,6 +78,8 @@ export default function SiteNav() {
       >
         WC <span style={{ opacity: 0.6 }}>·</span> 2026
       </Link>
+      <LiveNowBadge compact />
+      </div>
 
       {/* Right: Section links */}
       <div
