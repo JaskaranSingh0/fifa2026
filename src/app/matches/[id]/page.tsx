@@ -5,6 +5,7 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { TEAM_BRANDING } from "@/lib/data/team-branding";
+import { formatLocalKickoff } from "@/lib/matches-data";
 import TeamLogo from "@/components/TeamLogo";
 
 const formatMatchDate = (dateStr: string) => {
@@ -131,6 +132,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
 
   const isLive = baseMatch.status === "LIVE";
   const isFinished = baseMatch.status === "FINISHED";
+  const kickoff = formatLocalKickoff(baseMatch.date, baseMatch.time);
 
   const renderGoals = () => {
     if (status === 'loading') {
@@ -491,7 +493,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
               <div className="mt-8 flex flex-col items-center gap-1">
                 {isLive ? (
                   <span className="text-xs font-bold tracking-[0.2em] uppercase" style={{ color: homePrimary }}>
-                    ● LIVE {baseMatch.minute}&apos;
+                    ● LIVE{baseMatch.liveData?.currentMinute ? ` ${baseMatch.liveData.currentMinute}'` : ""}
                   </span>
                 ) : (
                   <span className="text-xs tracking-[0.2em] text-[rgba(255,255,255,0.4)] uppercase">
@@ -523,7 +525,10 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
           </div>
 
           <div className="mt-8 mb-24 text-xs tracking-widest text-white/40 uppercase text-center">
-            {formatMatchDate(baseMatch.date)} · {baseMatch.group ?? baseMatch.stage.replace(/_/g, " ")} · {baseMatch.stadium === baseMatch.city ? baseMatch.stadium : `${baseMatch.stadium} · ${baseMatch.city}`}
+            {formatMatchDate(baseMatch.date)}
+            {kickoff ? ` · ${kickoff}` : ""}
+            {" · "}{baseMatch.group ?? baseMatch.stage.replace(/_/g, " ")}
+            {" · "}{baseMatch.stadium === baseMatch.city ? baseMatch.stadium : `${baseMatch.stadium} · ${baseMatch.city}`}
           </div>
 
           <hr className="w-full max-w-5xl border-[rgba(255,255,255,0.08)] my-0" />

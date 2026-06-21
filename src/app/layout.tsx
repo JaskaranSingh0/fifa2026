@@ -6,6 +6,8 @@ import SiteNav from "@/components/SiteNav";
 import CustomCursor from "@/components/CustomCursor";
 import FilmGrain from "@/components/FilmGrain";
 import MusicProvider from "@/components/music/MusicProvider";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 // Inter: self-hosted via next/font (zero CLS, no FOIT) — the typeface the whole
 // design assumes. Exposed as the `--font-inter` CSS variable that components
@@ -73,6 +75,8 @@ export default function RootLayout({
             {children}
           </MusicProvider>
         </MotionConfig>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
