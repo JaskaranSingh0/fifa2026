@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback, Suspense } from "react";
+import React, { useState, useRef, useCallback, useEffect, Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Preload, PerformanceMonitor } from "@react-three/drei";
 import { AnimatePresence, motion } from "framer-motion";
@@ -24,6 +24,13 @@ export default function TeamsExperience() {
   const [dpr, setDpr] = useState(1.5);
   const [selectedCountry, setSelectedCountry] = useState<GlobeTeamData | null>(null);
   const [experienceState, setExperienceState] = useState<ExperienceState>("IDLE");
+  const [mobileList, setMobileList] = useState(false);
+
+  // The mobile "Browse Teams" sheet only belongs in the IDLE state — close it the
+  // moment a country is selected (so the globe spin + country card are visible).
+  useEffect(() => {
+    if (experienceState !== "IDLE") setMobileList(false);
+  }, [experienceState]);
 
   // Refs for GSAP transition targets
   const canvasWrapRef = useRef<HTMLDivElement>(null);
@@ -209,6 +216,64 @@ export default function TeamsExperience() {
                   key={team.code}
                   onClick={() => handleSelectCountry(team)}
                   className="text-right text-sm md:text-base tracking-[0.1em] text-white/70 hover:text-white transition-colors duration-300 uppercase py-0.5 font-medium drop-shadow-md"
+                >
+                  {team.name}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Mobile: "Browse Teams" sheet (desktop uses the sidebars) ──── */}
+      {experienceState === "IDLE" && (
+        <button
+          className="md:hidden"
+          onClick={() => setMobileList(true)}
+          style={{
+            position: "absolute", left: "50%", bottom: "1.75rem", transform: "translateX(-50%)",
+            zIndex: 30, pointerEvents: "auto", padding: "0.7rem 1.4rem", borderRadius: 999,
+            border: "1px solid rgba(255,255,255,0.2)", background: "rgba(5,5,5,0.6)",
+            backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+            color: "rgba(255,255,255,0.85)", fontSize: "0.65rem", letterSpacing: "0.2em",
+            textTransform: "uppercase", fontWeight: 600,
+          }}
+        >
+          Browse Teams
+        </button>
+      )}
+
+      <AnimatePresence>
+        {mobileList && (
+          <motion.div
+            className="md:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            style={{
+              position: "fixed", inset: 0, zIndex: 120,
+              background: "rgba(5,5,5,0.97)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
+              display: "flex", flexDirection: "column",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1.25rem 1.5rem", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <span style={{ fontSize: "0.7rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>48 Nations</span>
+              <button onClick={() => setMobileList(false)} aria-label="Close team list" style={{ background: "none", border: "none", color: "#fff", padding: 6, cursor: "pointer", display: "flex" }}>
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M4 4l10 10M14 4L4 14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
+              </button>
+            </div>
+            <div style={{ overflowY: "auto", flex: 1, padding: "0.25rem 0 2rem", WebkitOverflowScrolling: "touch" }}>
+              {[...globeTeams].sort((a, b) => a.name.localeCompare(b.name)).map((team) => (
+                <button
+                  key={team.code}
+                  onClick={() => handleSelectCountry(team)}
+                  style={{
+                    display: "block", width: "100%", textAlign: "left", padding: "0.85rem 1.5rem",
+                    background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.04)",
+                    color: "rgba(255,255,255,0.82)", fontSize: "0.95rem", letterSpacing: "0.08em",
+                    textTransform: "uppercase", fontWeight: 500, cursor: "pointer",
+                  }}
                 >
                   {team.name}
                 </button>

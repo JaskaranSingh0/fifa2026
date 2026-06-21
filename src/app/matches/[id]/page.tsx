@@ -435,7 +435,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
 
   return (
     <main
-      className="min-h-screen bg-[#050505] text-white px-8 md:px-16 lg:px-24 py-12"
+      className="min-h-screen bg-[#050505] text-white px-5 md:px-16 lg:px-24 py-12"
       style={{ fontFamily: "'Inter', sans-serif" }}
     >
       <div
@@ -465,26 +465,26 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center w-full">
           
           {/* Hero Block */}
-          <div className="flex w-full items-center justify-between py-20 mb-4 max-w-6xl mx-auto">
+          <div className="flex w-full items-center justify-between py-10 md:py-20 mb-4 max-w-6xl mx-auto">
             <div className="flex flex-col items-center flex-1 gap-4">
               <span style={{ fontSize: '10px', letterSpacing: '0.2em', color: 'rgba(255,255,255,0.3)' }}>
                 {baseMatch.home.code}
               </span>
               <TeamLogo code={baseMatch.home.code} size={56} />
-              <span className="text-2xl md:text-3xl tracking-[0.3em] uppercase font-light text-center mt-2">
+              <span className="text-base sm:text-2xl md:text-3xl tracking-[0.1em] md:tracking-[0.3em] uppercase font-light text-center mt-2">
                 {baseMatch.home.name}
               </span>
             </div>
 
-            <div className="flex flex-col items-center shrink-0 mx-4 md:mx-8">
-              <div className="flex items-center gap-4 md:gap-8">
-                <span className="text-[10rem] md:text-[14rem] font-black leading-none text-white">
+            <div className="flex flex-col items-center shrink-0 mx-2 md:mx-8">
+              <div className="flex items-center gap-3 md:gap-8">
+                <span className="font-black leading-none text-white" style={{ fontSize: 'clamp(3.25rem, 16vw, 14rem)' }}>
                   {baseMatch.homeScore ?? 0}
                 </span>
-                <span className="text-[2.5rem] md:text-[4rem] font-light text-[rgba(255,255,255,0.3)]">
+                <span className="font-light text-[rgba(255,255,255,0.3)]" style={{ fontSize: 'clamp(1.5rem, 5vw, 4rem)' }}>
                   —
                 </span>
-                <span className="text-[10rem] md:text-[14rem] font-black leading-none text-white">
+                <span className="font-black leading-none text-white" style={{ fontSize: 'clamp(3.25rem, 16vw, 14rem)' }}>
                   {baseMatch.awayScore ?? 0}
                 </span>
               </div>
@@ -516,7 +516,7 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
                 {baseMatch.away.code}
               </span>
               <TeamLogo code={baseMatch.away.code} size={56} />
-              <span className="text-2xl md:text-3xl tracking-[0.3em] uppercase font-light text-center mt-2">
+              <span className="text-base sm:text-2xl md:text-3xl tracking-[0.1em] md:tracking-[0.3em] uppercase font-light text-center mt-2">
                 {baseMatch.away.name}
               </span>
             </div>

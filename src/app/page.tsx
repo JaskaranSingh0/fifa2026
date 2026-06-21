@@ -534,13 +534,13 @@ export default function HomePage() {
         </motion.div>
       )}
 
-      {/* ── Live pulse — only renders when a match is live ─────────────────── */}
+      {/* ── Live pulse — top-right (WelcomeText owns top-left); only renders when a match is live ─ */}
       {phase === 'universe' && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={showWelcome ? { opacity: 1 } : { opacity: 0 }}
           transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
-          className="absolute z-20 top-6 left-6 md:top-8 md:left-8"
+          className="absolute z-20 top-6 right-6 md:top-8 md:right-8"
         >
           <LiveNowBadge />
         </motion.div>
