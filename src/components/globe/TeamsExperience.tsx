@@ -119,11 +119,15 @@ export default function TeamsExperience() {
       <GlobeLoader />
 
       {/* ── Globe Canvas ────────────────────────────────────────────────── */}
-      <div ref={canvasWrapRef} className="absolute inset-0">
+      {/* touchAction:none lets the canvas capture drags on touch devices instead
+          of the browser scrolling/zooming the page. */}
+      <div ref={canvasWrapRef} className="absolute inset-0" style={{ touchAction: "none" }}>
         <Canvas
-          camera={{ position: [0, 0, 5], fov: 45 }}
+          camera={{ position: [0, 0, 6.2], fov: 45 }}
           gl={{ antialias: true, alpha: false }}
           dpr={dpr}
+          style={{ touchAction: "none" }}
+          onCreated={({ gl }) => { gl.domElement.style.touchAction = "none"; }}
         >
           <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(2)} />
           <ambientLight intensity={0.02} />

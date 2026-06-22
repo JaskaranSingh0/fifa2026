@@ -133,6 +133,11 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
   const isLive = baseMatch.status === "LIVE";
   const isFinished = baseMatch.status === "FINISHED";
   const kickoff = formatLocalKickoff(baseMatch.date, baseMatch.time);
+  const isHalftime =
+    isLive &&
+    (details?.details?.statusName === "HALFTIME" ||
+      details?.details?.statusName === "STATUS_HALFTIME" ||
+      /^HT$|half\s*time/i.test(details?.details?.statusDetail ?? ""));
 
   const renderGoals = () => {
     if (status === 'loading') {
@@ -493,7 +498,9 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
               <div className="mt-8 flex flex-col items-center gap-1">
                 {isLive ? (
                   <span className="text-xs font-bold tracking-[0.2em] uppercase" style={{ color: homePrimary }}>
-                    ● LIVE{baseMatch.liveData?.currentMinute ? ` ${baseMatch.liveData.currentMinute}'` : ""}
+                    {isHalftime
+                      ? "● HALF TIME"
+                      : `● LIVE${baseMatch.liveData?.currentMinute ? ` ${baseMatch.liveData.currentMinute}'` : ""}`}
                   </span>
                 ) : (
                   <span className="text-xs tracking-[0.2em] text-[rgba(255,255,255,0.4)] uppercase">

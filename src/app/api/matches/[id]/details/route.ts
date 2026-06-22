@@ -235,6 +235,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       nationality: null,
     }));
 
+    // Live status straight from ESPN (the sync collapses HALFTIME → LIVE, so the
+    // detailed view reads it here): name is e.g. STATUS_HALFTIME / STATUS_IN_PROGRESS,
+    // shortDetail is the clock string like "HT", "67'", "FT".
+    const compStatus = espn.header?.competitions?.[0]?.status?.type ?? {};
+    const statusName: string | null = compStatus?.name ?? null;
+    const statusDetail: string | null = compStatus?.shortDetail ?? compStatus?.description ?? null;
+
     const details = {
       goals,
       matchStats,
@@ -243,6 +250,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       referees,
       venue: espn.gameInfo?.venue?.fullName ?? null,
       attendance: espn.gameInfo?.attendance ?? null,
+      statusName,
+      statusDetail,
       espnEventId,
     };
 

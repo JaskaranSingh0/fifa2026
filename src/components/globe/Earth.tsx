@@ -11,6 +11,11 @@ import Markers from "./Markers";
 import { GlobeTeamData } from "@/lib/data/globe-teams";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
+// Idle camera distance — pulled further back on narrow/portrait mobile so the
+// whole globe stays in frame (the vertical FOV would otherwise crop it).
+const idleZoom = () =>
+  typeof window !== "undefined" && window.innerWidth < 768 ? 9 : 6.2;
+
 interface EarthProps {
   teams: GlobeTeamData[];
   selectedCountry: GlobeTeamData | null;
@@ -40,7 +45,7 @@ export default function Earth({ teams, selectedCountry, onSelectCountry }: Earth
   const autoRotate = useRef(!selectedCountry);
 
   // Zoom State
-  const targetZoom = useRef(5);
+  const targetZoom = useRef(idleZoom());
   const { camera } = useThree();
 
   useEffect(() => {
@@ -90,7 +95,7 @@ export default function Earth({ teams, selectedCountry, onSelectCountry }: Earth
       });
     } else {
       // Reset zoom when deselecting
-      targetZoom.current = 5;
+      targetZoom.current = idleZoom();
     }
   }, [selectedCountry, reducedMotion]);
 

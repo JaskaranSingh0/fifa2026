@@ -124,6 +124,9 @@ a:focus-visible {
    ────────────────────────────────────────────────────────── */
 canvas {
   display: block;
+  /* Let WebGL scenes (the globe, the passing-web) capture touch drags instead
+     of the browser scrolling/zooming the page. */
+  touch-action: none;
 }
 
 /* ──────────────────────────────────────────────────────────

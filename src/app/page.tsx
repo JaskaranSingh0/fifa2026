@@ -540,7 +540,7 @@ export default function HomePage() {
           initial={{ opacity: 0 }}
           animate={showWelcome ? { opacity: 1 } : { opacity: 0 }}
           transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
-          className="absolute z-20 top-6 right-6 md:top-8 md:right-8"
+          className="absolute z-20 bottom-24 left-1/2 -translate-x-1/2 md:bottom-auto md:left-auto md:translate-x-0 md:top-8 md:right-8"
         >
           <LiveNowBadge />
         </motion.div>
