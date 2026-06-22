@@ -6,6 +6,7 @@ import { GROUPS, Group } from "@/lib/data/groups";
 import TeamLogo from "@/components/TeamLogo";
 import RevealText from "@/components/RevealText";
 import GroupOverlay from "@/components/groups/GroupOverlay";
+import { teamAdvanceStatus } from "@/lib/bracket";
 
 interface GroupStandingRow {
   code: string;
@@ -220,16 +221,21 @@ export default function GroupsPage() {
                     </li>
                     {groupData?.teams.map((teamData, j) => {
                       const pos = j + 1;
+                      const status = teamAdvanceStatus(groupData?.teams ?? [], j);
                       const borderLeft =
-                        pos === 1
+                        status === "through"
+                          ? "3px solid #16A34A"
+                          : status === "out"
+                          ? "3px solid rgba(229,72,77,0.45)"
+                          : pos === 1
                           ? "3px solid rgba(255,255,255,0.5)"
                           : pos === 2
                           ? "3px solid rgba(255,255,255,0.25)"
                           : pos === 3
                           ? "3px solid rgba(255,255,255,0.08)"
                           : "none";
-                      
-                      const paddingLeft = pos <= 3 ? "12px" : "15px";
+
+                      const paddingLeft = borderLeft === "none" ? "15px" : "12px";
 
                       return (
                         <li
@@ -240,12 +246,13 @@ export default function GroupsPage() {
                             borderBottom: "1px solid rgba(255,255,255,0.03)",
                             borderLeft,
                             paddingLeft,
-                            marginLeft: pos <= 3 ? "-15px" : "-15px",
-                            transition: "background 0.3s ease",
+                            marginLeft: "-15px",
+                            opacity: status === "out" ? 0.5 : 1,
+                            transition: "background 0.3s ease, opacity 0.3s ease",
                           }}
                         >
                           <div className="grid w-full items-center" style={{ gridTemplateColumns: "20px 28px 1fr 28px 28px 28px 28px 28px 36px", gap: "0.5rem" }}>
-                            <div style={{ fontSize: "0.7rem", fontWeight: 300, color: "rgba(255,255,255,0.2)" }}>
+                            <div style={{ fontSize: "0.7rem", fontWeight: status ? 600 : 300, color: status === "through" ? "#16A34A" : status === "out" ? "rgba(229,72,77,0.75)" : "rgba(255,255,255,0.2)" }}>
                               {pos}
                             </div>
                             <div className="flex justify-center">
@@ -286,11 +293,17 @@ export default function GroupsPage() {
           })}
         </div>
 
-        <div className="mt-12 md:mt-16 border-t border-[rgba(255,255,255,0.05)] pt-6">
-          <p style={{ fontSize: "0.7rem", letterSpacing: "0.14em", color: "rgba(255,255,255,0.6)", textTransform: "uppercase", fontWeight: 500 }}>
-            <span className="inline-block w-1 h-3 bg-[rgba(255,255,255,0.7)] mr-2 align-middle"></span>
-            Advances to Round of 32
-          </p>
+        <div className="mt-12 md:mt-16 border-t border-[rgba(255,255,255,0.05)] pt-6 flex flex-wrap gap-x-6 gap-y-2">
+          {[
+            { c: "#16A34A", label: "Qualified" },
+            { c: "rgba(229,72,77,0.6)", label: "Eliminated" },
+            { c: "rgba(255,255,255,0.5)", label: "Top 2 advance" },
+          ].map((item) => (
+            <span key={item.label} className="flex items-center" style={{ fontSize: "0.65rem", letterSpacing: "0.12em", color: "rgba(255,255,255,0.55)", textTransform: "uppercase", fontWeight: 500 }}>
+              <span style={{ width: 10, height: 10, background: item.c, marginRight: 8, display: "inline-block" }} />
+              {item.label}
+            </span>
+          ))}
         </div>
       </div>
 

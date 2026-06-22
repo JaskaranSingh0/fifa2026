@@ -164,7 +164,10 @@ export default function SelectedCountryOverlay({
           transition={{ delay: 1, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
           onClick={onExploreTeam}
           style={{
-            background: "none",
+            background: "rgba(8,8,8,0.6)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            borderRadius: "100px",
             border: `1px solid ${primary}59`,
             cursor: "pointer",
             padding: "14px 40px",

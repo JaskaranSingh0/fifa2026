@@ -113,7 +113,7 @@ export default function TeamsExperience() {
     : null;
 
   return (
-    <div className="relative w-full h-screen bg-[#050505] overflow-hidden select-none">
+    <div className="relative w-full h-[100dvh] bg-[#050505] overflow-hidden select-none">
 
       {/* ── Branded texture-load veil ───────────────────────────────────── */}
       <GlobeLoader />

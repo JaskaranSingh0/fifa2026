@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function TeamsPage() {
   return (
-    <main className="w-full h-screen bg-[#050505]">
+    <main className="w-full h-[100dvh] bg-[#050505]">
       <TeamsExperience />
     </main>
   );

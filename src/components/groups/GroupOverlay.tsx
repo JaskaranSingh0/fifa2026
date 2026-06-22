@@ -11,6 +11,7 @@ import { getTeamProfile } from "@/lib/data/team-profiles";
 import { formatLocalKickoff, formatDateEditorial } from "@/lib/matches-data";
 import TeamLogo from "@/components/TeamLogo";
 import { useModalA11y } from "@/hooks/useModalA11y";
+import { teamAdvanceStatus } from "@/lib/bracket";
 
 export interface StandingRow {
   code: string;
@@ -80,9 +81,6 @@ export default function GroupOverlay({ group, standings, onClose }: Props) {
       name: getTeam(code)?.name ?? code,
       played: 0, won: 0, drawn: 0, lost: 0, gf: 0, ga: 0, gd: 0, points: 0,
     }));
-
-  const qualColor = (pos: number) =>
-    pos <= 2 ? accent : pos === 3 ? "rgba(255,255,255,0.25)" : "transparent";
 
   return (
     <motion.div
@@ -182,6 +180,13 @@ export default function GroupOverlay({ group, standings, onClose }: Props) {
           <ul className="flex flex-col">
             {rows.map((t, i) => {
               const pos = i + 1;
+              const status = teamAdvanceStatus(rows, i);
+              const border =
+                status === "through" ? "#16A34A"
+                : status === "out" ? "rgba(229,72,77,0.45)"
+                : pos <= 2 ? accent
+                : pos === 3 ? "rgba(255,255,255,0.25)"
+                : "transparent";
               return (
                 <li
                   key={t.code}
@@ -192,10 +197,11 @@ export default function GroupOverlay({ group, standings, onClose }: Props) {
                     padding: "0.85rem 0 0.85rem 12px",
                     marginLeft: "-12px",
                     borderBottom: "1px solid rgba(255,255,255,0.04)",
-                    borderLeft: `3px solid ${qualColor(pos)}`,
+                    borderLeft: `3px solid ${border}`,
+                    opacity: status === "out" ? 0.5 : 1,
                   }}
                 >
-                  <div style={{ fontSize: "0.75rem", fontWeight: 400, color: pos <= 2 ? "var(--accent)" : "rgba(255,255,255,0.3)" }}>{pos}</div>
+                  <div style={{ fontSize: "0.75rem", fontWeight: status ? 600 : 400, color: status === "through" ? "#16A34A" : status === "out" ? "rgba(229,72,77,0.75)" : pos <= 2 ? "var(--accent)" : "rgba(255,255,255,0.3)" }}>{pos}</div>
                   <div className="flex items-center gap-3 min-w-0">
                     <TeamLogo code={t.code} size={24} />
                     <span className="uppercase truncate" style={{ fontSize: "0.95rem", fontWeight: 700, letterSpacing: "0.06em", color: "rgba(255,255,255,0.92)" }}>
@@ -218,10 +224,13 @@ export default function GroupOverlay({ group, standings, onClose }: Props) {
           {/* Legend */}
           <div className="flex flex-wrap gap-x-6 gap-y-2" style={{ marginTop: "1.25rem" }}>
             <span className="flex items-center gap-2" style={{ fontSize: "0.6rem", letterSpacing: "0.12em", color: "rgba(255,255,255,0.5)", textTransform: "uppercase" }}>
-              <span style={{ width: 10, height: 10, background: accent }} /> Top 2 — Round of 32
+              <span style={{ width: 10, height: 10, background: "#16A34A" }} /> Qualified
+            </span>
+            <span className="flex items-center gap-2" style={{ fontSize: "0.6rem", letterSpacing: "0.12em", color: "rgba(255,255,255,0.45)", textTransform: "uppercase" }}>
+              <span style={{ width: 10, height: 10, background: "rgba(229,72,77,0.6)" }} /> Eliminated
             </span>
             <span className="flex items-center gap-2" style={{ fontSize: "0.6rem", letterSpacing: "0.12em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase" }}>
-              <span style={{ width: 10, height: 10, background: "rgba(255,255,255,0.25)" }} /> 3rd — best-third contention
+              <span style={{ width: 10, height: 10, background: "rgba(255,255,255,0.25)" }} /> 3rd — best-third watch
             </span>
           </div>
         </section>

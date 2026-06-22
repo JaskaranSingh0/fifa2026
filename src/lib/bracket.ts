@@ -78,6 +78,31 @@ export function buildGroupSlotResolver(groups: LiveGroupStanding[]) {
 }
 
 /**
+ * Group advancement status for the team at `idx` of a sorted standings array:
+ *   "through" — secured a top-two finish (definitely advances)
+ *   "out"     — mathematically can't finish in the top three (locked into 4th)
+ *   null      — still in contention (incl. 3rd, which depends on the best-third race)
+ */
+export function teamAdvanceStatus(
+  teams: { played: number; points: number }[],
+  idx: number
+): "through" | "out" | null {
+  const t = teams[idx];
+  if (!t) return null;
+  const maxPts = (x: { played: number; points: number }) => x.points + 3 * Math.max(0, 3 - x.played);
+  if (teams.every((x) => x.played >= 3)) {
+    if (idx <= 1) return "through";
+    if (idx >= 3) return "out";
+    return null;
+  }
+  const canFinishAbove = teams.filter((u) => u !== t && maxPts(u) > t.points).length;
+  if (canFinishAbove <= 1) return "through";
+  const guaranteedAbove = teams.filter((u) => u !== t && u.points > maxPts(t)).length;
+  if (guaranteedAbove >= 3) return "out";
+  return null;
+}
+
+/**
  * Build the feeder tree from the flat knockout list. Each "W<n>" ref points at the
  * match that feeds this slot; following them down from the Final yields the two
  * halves of the bracket (left = feeders of the Final's first slot, right = second).
