@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { TEAM_BRANDING } from "@/lib/data/team-branding";
 import { formatLocalKickoff } from "@/lib/matches-data";
+import { slotLabel, isRealTeam } from "@/lib/bracket";
 import TeamLogo from "@/components/TeamLogo";
 
 const formatMatchDate = (dateStr: string) => {
@@ -138,6 +139,13 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
     (details?.details?.statusName === "HALFTIME" ||
       details?.details?.statusName === "STATUS_HALFTIME" ||
       /^HT$|half\s*time/i.test(details?.details?.statusDetail ?? ""));
+
+  // Knockout fixtures store group-position placeholders ("1K", "3D/E/I/J/K") until
+  // the bracket is set — render those as readable labels instead of raw codes.
+  const homeReal = isRealTeam(baseMatch.home.code);
+  const awayReal = isRealTeam(baseMatch.away.code);
+  const homeName = homeReal ? baseMatch.home.name : slotLabel(baseMatch.home.code);
+  const awayName = awayReal ? baseMatch.away.name : slotLabel(baseMatch.away.code);
 
   const renderGoals = () => {
     if (status === 'loading') {
@@ -475,11 +483,18 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
           <div className="flex w-full items-center justify-between py-10 md:py-20 mb-4 max-w-6xl mx-auto">
             <div className="flex flex-col items-center flex-1 gap-4">
               <span style={{ fontSize: '10px', letterSpacing: '0.2em', color: 'rgba(255,255,255,0.3)' }}>
-                {baseMatch.home.code}
+                {homeReal ? baseMatch.home.code : "TBD"}
               </span>
-              <TeamLogo code={baseMatch.home.code} size={56} />
-              <span className="text-base sm:text-2xl md:text-3xl tracking-[0.1em] md:tracking-[0.3em] uppercase font-light text-center mt-2">
-                {baseMatch.home.name}
+              {homeReal ? (
+                <TeamLogo code={baseMatch.home.code} size={56} />
+              ) : (
+                <span style={{ width: 56, height: 56, borderRadius: "50%", border: "1px dashed rgba(255,255,255,0.2)", display: "inline-block" }} />
+              )}
+              <span
+                className="text-base sm:text-2xl md:text-3xl tracking-[0.1em] md:tracking-[0.3em] uppercase font-light text-center mt-2"
+                style={homeReal ? undefined : { fontStyle: "italic", color: "rgba(255,255,255,0.55)" }}
+              >
+                {homeName}
               </span>
             </div>
 
@@ -522,11 +537,18 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
 
             <div className="flex flex-col items-center flex-1 gap-4">
               <span style={{ fontSize: '10px', letterSpacing: '0.2em', color: 'rgba(255,255,255,0.3)' }}>
-                {baseMatch.away.code}
+                {awayReal ? baseMatch.away.code : "TBD"}
               </span>
-              <TeamLogo code={baseMatch.away.code} size={56} />
-              <span className="text-base sm:text-2xl md:text-3xl tracking-[0.1em] md:tracking-[0.3em] uppercase font-light text-center mt-2">
-                {baseMatch.away.name}
+              {awayReal ? (
+                <TeamLogo code={baseMatch.away.code} size={56} />
+              ) : (
+                <span style={{ width: 56, height: 56, borderRadius: "50%", border: "1px dashed rgba(255,255,255,0.2)", display: "inline-block" }} />
+              )}
+              <span
+                className="text-base sm:text-2xl md:text-3xl tracking-[0.1em] md:tracking-[0.3em] uppercase font-light text-center mt-2"
+                style={awayReal ? undefined : { fontStyle: "italic", color: "rgba(255,255,255,0.55)" }}
+              >
+                {awayName}
               </span>
             </div>
           </div>

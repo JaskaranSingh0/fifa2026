@@ -45,6 +45,7 @@ import TeamLogo from "@/components/TeamLogo";
 import LiveIndicator from "@/components/LiveIndicator";
 import RevealText from "@/components/RevealText";
 import { getTeamBranding } from "@/lib/data/team-branding";
+import { slotLabel, isRealTeam } from "@/lib/bracket";
 
 // ---------------------------------------------------------------------------
 // Stage filter — minimal text links, not pills
@@ -106,6 +107,13 @@ const MatchEntry = React.memo(function MatchEntry({ match, index }: { match: Mat
     isFinished && match.homeScore !== undefined && match.awayScore !== undefined
       ? match.awayScore < match.homeScore
       : false;
+
+  // Knockout fixtures hold group-position placeholders ("1K", "3D/E/I/J/K") until
+  // the bracket is set — show readable labels instead of raw codes.
+  const homeReal = isRealTeam(match.home.code);
+  const awayReal = isRealTeam(match.away.code);
+  const homeName = homeReal ? match.home.name : slotLabel(match.home.code);
+  const awayName = awayReal ? match.away.name : slotLabel(match.away.code);
 
   const handleEnter = () => {
     if (!linkRef.current) return;
@@ -208,12 +216,17 @@ const MatchEntry = React.memo(function MatchEntry({ match, index }: { match: Mat
                 fontSize: "clamp(0.85rem, 1.8vw, 1.55rem)",
                 letterSpacing: "0.08em",
                 lineHeight: 1.1,
-                color: homeDimmed ? "rgba(255,255,255,0.2)" : (isFinished && match.homeScore !== match.awayScore ? "#ffffff" : "#ffffff"),
+                fontStyle: homeReal ? "normal" : "italic",
+                color: !homeReal ? "rgba(255,255,255,0.5)" : homeDimmed ? "rgba(255,255,255,0.2)" : "#ffffff",
               }}
             >
-              {match.home.name}
+              {homeName}
             </span>
-            <TeamLogo code={match.home.code} size={homeDimmed ? 28 : (isFinished ? 40 : 36)} />
+            {homeReal ? (
+              <TeamLogo code={match.home.code} size={homeDimmed ? 28 : (isFinished ? 40 : 36)} />
+            ) : (
+              <span style={{ width: homeDimmed ? 28 : (isFinished ? 40 : 36), height: homeDimmed ? 28 : (isFinished ? 40 : 36), borderRadius: "50%", border: "1px dashed rgba(255,255,255,0.2)", flexShrink: 0, display: "inline-block" }} />
+            )}
           </div>
 
           {/* Score / Time block — center */}
@@ -267,17 +280,22 @@ const MatchEntry = React.memo(function MatchEntry({ match, index }: { match: Mat
               transition: "opacity 0.3s ease",
             }}
           >
-            <TeamLogo code={match.away.code} size={awayDimmed ? 28 : (isFinished ? 40 : 36)} />
+            {awayReal ? (
+              <TeamLogo code={match.away.code} size={awayDimmed ? 28 : (isFinished ? 40 : 36)} />
+            ) : (
+              <span style={{ width: awayDimmed ? 28 : (isFinished ? 40 : 36), height: awayDimmed ? 28 : (isFinished ? 40 : 36), borderRadius: "50%", border: "1px dashed rgba(255,255,255,0.2)", flexShrink: 0, display: "inline-block" }} />
+            )}
             <span
               className="text-left uppercase font-bold"
               style={{
                 fontSize: "clamp(0.85rem, 1.8vw, 1.55rem)",
                 letterSpacing: "0.08em",
                 lineHeight: 1.1,
-                color: awayDimmed ? "rgba(255,255,255,0.2)" : (isFinished && match.homeScore !== match.awayScore ? "#ffffff" : "#ffffff"),
+                fontStyle: awayReal ? "normal" : "italic",
+                color: !awayReal ? "rgba(255,255,255,0.5)" : awayDimmed ? "rgba(255,255,255,0.2)" : "#ffffff",
               }}
             >
-              {match.away.name}
+              {awayName}
             </span>
           </div>
         </div>
