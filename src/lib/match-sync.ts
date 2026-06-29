@@ -1,5 +1,6 @@
 import { fetchFromFootballData, fetchFromESPN, NormalizedMatch } from './football-api';
 import { prisma } from './prisma';
+import { MATCHES, TournamentStage } from './data/matches';
 
 // Maps football-data.org team name variants → names stored in our DB (from seed)
 const TEAM_NAME_MAP: Record<string, string> = {
@@ -23,6 +24,7 @@ const TEAM_NAME_MAP: Record<string, string> = {
   'Türkiye': 'Turkey',
   'Turkiye': 'Turkey',
   'Cabo Verde': 'Cape Verde',
+  'Cape Verde Islands': 'Cape Verde',
   'Republic of Ireland': 'Ireland',
   'Korea DPR': 'North Korea',
 };
@@ -30,6 +32,24 @@ const TEAM_NAME_MAP: Record<string, string> = {
 export function normalizeTeamName(name: string): string {
   return TEAM_NAME_MAP[name] ?? name;
 }
+
+/** Parse a seeded "HH:MM UTC±H" kickoff + ISO date into the absolute UTC instant (ms). */
+function kickoffUtcMs(dateStr: string, timeStr: string): number | null {
+  const m = timeStr.match(/(\d{1,2}):(\d{2})\s*UTC\s*([+-]\d{1,2})/i);
+  if (!m) return null;
+  const [, hh, mm, off] = m;
+  const sign = off.startsWith("-") ? "-" : "+";
+  const offHrs = String(Math.abs(parseInt(off, 10))).padStart(2, "0");
+  const d = new Date(`${dateStr}T${hh.padStart(2, "0")}:${mm}:00${sign}${offHrs}:00`);
+  return isNaN(d.getTime()) ? null : d.getTime();
+}
+
+// Seeded knockout fixtures with their real UTC kickoff. Their teams are
+// placeholders ("1A", "W73") that can't name-match the real upstream matchup, so
+// we map by kickoff time instead.
+const KO_SEEDS = MATCHES
+  .filter((x) => x.stage !== TournamentStage.GROUP_STAGE && x.stage !== TournamentStage.ALL)
+  .map((x) => ({ id: x.id, utc: kickoffUtcMs(x.date, x.time) }));
 
 export async function syncMatches(): Promise<{ updated: number, source: string }> {
   const [afdData, espnData] = await Promise.all([
@@ -74,7 +94,9 @@ export async function syncMatches(): Promise<{ updated: number, source: string }
     where: { id: { startsWith: 'm' } }, // Only our seeded WC matches (m001-m104)
     select: { id: true, homeTeam: true, awayTeam: true, date: true, homeScore: true, awayScore: true, minute: true, status: true, externalId: true }
   });
-  
+
+  const assignedKo = new Set<string>(); // knockout slots already claimed this run
+
   for (const m of mergedMap.values()) {
     const matchDate = new Date(m.date);
     const matchTime = matchDate.getTime();
@@ -89,7 +111,7 @@ export async function syncMatches(): Promise<{ updated: number, source: string }
       const statusChanged = existing.status !== m.status;
       const minuteChanged = existing.minute !== m.minute;
       const externalIdMissing = !existing.externalId && !!m.externalId;
-        
+
       if (scoreChanged || statusChanged || minuteChanged || externalIdMissing) {
         await prisma.match.update({
           where: { id: existing.id },
@@ -103,11 +125,53 @@ export async function syncMatches(): Promise<{ updated: number, source: string }
         });
         updatedCount++;
       }
-    } else {
-      // GUARD: Do NOT create foreign matches. Only update existing seeded WC matches.
-      // If no match found in DB for this API result, it is not a World Cup match — skip silently.
-      console.log(`[sync] Skipping non-WC match: ${m.homeTeam} vs ${m.awayTeam}`);
+      continue;
     }
+
+    // Knockout fixtures hold placeholder names in the seed ("1A", "W73"), so the
+    // real matchup ("South Africa vs Canada") can't name-match. Map it to a seeded
+    // knockout slot by KICKOFF TIME, then write the real teams + scores.
+    const realTeams =
+      !!m.homeTeam && !!m.awayTeam && !/tbd/i.test(m.homeTeam) && !/tbd/i.test(m.awayTeam);
+    if (realTeams) {
+      let bestId: string | null = null;
+      let bestDiff = Infinity;
+      for (const k of KO_SEEDS) {
+        if (k.utc == null || assignedKo.has(k.id)) continue;
+        const diff = Math.abs(k.utc - matchTime);
+        if (diff < bestDiff) { bestDiff = diff; bestId = k.id; }
+      }
+      if (bestId && bestDiff <= 2 * 60 * 60 * 1000) { // within 2h of the seeded kickoff
+        assignedKo.add(bestId);
+        const dbKo = existingMatches.find((e) => e.id === bestId);
+        const changed =
+          dbKo?.homeTeam !== m.homeTeam ||
+          dbKo?.awayTeam !== m.awayTeam ||
+          dbKo?.homeScore !== m.homeScore ||
+          dbKo?.awayScore !== m.awayScore ||
+          dbKo?.status !== m.status ||
+          dbKo?.minute !== m.minute;
+        if (changed) {
+          await prisma.match.update({
+            where: { id: bestId },
+            data: {
+              homeTeam: m.homeTeam,
+              awayTeam: m.awayTeam,
+              homeScore: m.homeScore,
+              awayScore: m.awayScore,
+              minute: m.minute,
+              status: m.status,
+              externalId: m.externalId,
+            },
+          });
+          updatedCount++;
+        }
+        continue;
+      }
+    }
+
+    // Not a WC match we recognise — skip (never create foreign matches).
+    console.log(`[sync] Skipping non-WC match: ${m.homeTeam} vs ${m.awayTeam}`);
   }
   
   return { updated: updatedCount, source: 'football-data+espn' };

@@ -3,9 +3,14 @@
 
 import { NextResponse, after } from "next/server";
 import { MATCHES, MatchStatus } from "@/lib/data/matches";
+import { TEAMS } from "@/lib/data/teams";
 import { prisma } from "@/lib/prisma";
 import { syncIfStale } from "@/lib/match-sync";
 export const dynamic = "force-dynamic"; // Never cache — always serve fresh data
+
+// Real team name → full team data. The sync writes real teams into knockout slots
+// once the bracket is set; the static fixture still holds the "1A"/"W73" placeholder.
+const TEAM_BY_NAME = new Map(Object.values(TEAMS).map((t) => [t.name, t]));
 
 export interface MatchWithScore {
   id: string;
@@ -49,8 +54,13 @@ export async function GET() {
       }
 
       if (dbMatch) {
+        // Prefer the real teams the sync wrote into knockout slots over the placeholder.
+        const dbHome = dbMatch.homeTeam !== match.home.name ? TEAM_BY_NAME.get(dbMatch.homeTeam) : undefined;
+        const dbAway = dbMatch.awayTeam !== match.away.name ? TEAM_BY_NAME.get(dbMatch.awayTeam) : undefined;
         return {
           ...match,
+          home: dbHome ?? match.home,
+          away: dbAway ?? match.away,
           status: dbMatch.status as MatchStatus,
           homeScore: dbMatch.homeScore,
           awayScore: dbMatch.awayScore,

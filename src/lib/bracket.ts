@@ -10,7 +10,7 @@ export interface BracketMatch {
   awayScore?: number;
   home: { code: string; name: string };
   away: { code: string; name: string };
-  liveData?: { currentMinute: number };
+  liveData?: { currentMinute: number; penaltyScore?: [number, number] };
 }
 
 export interface BracketNode {
@@ -100,6 +100,41 @@ export function teamAdvanceStatus(
   const guaranteedAbove = teams.filter((u) => u !== t && u.points > maxPts(t)).length;
   if (guaranteedAbove >= 3) return "out";
   return null;
+}
+
+/**
+ * Resolve match-outcome placeholders into the team that actually went through:
+ *   "W73" → the winner of match 73   "L101" → the loser of match 101 (3rd-place feed)
+ * Only resolves once the feeding match has a DECISIVE result. A knockout draw is
+ * settled on penalties, so when the 90/120-minute score is level we fall back to
+ * `liveData.penaltyScore`; absent that we leave the slot unresolved. Chases the
+ * chain when a feeder's own slot is itself a "W…"/"L…" placeholder (e.g. a
+ * quarter-final fed by a round-of-16 winner).
+ */
+export function buildWinnerResolver(matches: BracketMatch[]) {
+  const byNumber = new Map(matches.map((m) => [m.matchNumber, m]));
+  const resolve = (code: string, depth = 0): ResolvedTeam => {
+    const m = /^([WL])(\d+)$/.exec(code);
+    if (!m || depth > 16) return null;
+    const wantWinner = m[1] === "W";
+    const fed = byNumber.get(parseInt(m[2], 10));
+    if (!fed || fed.status !== "FINISHED" || fed.homeScore == null || fed.awayScore == null) return null;
+
+    let homeAdvances: boolean;
+    if (fed.homeScore !== fed.awayScore) {
+      homeAdvances = fed.homeScore > fed.awayScore;
+    } else {
+      const pens = fed.liveData?.penaltyScore;
+      if (!pens) return null; // level after normal time, no shoot-out score yet
+      homeAdvances = pens[0] > pens[1];
+    }
+    const advancing = homeAdvances === wantWinner ? fed.home : fed.away;
+    // The advancing slot may itself still be a placeholder — follow it up the tree.
+    return isRealTeam(advancing.code)
+      ? { code: advancing.code, name: advancing.name }
+      : resolve(advancing.code, depth + 1);
+  };
+  return resolve;
 }
 
 /**

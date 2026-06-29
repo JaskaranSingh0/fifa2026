@@ -12,10 +12,12 @@ import MirroredBracket from "@/components/bracket/MirroredBracket";
 import {
   buildBracketTree,
   buildGroupSlotResolver,
+  buildWinnerResolver,
   isRealTeam,
   slotLabel,
   type BracketMatch,
   type LiveGroupStanding,
+  type ResolvedTeam,
 } from "@/lib/bracket";
 
 // status arrives as a plain string from the API — keep it loose
@@ -212,9 +214,14 @@ export default function BracketPage() {
     return () => { alive = false; clearInterval(id); };
   }, []);
 
-  // Resolve group-position slots ("1A"/"2B"…) into qualified teams, and build the
-  // feeder tree for the mirrored desktop bracket.
-  const resolver = useMemo(() => buildGroupSlotResolver(groups), [groups]);
+  // Resolve slot placeholders into real teams: group-position slots ("1A"/"2B"…)
+  // from the live standings, and match-outcome slots ("W73"/"L101") from finished
+  // knockout results — so a side advances through the bracket as soon as it wins.
+  const resolver = useMemo<(code: string) => ResolvedTeam>(() => {
+    const byGroup = buildGroupSlotResolver(groups);
+    const byWinner = buildWinnerResolver(liveMatches as unknown as BracketMatch[]);
+    return (code) => byGroup(code) ?? byWinner(code);
+  }, [groups, liveMatches]);
   const bracketTree = useMemo(
     () => buildBracketTree(liveMatches as unknown as BracketMatch[]),
     [liveMatches]
