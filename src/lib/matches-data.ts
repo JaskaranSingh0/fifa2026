@@ -52,6 +52,21 @@ export function formatLocalKickoff(isoDate: string, timeStr: string): string {
   return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
+/**
+ * The match's kickoff as an absolute Date (parses the same official
+ * "HH:MM UTC±H" string). Null when unparseable.
+ */
+export function kickoffDateTime(isoDate: string, timeStr: string): Date | null {
+  if (!timeStr) return null;
+  const m = timeStr.match(/(\d{1,2}):(\d{2})\s*UTC\s*([+-]\d{1,2})/i);
+  if (!m) return null;
+  const [, hh, mm, off] = m;
+  const sign = off.startsWith("-") ? "-" : "+";
+  const offHrs = String(Math.abs(parseInt(off, 10))).padStart(2, "0");
+  const d = new Date(`${isoDate}T${hh.padStart(2, "0")}:${mm}:00${sign}${offHrs}:00`);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 /** Get the tournament date range as a formatted string */
 export function getTournamentDateRange(matches: Match[]): string {
   if (!matches || matches.length === 0) return "";

@@ -37,6 +37,19 @@ export default function SiteNav() {
   // Close the mobile menu on navigation
   useEffect(() => { setMenuOpen(false); }, [pathname]);
 
+  // While the menu is open: Escape closes it, and the page behind stops scrolling
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuOpen(false); };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
+
   if (isHomepage) return null;
 
   return (
@@ -122,7 +135,8 @@ export default function SiteNav() {
           onClick={() => setMenuOpen(o => !o)}
           aria-label={menuOpen ? "Close menu" : "Open menu"}
           aria-expanded={menuOpen}
-          style={{ background: "none", border: "none", cursor: "pointer", padding: 6, margin: -6, color: "#fff" }}
+          // 44px hit area (13px padding + 18px icon) without shifting the layout
+          style={{ background: "none", border: "none", cursor: "pointer", padding: 13, margin: -13, color: "#fff" }}
         >
           {menuOpen ? (
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">

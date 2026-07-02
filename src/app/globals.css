@@ -37,11 +37,13 @@ body {
 }
 
 /* ──────────────────────────────────────────────────────────
-   Navigation focus — custom ring in accent color
+   Keyboard focus — accent ring on ANY focusable element
+   (links, buttons, and role="button" divs alike), so keyboard
+   users always know where they are in the experience.
    ────────────────────────────────────────────────────────── */
-a:focus-visible {
-  outline: 1px solid rgba(0, 209, 255, 0.5);
-  outline-offset: 6px;
+:focus-visible {
+  outline: 1px solid rgba(0, 209, 255, 0.55);
+  outline-offset: 4px;
   border-radius: 2px;
 }
 

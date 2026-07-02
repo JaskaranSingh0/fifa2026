@@ -10,8 +10,27 @@ import {
   groupSquadByPosition,
 } from "@/lib/data/team-profiles";
 import { getTeamBranding } from "@/lib/data/team-branding";
+import { STAGE_LABELS_SHORT, TournamentStage, formatLocalKickoff } from "@/lib/matches-data";
 import TeamLogo from "@/components/TeamLogo";
 import { useModalA11y } from "@/hooks/useModalA11y";
+
+// Result of one journey match from THIS team's perspective (pens-aware).
+function matchResult(match: any, code: string): "W" | "D" | "L" | null {
+  if (match.status !== "FINISHED") return null;
+  const isHome = match.home.code === code;
+  const my = isHome ? match.homeScore : match.awayScore;
+  const their = isHome ? match.awayScore : match.homeScore;
+  if (my === undefined || their === undefined) return null;
+  if (my > their) return "W";
+  if (my < their) return "L";
+  const pens = match.penaltyScore as [number, number] | undefined;
+  if (pens && pens[0] !== pens[1]) {
+    const myPens = isHome ? pens[0] : pens[1];
+    const theirPens = isHome ? pens[1] : pens[0];
+    return myPens > theirPens ? "W" : "L";
+  }
+  return "D";
+}
 
 interface Props {
   profile: TeamProfile;
@@ -66,10 +85,11 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
           setGroupData(myGroup);
         });
 
-        // Find matches
-        const myMatches = (mData.matches || []).filter((m: any) => 
-          m.home.code === profile.code || m.away.code === profile.code
-        ).slice(0, 6);
+        // The team's full tournament path — knockout fixtures join the list
+        // automatically as the sync writes real teams into the bracket slots.
+        const myMatches = (mData.matches || [])
+          .filter((m: any) => m.home.code === profile.code || m.away.code === profile.code)
+          .sort((a: any, b: any) => a.date.localeCompare(b.date));
         setMatches(myMatches);
       } catch (err) {
         console.error(err);
@@ -413,26 +433,60 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
                   textTransform: "uppercase",
                   color: "rgba(255,255,255,0.9)",
                   lineHeight: 1,
-                  marginBottom: "clamp(1.5rem, 3vw, 2.5rem)",
+                  marginBottom: "clamp(1rem, 2vw, 1.5rem)",
                 }}
               >
-                ROAD TO 2026
+                THE JOURNEY
               </h2>
-              
+
+              {/* Form line — one mark per match: W (team colour), D, L, upcoming hollow */}
+              <div className="flex items-center gap-2" style={{ marginBottom: "clamp(1.5rem, 3vw, 2.5rem)" }} aria-label="Tournament form">
+                {matches.map((m: any) => {
+                  const r = matchResult(m, profile.code);
+                  const live = m.status === "LIVE";
+                  return (
+                    <span
+                      key={m.id}
+                      title={`${m.home.name} v ${m.away.name}`}
+                      style={{
+                        width: 22, height: 22, borderRadius: "50%",
+                        display: "inline-flex", alignItems: "center", justifyContent: "center",
+                        fontSize: "0.55rem", fontWeight: 800, letterSpacing: 0,
+                        color: r === "W" ? "#050505" : r ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.3)",
+                        background: r === "W" ? "var(--team-primary)" : r === "L" ? "rgba(229,72,77,0.28)" : r === "D" ? "rgba(255,255,255,0.14)" : "transparent",
+                        border: r ? "none" : live ? "1px solid rgba(255,0,0,0.6)" : "1px dashed rgba(255,255,255,0.25)",
+                      }}
+                    >
+                      {r ?? (live ? "●" : "")}
+                    </span>
+                  );
+                })}
+              </div>
+
               <ul className="flex flex-col gap-0 relative">
                 {matches.map((match: any) => {
                   const isHome = match.home.code === profile.code;
                   const opponent = isHome ? match.away : match.home;
                   const myScore = isHome ? match.homeScore : match.awayScore;
                   const theirScore = isHome ? match.awayScore : match.homeScore;
-                  
+                  const result = matchResult(match, profile.code);
+                  const won = result === "W";
+                  const pens = match.penaltyScore as [number, number] | undefined;
+                  const pensNote =
+                    match.status === "FINISHED" && myScore === theirScore && pens && pens[0] !== pens[1]
+                      ? `${Math.max(...pens)}–${Math.min(...pens)} pens`
+                      : null;
+                  const stageLabel =
+                    match.group ?? STAGE_LABELS_SHORT[match.stage as TournamentStage] ?? match.stage;
+                  const isNext =
+                    match.status !== "FINISHED" && match.status !== "LIVE" &&
+                    matches.find((m: any) => m.status !== "FINISHED" && m.status !== "LIVE")?.id === match.id;
+
                   let scoreDisplay = "—";
-                  let won = false;
-                  if (match.status === "FINISHED" && myScore !== undefined && theirScore !== undefined) {
+                  if ((match.status === "FINISHED" || match.status === "LIVE") && myScore !== undefined && theirScore !== undefined) {
                     scoreDisplay = `${myScore} — ${theirScore}`;
-                    won = myScore > theirScore;
-                  } else if (match.status === "LIVE" && myScore !== undefined && theirScore !== undefined) {
-                    scoreDisplay = `${myScore} — ${theirScore}`;
+                  } else if (isNext) {
+                    scoreDisplay = formatLocalKickoff(match.date, match.time) || "—";
                   }
 
                   return (
@@ -443,12 +497,16 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
                           padding: "1.2rem 0",
                           borderBottom: "1px solid rgba(255,255,255,0.03)",
                           transition: "background 0.3s ease",
+                          background: isNext ? "linear-gradient(to right, color-mix(in srgb, var(--team-primary) 7%, transparent), transparent 70%)" : "none",
                         }}
                       >
                         <div className="flex flex-col md:flex-row md:items-center w-full justify-between gap-2">
-                          <div className="flex items-center gap-6">
-                            <div style={{ width: "80px", fontSize: "0.65rem", fontWeight: 400, color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em" }}>
+                          <div className="flex items-center gap-4 md:gap-6">
+                            <div style={{ width: "58px", fontSize: "0.65rem", fontWeight: 400, color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em" }}>
                               {formatMatchDate(match.date)}
+                            </div>
+                            <div className="uppercase" style={{ width: "72px", fontSize: "0.58rem", fontWeight: 600, letterSpacing: "0.14em", color: isNext ? "var(--team-primary)" : "rgba(255,255,255,0.35)" }}>
+                              {stageLabel}
                             </div>
                             <div className="flex items-center gap-3">
                               <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.3)" }}>vs</span>
@@ -463,9 +521,14 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
                               >
                                 {opponent.name}
                               </div>
+                              {isNext && (
+                                <span className="uppercase" style={{ fontSize: "0.5rem", fontWeight: 800, letterSpacing: "0.2em", color: "var(--team-primary)", border: "1px solid color-mix(in srgb, var(--team-primary) 55%, transparent)", borderRadius: 999, padding: "3px 8px" }}>
+                                  Next
+                                </span>
+                              )}
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center gap-6 md:justify-end">
                             <div
                               className="tabular-nums"
@@ -482,11 +545,18 @@ export default function TeamProfileOverlay({ profile, teamName, onBack }: Props)
                                   <span className="text-[0.6rem] text-red-500 ml-1">{match.liveData?.currentMinute}&apos;</span>
                                 </span>
                               ) : (
-                                scoreDisplay
+                                <span className="flex items-center gap-2">
+                                  {scoreDisplay}
+                                  {pensNote && (
+                                    <span style={{ fontSize: "0.55rem", letterSpacing: "0.1em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase" }}>
+                                      {pensNote}
+                                    </span>
+                                  )}
+                                </span>
                               )}
                             </div>
-                            <div style={{ width: "70px", textAlign: "right", fontSize: "0.6rem", fontWeight: 400, color: "rgba(255,255,255,0.2)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                              {match.status}
+                            <div style={{ width: "70px", textAlign: "right", fontSize: "0.6rem", fontWeight: 400, color: result === "L" ? "rgba(229,72,77,0.6)" : "rgba(255,255,255,0.2)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                              {result === "W" ? "Won" : result === "L" ? "Lost" : result === "D" ? "Draw" : match.status === "LIVE" ? "Live" : ""}
                             </div>
                           </div>
                         </div>

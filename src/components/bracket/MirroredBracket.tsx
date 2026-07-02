@@ -47,17 +47,23 @@ function HLine() {
   return <div style={{ width: 30, height: 1, background: LINE, alignSelf: "center", flexShrink: 0 }} />;
 }
 
-function TeamSlot({ team, won, score, live, finished, resolver }: {
+function TeamSlot({ team, won, score, live, finished, resolver, onTrace }: {
   team: { code: string; name: string };
   won: boolean;
   score?: number;
   live: boolean;
   finished: boolean;
   resolver: Resolver;
+  onTrace?: (code: string | null) => void;
 }) {
   const resolved: ResolvedTeam = isRealTeam(team.code) ? team : resolver(team.code);
   return (
-    <div className="flex items-center justify-between" style={{ gap: 8, padding: "5px 9px" }}>
+    <div
+      className="flex items-center justify-between"
+      style={{ gap: 8, padding: "5px 9px" }}
+      onMouseEnter={resolved && onTrace ? () => onTrace(resolved.code) : undefined}
+      onMouseLeave={onTrace ? () => onTrace(null) : undefined}
+    >
       <div className="flex items-center" style={{ gap: 7, minWidth: 0 }}>
         {resolved ? (
           <TeamLogo code={resolved.code} size={16} />
@@ -86,30 +92,50 @@ function TeamSlot({ team, won, score, live, finished, resolver }: {
   );
 }
 
-function TreeCard({ match, resolver, featured = false }: { match: BracketMatch; resolver: Resolver; featured?: boolean }) {
+function TreeCard({ match, resolver, featured = false, traced, onTrace }: {
+  match: BracketMatch;
+  resolver: Resolver;
+  featured?: boolean;
+  traced?: string | null;
+  onTrace?: (code: string | null) => void;
+}) {
   const finished = match.status === "FINISHED" && match.homeScore !== undefined && match.awayScore !== undefined;
   const live = match.status === "LIVE";
-  const homeWon = finished && (match.homeScore as number) > (match.awayScore as number);
-  const awayWon = finished && (match.awayScore as number) > (match.homeScore as number);
+  // Level after 120' → the shootout decides the winner
+  const pens = match.penaltyScore;
+  const pensDecided = !!(finished && match.homeScore === match.awayScore && pens && pens[0] !== pens[1]);
+  const homeWon = finished && ((match.homeScore as number) > (match.awayScore as number) || (pensDecided && pens![0] > pens![1]));
+  const awayWon = finished && ((match.awayScore as number) > (match.homeScore as number) || (pensDecided && pens![1] > pens![0]));
   const winnerCode = homeWon ? match.home.code : awayWon ? match.away.code : null;
   const accent = winnerCode && isRealTeam(winnerCode) ? getTeamBranding(winnerCode).primary : featured ? "#E8C249" : null;
+
+  // Path tracing: while a team is hovered anywhere in the bracket, its route
+  // lights up in its colour and every other card recedes.
+  const rHome = isRealTeam(match.home.code) ? match.home : resolver(match.home.code);
+  const rAway = isRealTeam(match.away.code) ? match.away : resolver(match.away.code);
+  const onPath = !!traced && (rHome?.code === traced || rAway?.code === traced);
+  const traceColor = onPath ? getTeamBranding(traced!).primary : null;
 
   return (
     <Link
       href={`/matches/${match.id}`}
-      className="group block focus-visible:outline-none"
-      style={{ textDecoration: "none", width: featured ? CARD_W + 24 : CARD_W, margin: "12px 0", flexShrink: 0 }}
+      className="group block"
+      style={{
+        textDecoration: "none", width: featured ? CARD_W + 24 : CARD_W, margin: "12px 0", flexShrink: 0,
+        opacity: traced && !onPath ? 0.28 : 1,
+        transition: "opacity 0.3s ease",
+      }}
     >
       <div
         onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.28)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.borderColor = accent ?? "rgba(255,255,255,0.1)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.borderColor = traceColor ?? accent ?? "rgba(255,255,255,0.1)"; }}
         style={{
           borderRadius: 8,
-          border: "1px solid rgba(255,255,255,0.1)",
-          borderTop: accent ? `2px solid ${accent}` : "1px solid rgba(255,255,255,0.1)",
+          border: `1px solid ${traceColor ? `${traceColor}88` : "rgba(255,255,255,0.1)"}`,
+          borderTop: traceColor ? `2px solid ${traceColor}` : accent ? `2px solid ${accent}` : "1px solid rgba(255,255,255,0.1)",
           background: featured ? "rgba(232,194,73,0.06)" : "rgba(255,255,255,0.025)",
-          boxShadow: featured ? "0 0 40px rgba(232,194,73,0.12)" : "none",
-          transition: "border-color 0.25s ease",
+          boxShadow: traceColor ? `0 0 26px ${traceColor}33` : featured ? "0 0 40px rgba(232,194,73,0.12)" : "none",
+          transition: "border-color 0.25s ease, box-shadow 0.3s ease",
           overflow: "hidden",
         }}
       >
@@ -124,27 +150,30 @@ function TreeCard({ match, resolver, featured = false }: { match: BracketMatch; 
             </span>
           ) : (
             <span style={{ fontSize: "0.5rem", letterSpacing: "0.12em", color: "rgba(255,255,255,0.4)" }}>
-              {finished ? "FT" : shortDate(match.date)}
+              {pensDecided ? `PENS ${pens![0]}–${pens![1]}` : finished ? (match.duration === "EXTRA_TIME" ? "AET" : "FT") : shortDate(match.date)}
             </span>
           )}
         </div>
-        <TeamSlot team={match.home} won={homeWon} score={match.homeScore} live={live} finished={finished} resolver={resolver} />
+        <TeamSlot team={match.home} won={homeWon} score={match.homeScore} live={live} finished={finished} resolver={resolver} onTrace={onTrace} />
         <div style={{ height: 1, background: "rgba(255,255,255,0.05)" }} />
-        <TeamSlot team={match.away} won={awayWon} score={match.awayScore} live={live} finished={finished} resolver={resolver} />
+        <TeamSlot team={match.away} won={awayWon} score={match.awayScore} live={live} finished={finished} resolver={resolver} onTrace={onTrace} />
       </div>
     </Link>
   );
 }
 
-function Side({ node, side, resolver }: { node: BracketNode; side: "left" | "right"; resolver: Resolver }) {
-  if (!node.children) return <TreeCard match={node.match} resolver={resolver} />;
+function Side({ node, side, resolver, traced, onTrace }: {
+  node: BracketNode; side: "left" | "right"; resolver: Resolver;
+  traced: string | null; onTrace: (code: string | null) => void;
+}) {
+  if (!node.children) return <TreeCard match={node.match} resolver={resolver} traced={traced} onTrace={onTrace} />;
   const kids = (
     <div style={{ display: "flex", flexDirection: "column" }}>
-      <Side node={node.children[0]} side={side} resolver={resolver} />
-      <Side node={node.children[1]} side={side} resolver={resolver} />
+      <Side node={node.children[0]} side={side} resolver={resolver} traced={traced} onTrace={onTrace} />
+      <Side node={node.children[1]} side={side} resolver={resolver} traced={traced} onTrace={onTrace} />
     </div>
   );
-  const card = <TreeCard match={node.match} resolver={resolver} />;
+  const card = <TreeCard match={node.match} resolver={resolver} traced={traced} onTrace={onTrace} />;
   return (
     <div style={{ display: "flex", alignItems: "center" }}>
       {side === "left" ? (
@@ -156,20 +185,23 @@ function Side({ node, side, resolver }: { node: BracketNode; side: "left" | "rig
   );
 }
 
-function FinalBlock({ final, third, resolver }: { final: BracketMatch; third?: BracketMatch; resolver: Resolver }) {
+function FinalBlock({ final, third, resolver, traced, onTrace }: {
+  final: BracketMatch; third?: BracketMatch; resolver: Resolver;
+  traced: string | null; onTrace: (code: string | null) => void;
+}) {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", alignSelf: "stretch", flexShrink: 0, width: CARD_W + 40 }}>
       {/* top spacer keeps the Final card vertically centred against the semis */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", paddingBottom: 8 }}>
         <span className="uppercase" style={{ fontSize: "0.6rem", letterSpacing: "0.32em", color: "#E8C249", fontWeight: 800 }}>Final</span>
       </div>
-      <TreeCard match={final} resolver={resolver} featured />
+      <TreeCard match={final} resolver={resolver} featured traced={traced} onTrace={onTrace} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "center", paddingTop: 10, gap: 10 }}>
         <span className="uppercase" style={{ fontSize: "0.55rem", letterSpacing: "0.28em", color: "rgba(255,255,255,0.55)", fontWeight: 700 }}>★ Champion ★</span>
         {third && (
           <div className="flex flex-col items-center" style={{ marginTop: 8 }}>
             <span className="uppercase" style={{ fontSize: "0.5rem", letterSpacing: "0.26em", color: "rgba(255,255,255,0.35)", fontWeight: 700, marginBottom: 2 }}>3rd Place</span>
-            <TreeCard match={third} resolver={resolver} />
+            <TreeCard match={third} resolver={resolver} traced={traced} onTrace={onTrace} />
           </div>
         )}
       </div>
@@ -281,16 +313,18 @@ function HeaderRow() {
 }
 
 export default function MirroredBracket({ tree, resolver }: { tree: BracketTree; resolver: Resolver }) {
+  // Hovered team code — its route through the rounds lights up (path tracing).
+  const [traced, setTraced] = useState<string | null>(null);
   return (
     <ScaleToFit>
       <div style={{ display: "flex", flexDirection: "column", width: "max-content" }}>
         <HeaderRow />
         <div style={{ display: "flex", alignItems: "center", padding: "1.5rem 1rem" }}>
-          {tree.left && <Side node={tree.left} side="left" resolver={resolver} />}
+          {tree.left && <Side node={tree.left} side="left" resolver={resolver} traced={traced} onTrace={setTraced} />}
           <HLine />
-          <FinalBlock final={tree.final} third={tree.third} resolver={resolver} />
+          <FinalBlock final={tree.final} third={tree.third} resolver={resolver} traced={traced} onTrace={setTraced} />
           <HLine />
-          {tree.right && <Side node={tree.right} side="right" resolver={resolver} />}
+          {tree.right && <Side node={tree.right} side="right" resolver={resolver} traced={traced} onTrace={setTraced} />}
         </div>
       </div>
     </ScaleToFit>

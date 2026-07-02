@@ -98,14 +98,23 @@ const MatchEntry = React.memo(function MatchEntry({ match, index }: { match: Mat
   const homeBranding = getTeamBranding(match.home.code);
   const awayBranding = getTeamBranding(match.away.code);
 
+  // Level after 120' → the shootout decides who advanced
+  const pens = match.penaltyScore;
+  const pensDecided = !!(
+    isFinished &&
+    match.homeScore !== undefined &&
+    match.homeScore === match.awayScore &&
+    pens && pens[0] !== pens[1]
+  );
+
   // Winner/loser opacity
   const homeDimmed =
     isFinished && match.homeScore !== undefined && match.awayScore !== undefined
-      ? match.homeScore < match.awayScore
+      ? match.homeScore < match.awayScore || (pensDecided && pens![0] < pens![1])
       : false;
   const awayDimmed =
     isFinished && match.homeScore !== undefined && match.awayScore !== undefined
-      ? match.awayScore < match.homeScore
+      ? match.awayScore < match.homeScore || (pensDecided && pens![1] < pens![0])
       : false;
 
   // Knockout fixtures hold group-position placeholders ("1K", "3D/E/I/J/K") until
@@ -139,7 +148,7 @@ const MatchEntry = React.memo(function MatchEntry({ match, index }: { match: Mat
         href={`/matches/${match.id}`}
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
-        className="block focus-visible:outline-none group"
+        className="block group"
         style={{
           textDecoration: "none",
           padding: "clamp(1.6rem, 2.5vw, 2.2rem) 0",
@@ -173,17 +182,20 @@ const MatchEntry = React.memo(function MatchEntry({ match, index }: { match: Mat
               {match.group ?? STAGE_LABELS_SHORT[match.stage as TournamentStage]}
             </span>
 
-            {/* Time */}
-            <span
-              style={{
-                fontSize: "0.65rem",
-                fontWeight: 500,
-                letterSpacing: "0.12em",
-                color: "rgba(255,255,255,0.5)",
-              }}
-            >
-              {formatLocalKickoff(match.date, match.time)}
-            </span>
+            {/* Time — only when the centre block shows a score (upcoming
+                matches already show kickoff under the "vs", so skip the dupe) */}
+            {(isFinished || isLive) && (
+              <span
+                style={{
+                  fontSize: "0.65rem",
+                  fontWeight: 500,
+                  letterSpacing: "0.12em",
+                  color: "rgba(255,255,255,0.5)",
+                }}
+              >
+                {formatLocalKickoff(match.date, match.time)}
+              </span>
+            )}
           </div>
 
           {/* Venue — desktop only */}
@@ -250,8 +262,8 @@ const MatchEntry = React.memo(function MatchEntry({ match, index }: { match: Mat
                   </span>
                 </span>
                 {isFinished && (
-                  <span style={{ fontSize: '0.55rem', letterSpacing: '0.25em', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
-                    FT
+                  <span style={{ fontSize: '0.55rem', letterSpacing: pensDecided ? '0.12em' : '0.25em', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
+                    {pensDecided ? `${pens![0]}–${pens![1]} PENS` : match.duration === "EXTRA_TIME" ? "AET" : "FT"}
                   </span>
                 )}
                 {isLive && match.liveData && (
@@ -312,7 +324,13 @@ const MatchEntry = React.memo(function MatchEntry({ match, index }: { match: Mat
   prev.match.status === next.match.status &&
   prev.match.homeScore === next.match.homeScore &&
   prev.match.awayScore === next.match.awayScore &&
-  prev.match.liveData?.currentMinute === next.match.liveData?.currentMinute
+  prev.match.liveData?.currentMinute === next.match.liveData?.currentMinute &&
+  // knockout slots resolve into real teams / shootouts conclude while the page polls
+  prev.match.home.code === next.match.home.code &&
+  prev.match.away.code === next.match.away.code &&
+  prev.match.penaltyScore?.[0] === next.match.penaltyScore?.[0] &&
+  prev.match.penaltyScore?.[1] === next.match.penaltyScore?.[1] &&
+  prev.match.duration === next.match.duration
 );
 
 // ---------------------------------------------------------------------------
@@ -507,7 +525,9 @@ export default function MatchesPage() {
       const el = document.getElementById(`md-${target}`);
       if (el) {
         const y = Math.max(0, el.getBoundingClientRect().top + window.scrollY - NAV_OFFSET);
-        if (Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y);
+        // "instant" bypasses the global `scroll-behavior: smooth`, which would
+        // otherwise restart a smooth animation on every frame of this loop.
+        if (Math.abs(window.scrollY - y) > 2) window.scrollTo({ top: y, behavior: "instant" as ScrollBehavior });
       }
       if (performance.now() - start < 1200) raf = requestAnimationFrame(tick);
       else cleanup();
@@ -676,9 +696,8 @@ export default function MatchesPage() {
               spellCheck={false}
               autoComplete="off"
               aria-label="Search matches"
-              className="w-full bg-transparent focus:outline-none"
+              className="w-full bg-transparent focus:outline-none text-[16px] md:text-[0.78rem]"
               style={{
-                fontSize: "0.78rem",
                 fontWeight: 300,
                 letterSpacing: "0.08em",
                 color: "#ffffff",
@@ -715,7 +734,7 @@ export default function MatchesPage() {
                     background: "none",
                     border: "none",
                     cursor: "pointer",
-                    padding: "4px 0",
+                    padding: "10px 0", // comfortable touch target without changing the look
                     fontSize: "0.72rem",
                     fontWeight: isActive ? 600 : 500,
                     letterSpacing: "0.14em",

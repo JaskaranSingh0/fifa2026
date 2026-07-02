@@ -27,6 +27,10 @@ export interface MatchWithScore {
   status: MatchStatus;
   homeScore?: number;
   awayScore?: number;
+  /** Shootout result, once (or while) the match goes to penalties */
+  penaltyScore?: [number, number];
+  /** "REGULAR" | "EXTRA_TIME" | "PENALTY_SHOOTOUT" */
+  duration?: string;
   liveData?: {
     currentMinute: number;
     isExtraTime: boolean;
@@ -57,6 +61,10 @@ export async function GET() {
         // Prefer the real teams the sync wrote into knockout slots over the placeholder.
         const dbHome = dbMatch.homeTeam !== match.home.name ? TEAM_BY_NAME.get(dbMatch.homeTeam) : undefined;
         const dbAway = dbMatch.awayTeam !== match.away.name ? TEAM_BY_NAME.get(dbMatch.awayTeam) : undefined;
+        const pens: [number, number] | undefined =
+          dbMatch.homePens != null && dbMatch.awayPens != null
+            ? [dbMatch.homePens, dbMatch.awayPens]
+            : undefined;
         return {
           ...match,
           home: dbHome ?? match.home,
@@ -64,10 +72,13 @@ export async function GET() {
           status: dbMatch.status as MatchStatus,
           homeScore: dbMatch.homeScore,
           awayScore: dbMatch.awayScore,
+          penaltyScore: pens,
+          duration: dbMatch.duration,
           liveData: dbMatch.status === "LIVE" ? {
             currentMinute: dbMatch.minute,
-            isExtraTime: false,
-            isPenalties: false
+            isExtraTime: dbMatch.duration === "EXTRA_TIME",
+            isPenalties: dbMatch.duration === "PENALTY_SHOOTOUT",
+            penaltyScore: pens
           } : match.liveData
         };
       }

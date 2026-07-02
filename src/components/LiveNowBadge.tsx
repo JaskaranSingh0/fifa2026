@@ -49,7 +49,7 @@ export default function LiveNowBadge({ compact = false }: { compact?: boolean })
       className="inline-flex items-center gap-2 group"
       style={{
         textDecoration: "none",
-        padding: "3px 10px",
+        padding: "6px 12px",
         borderRadius: "999px",
         border: "1px solid rgba(255,0,0,0.35)",
         background: "rgba(255,0,0,0.06)",

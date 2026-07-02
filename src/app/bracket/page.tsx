@@ -77,8 +77,11 @@ function BracketMatchCard({ match, resolver, featured = false }: {
   const finished =
     match.status === "FINISHED" && match.homeScore !== undefined && match.awayScore !== undefined;
   const live = match.status === "LIVE";
-  const homeWon = finished && (match.homeScore as number) > (match.awayScore as number);
-  const awayWon = finished && (match.awayScore as number) > (match.homeScore as number);
+  // Level after 120' → the shootout decides the winner
+  const pens = match.penaltyScore;
+  const pensDecided = !!(finished && match.homeScore === match.awayScore && pens && pens[0] !== pens[1]);
+  const homeWon = finished && ((match.homeScore as number) > (match.awayScore as number) || (pensDecided && pens![0] > pens![1]));
+  const awayWon = finished && ((match.awayScore as number) > (match.homeScore as number) || (pensDecided && pens![1] > pens![0]));
   const winnerCode = homeWon ? match.home.code : awayWon ? match.away.code : null;
   const accent = winnerCode && isRealTeam(winnerCode) ? getTeamBranding(winnerCode).primary : null;
   const idleBorder = accent ?? "rgba(255,255,255,0.08)";
@@ -136,7 +139,7 @@ function BracketMatchCard({ match, resolver, featured = false }: {
   return (
     <Link
       href={`/matches/${match.id}`}
-      className="group block focus-visible:outline-none"
+      className="group block"
       style={{ textDecoration: "none", width: 260, maxWidth: "100%" }}
       aria-label={`${homeResolved ? homeResolved.name : slotLabel(match.home.code)} versus ${awayResolved ? awayResolved.name : slotLabel(match.away.code)}`}
     >
@@ -173,7 +176,9 @@ function BracketMatchCard({ match, resolver, featured = false }: {
               LIVE{match.liveData?.currentMinute ? ` ${match.liveData.currentMinute}'` : ""}
             </span>
           ) : finished ? (
-            <span style={{ fontSize: "0.55rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.4)", fontWeight: 600 }}>FT</span>
+            <span style={{ fontSize: "0.55rem", letterSpacing: "0.2em", color: "rgba(255,255,255,0.4)", fontWeight: 600 }}>
+              {pensDecided ? `PENS ${pens![0]}–${pens![1]}` : match.duration === "EXTRA_TIME" ? "AET" : "FT"}
+            </span>
           ) : null}
         </div>
 

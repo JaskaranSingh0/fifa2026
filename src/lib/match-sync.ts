@@ -83,8 +83,21 @@ export async function syncMatches(): Promise<{ updated: number, source: string }
     if (!existing) {
       mergedMap.set(key, { ...match, homeTeam: normalizedHome, awayTeam: normalizedAway });
     } else if (match.status === 'FINISHED') {
-      // football-data.org confirmed finish overrides ESPN
-      mergedMap.set(key, { ...match, homeTeam: normalizedHome, awayTeam: normalizedAway });
+      if (match.duration === 'PENALTY_SHOOTOUT' || existing.duration === 'PENALTY_SHOOTOUT') {
+        // Shootout: football-data's fullTime has historically been ambiguous about
+        // including shootout goals — keep ESPN's 120' score and only borrow the
+        // pens/duration from football-data when ESPN doesn't have them.
+        mergedMap.set(key, {
+          ...existing,
+          status: 'FINISHED',
+          homePens: existing.homePens ?? match.homePens,
+          awayPens: existing.awayPens ?? match.awayPens,
+          duration: 'PENALTY_SHOOTOUT',
+        });
+      } else {
+        // football-data.org confirmed finish overrides ESPN
+        mergedMap.set(key, { ...match, homeTeam: normalizedHome, awayTeam: normalizedAway });
+      }
     }
   }
   
@@ -92,7 +105,7 @@ export async function syncMatches(): Promise<{ updated: number, source: string }
   
   const existingMatches = await prisma.match.findMany({
     where: { id: { startsWith: 'm' } }, // Only our seeded WC matches (m001-m104)
-    select: { id: true, homeTeam: true, awayTeam: true, date: true, homeScore: true, awayScore: true, minute: true, status: true, externalId: true }
+    select: { id: true, homeTeam: true, awayTeam: true, date: true, homeScore: true, awayScore: true, minute: true, status: true, externalId: true, homePens: true, awayPens: true, duration: true }
   });
 
   const assignedKo = new Set<string>(); // knockout slots already claimed this run
@@ -111,8 +124,10 @@ export async function syncMatches(): Promise<{ updated: number, source: string }
       const statusChanged = existing.status !== m.status;
       const minuteChanged = existing.minute !== m.minute;
       const externalIdMissing = !existing.externalId && !!m.externalId;
+      const pensChanged = existing.homePens !== (m.homePens ?? null) || existing.awayPens !== (m.awayPens ?? null);
+      const durationChanged = existing.duration !== (m.duration ?? 'REGULAR');
 
-      if (scoreChanged || statusChanged || minuteChanged || externalIdMissing) {
+      if (scoreChanged || statusChanged || minuteChanged || externalIdMissing || pensChanged || durationChanged) {
         await prisma.match.update({
           where: { id: existing.id },
           data: {
@@ -120,7 +135,10 @@ export async function syncMatches(): Promise<{ updated: number, source: string }
             awayScore: m.awayScore,
             minute: m.minute,
             status: m.status,
-            externalId: m.externalId
+            externalId: m.externalId,
+            homePens: m.homePens ?? null,
+            awayPens: m.awayPens ?? null,
+            duration: m.duration ?? 'REGULAR',
           }
         });
         updatedCount++;
@@ -150,7 +168,10 @@ export async function syncMatches(): Promise<{ updated: number, source: string }
           dbKo?.homeScore !== m.homeScore ||
           dbKo?.awayScore !== m.awayScore ||
           dbKo?.status !== m.status ||
-          dbKo?.minute !== m.minute;
+          dbKo?.minute !== m.minute ||
+          dbKo?.homePens !== (m.homePens ?? null) ||
+          dbKo?.awayPens !== (m.awayPens ?? null) ||
+          dbKo?.duration !== (m.duration ?? 'REGULAR');
         if (changed) {
           await prisma.match.update({
             where: { id: bestId },
@@ -162,6 +183,9 @@ export async function syncMatches(): Promise<{ updated: number, source: string }
               minute: m.minute,
               status: m.status,
               externalId: m.externalId,
+              homePens: m.homePens ?? null,
+              awayPens: m.awayPens ?? null,
+              duration: m.duration ?? 'REGULAR',
             },
           });
           updatedCount++;

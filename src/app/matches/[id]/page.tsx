@@ -1,13 +1,27 @@
 "use client";
 /* eslint-disable @typescript-eslint/no-explicit-any -- presentational view over loosely-typed match + ESPN-derived JSON */
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useRef, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { TEAM_BRANDING } from "@/lib/data/team-branding";
-import { formatLocalKickoff } from "@/lib/matches-data";
+import { formatLocalKickoff, kickoffDateTime } from "@/lib/matches-data";
 import { slotLabel, isRealTeam } from "@/lib/bracket";
 import TeamLogo from "@/components/TeamLogo";
+
+/** "Kicks off in 2h 14m" — null once kickoff has passed */
+function formatCountdown(kick: Date, now: Date): string | null {
+  const ms = kick.getTime() - now.getTime();
+  if (ms <= 0) return null;
+  const mins = Math.floor(ms / 60000);
+  const d = Math.floor(mins / 1440);
+  const h = Math.floor((mins % 1440) / 60);
+  const m = mins % 60;
+  if (d > 0) return `KICKS OFF IN ${d}D ${h}H`;
+  if (h > 0) return `KICKS OFF IN ${h}H ${m}M`;
+  if (m > 0) return `KICKS OFF IN ${m}M`;
+  return "KICKING OFF SOON";
+}
 
 const formatMatchDate = (dateStr: string) => {
   // Parse as LOCAL midnight so the label can't slip to the previous day in
@@ -72,35 +86,61 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
   const [showFullBenchAway, setShowFullBenchAway] = useState(false);
   const BENCH_LIMIT = 7;
 
+  // Ticks every 30s so the pre-kickoff countdown stays current.
+  const [now, setNow] = useState(() => new Date());
   useEffect(() => {
-    async function fetchData() {
+    const t = setInterval(() => setNow(new Date()), 30000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Latest known status — lets the poll stop itself once the match is over.
+  const matchStatusRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+
+    async function fetchData(initial: boolean) {
       try {
-        const matchesRes = await fetch('/api/matches');
+        const matchesRes = await fetch('/api/matches', { cache: 'no-store' });
         if (!matchesRes.ok) throw new Error('Failed to fetch matches');
         const matchesData = await matchesRes.json();
         const match = matchesData.matches.find((m: any) => m.id === id);
-        
+
+        if (!alive) return;
         if (!match) {
-          setStatus('error');
+          if (initial) setStatus('error');
           return;
         }
         setBaseMatch(match);
+        matchStatusRef.current = match.status;
 
-        const detailsRes = await fetch(`/api/matches/${id}/details`);
+        const detailsRes = await fetch(`/api/matches/${id}/details`, { cache: 'no-store' });
+        if (!alive) return;
         if (!detailsRes.ok) {
           setStatus('loaded');
           return;
         }
         const detailsData = await detailsRes.json();
+        if (!alive) return;
 
         setDetails(detailsData);
         setStatus('loaded');
       } catch (err) {
         console.error(err);
-        setStatus('error');
+        if (alive && initial) setStatus('error');
       }
     }
-    fetchData();
+
+    fetchData(true);
+
+    // Keep the page alive: refresh every 15s until the match has FINISHED
+    // (scores, minute, goals, half-time, shoot-outs — no manual reloads).
+    const timer = setInterval(() => {
+      if (matchStatusRef.current === 'FINISHED') { clearInterval(timer); return; }
+      fetchData(false);
+    }, 15000);
+
+    return () => { alive = false; clearInterval(timer); };
   }, [id]);
 
   if (status === 'error' && !baseMatch) {
@@ -139,6 +179,25 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
     (details?.details?.statusName === "HALFTIME" ||
       details?.details?.statusName === "STATUS_HALFTIME" ||
       /^HT$|half\s*time/i.test(details?.details?.statusDetail ?? ""));
+
+  // Extra time / penalties context
+  const pens: [number, number] | undefined = baseMatch.penaltyScore;
+  const wentToExtraTime = baseMatch.duration === "EXTRA_TIME" || baseMatch.duration === "PENALTY_SHOOTOUT";
+  const liveInET = isLive && (baseMatch.liveData?.isExtraTime || (baseMatch.liveData?.currentMinute ?? 0) > 90);
+  const liveInPens = isLive && baseMatch.liveData?.isPenalties;
+  const pensDecided = !!(
+    isFinished &&
+    baseMatch.homeScore === baseMatch.awayScore &&
+    pens && pens[0] !== pens[1]
+  );
+  const pensWinner = pensDecided ? (pens![0] > pens![1] ? baseMatch.home : baseMatch.away) : null;
+  const pensWinnerColor = pensDecided
+    ? (pens![0] > pens![1] ? homePrimary : awayPrimary)
+    : undefined;
+
+  // Pre-kickoff countdown (upcoming matches only)
+  const kickDate = kickoffDateTime(baseMatch.date, baseMatch.time);
+  const countdown = !isLive && !isFinished && kickDate ? formatCountdown(kickDate, now) : null;
 
   // Knockout fixtures store group-position placeholders ("1K", "3D/E/I/J/K") until
   // the bracket is set — render those as readable labels instead of raw codes.
@@ -513,13 +572,29 @@ export default function MatchDetailPage({ params }: { params: Promise<{ id: stri
               <div className="mt-8 flex flex-col items-center gap-1">
                 {isLive ? (
                   <span className="text-xs font-bold tracking-[0.2em] uppercase" style={{ color: homePrimary }}>
-                    {isHalftime
+                    {liveInPens
+                      ? `● PENALTIES${pens ? ` ${pens[0]}–${pens[1]}` : ""}`
+                      : isHalftime
                       ? "● HALF TIME"
+                      : liveInET
+                      ? `● EXTRA TIME${baseMatch.liveData?.currentMinute ? ` ${baseMatch.liveData.currentMinute}'` : ""}`
                       : `● LIVE${baseMatch.liveData?.currentMinute ? ` ${baseMatch.liveData.currentMinute}'` : ""}`}
+                  </span>
+                ) : isFinished ? (
+                  <span className="text-xs tracking-[0.2em] text-[rgba(255,255,255,0.4)] uppercase">
+                    {wentToExtraTime ? "AFTER EXTRA TIME" : "FULL TIME"}
                   </span>
                 ) : (
                   <span className="text-xs tracking-[0.2em] text-[rgba(255,255,255,0.4)] uppercase">
-                    {baseMatch.status}
+                    {countdown ?? baseMatch.status}
+                  </span>
+                )}
+                {pensDecided && pensWinner && (
+                  <span
+                    className="text-xs font-bold tracking-[0.18em] uppercase mt-1"
+                    style={{ color: pensWinnerColor, textShadow: `0 0 24px ${pensWinnerColor}55` }}
+                  >
+                    {pensWinner.name} win {Math.max(pens![0], pens![1])}–{Math.min(pens![0], pens![1])} on penalties
                   </span>
                 )}
                 {details?.reason === 'no_external_id' && (

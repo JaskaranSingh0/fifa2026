@@ -19,4 +19,9 @@ model Match {
   stage     String
   stadiumId String?
   externalId String?
+  // Knockout resolution: shootout score + how the match ended
+  // ("REGULAR" | "EXTRA_TIME" | "PENALTY_SHOOTOUT")
+  homePens  Int?
+  awayPens  Int?
+  duration  String   @default("REGULAR")
 }

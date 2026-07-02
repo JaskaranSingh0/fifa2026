@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 export default function NotFound() {
@@ -61,6 +63,17 @@ export default function NotFound() {
           fontSize: "0.65rem",
           letterSpacing: "0.25em",
           textTransform: "uppercase",
+          transition: "border-color 0.3s ease, background 0.3s ease, color 0.3s ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = "rgba(255,255,255,0.6)";
+          e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+          e.currentTarget.style.color = "#ffffff";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
+          e.currentTarget.style.background = "transparent";
+          e.currentTarget.style.color = "rgba(255,255,255,0.8)";
         }}
       >
         Enter the Universe

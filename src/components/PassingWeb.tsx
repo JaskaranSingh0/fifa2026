@@ -42,18 +42,22 @@ interface WebProps {
   introProgress: number;
   reducedMotion: boolean;
   boost: number; // 0 idle, 1 on nav hover
+  converge: boolean; // TEAMS handoff: the web gathers into a rotating Earth-sphere
 }
 
-function Web({ mousePos, introProgress, reducedMotion, boost }: WebProps) {
+function Web({ mousePos, introProgress, reducedMotion, boost, converge }: WebProps) {
   const count = useMemo(() => (isMobile() ? NODE_COUNT_MOBILE : NODE_COUNT_DESKTOP), []);
   const pointsRef = useRef<THREE.Points>(null);
   const linesRef = useRef<THREE.LineSegments>(null);
   const boostRef = useRef(0);
+  const convRef = useRef(0);
 
-  const { pos, home, seed, nodeGeo, nodeMat, lineGeo, lineMat, linePos, lineCol } = useMemo(() => {
+  const { pos, home, seed, sphere, nodeGeo, nodeMat, lineGeo, lineMat, linePos, lineCol } = useMemo(() => {
     const pos = new Float32Array(count * 3);
     const home = new Float32Array(count * 3);  // fixed anchor per node
     const seed = new Float32Array(count);      // per-node wander phase
+    const sphere = new Float32Array(count * 3); // unit Fibonacci-sphere direction per node
+    const GA = Math.PI * (3 - Math.sqrt(5));   // golden angle — even coverage
     for (let i = 0; i < count; i++) {
       const x = (Math.random() - 0.5) * FIELD_X * 2;
       const y = (Math.random() - 0.5) * FIELD_Y * 2;
@@ -61,6 +65,12 @@ function Web({ mousePos, introProgress, reducedMotion, boost }: WebProps) {
       home[i * 3] = x; home[i * 3 + 1] = y; home[i * 3 + 2] = z;
       pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z;
       seed[i] = Math.random();
+      const sy = 1 - (i / Math.max(1, count - 1)) * 2; // 1 → -1
+      const r = Math.sqrt(Math.max(0, 1 - sy * sy));
+      const th = GA * i;
+      sphere[i * 3] = Math.cos(th) * r;
+      sphere[i * 3 + 1] = sy;
+      sphere[i * 3 + 2] = Math.sin(th) * r;
     }
 
     const nodeGeo = new THREE.BufferGeometry();
@@ -106,20 +116,29 @@ function Web({ mousePos, introProgress, reducedMotion, boost }: WebProps) {
       blending: THREE.AdditiveBlending,
     });
 
-    return { pos, home, seed, nodeGeo, nodeMat, lineGeo, lineMat, linePos, lineCol };
+    return { pos, home, seed, sphere, nodeGeo, nodeMat, lineGeo, lineMat, linePos, lineCol };
   }, [count]);
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock, viewport }) => {
     const t = clock.getElapsedTime();
     nodeMat.uniforms.uOpacity.value = introProgress;
 
     boostRef.current += (boost - boostRef.current) * 0.06;
     const b = boostRef.current;
+    // Handoff factor — eases toward 1 while converging (~1.2s to gather)
+    convRef.current += ((converge ? 1 : 0) - convRef.current) * 0.05;
+    const c = convRef.current < 0.001 ? 0 : convRef.current;
+    const cSmooth = c * c * (3 - 2 * c); // smoothstep — soft start, decisive gather
 
     if (!reducedMotion) {
       const mx = mousePos.x * FIELD_X;
       const my = mousePos.y * FIELD_Y;
       const amp = WANDER_AMP * (1 + b * 0.4);
+      // Earth-sphere: fits the viewport, spins slowly while forming
+      const R = Math.min(viewport.width, viewport.height) * 0.28;
+      const rot = t * 0.22;
+      const cosR = Math.cos(rot), sinR = Math.sin(rot);
+      const ease = EASE * (1 + cSmooth * 1.4); // gather with intent
       for (let i = 0; i < count; i++) {
         const i3 = i * 3;
         const ph = seed[i] * 6.2831;
@@ -127,35 +146,52 @@ function Web({ mousePos, introProgress, reducedMotion, boost }: WebProps) {
         // target = home + a small orbit around it (bounded → never migrates)
         let tx = home[i3] + Math.sin(t * sp + ph) * amp;
         let ty = home[i3 + 1] + Math.cos(t * sp * 1.1 + ph * 1.7) * amp;
+        let tz = home[i3 + 2];
 
-        // cursor shoves nodes outward; the spring below pulls them back
+        // cursor shoves nodes outward (fades away as the sphere forms)
         const dx = tx - mx, dy = ty - my;
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < REPEL_R && dist > 0.001) {
-          const push = (1 - dist / REPEL_R) * REPEL_PUSH;
+          const push = (1 - dist / REPEL_R) * REPEL_PUSH * (1 - cSmooth);
           tx += (dx / dist) * push;
           ty += (dy / dist) * push;
         }
 
+        if (cSmooth > 0) {
+          // blend the web target into a point on the rotating sphere
+          const sx = sphere[i3], sy = sphere[i3 + 1], sz = sphere[i3 + 2];
+          const rx = sx * cosR + sz * sinR;
+          const rz = -sx * sinR + sz * cosR;
+          tx += (rx * R - tx) * cSmooth;
+          ty += (sy * R - ty) * cSmooth;
+          tz += (rz * R - tz) * cSmooth;
+        }
+
         // spring current position toward target
-        pos[i3] += (tx - pos[i3]) * EASE;
-        pos[i3 + 1] += (ty - pos[i3 + 1]) * EASE;
+        pos[i3] += (tx - pos[i3]) * ease;
+        pos[i3 + 1] += (ty - pos[i3 + 1]) * ease;
+        pos[i3 + 2] += (tz - pos[i3 + 2]) * ease;
       }
       (nodeGeo.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
     }
 
-    // rebuild links between nearby nodes
+    // rebuild links between nearby nodes (tighter + brighter as the sphere forms
+    // → reads as a wireframe Earth rather than a dense blob)
     let li = 0;
-    const maxD2 = LINK_DIST * LINK_DIST;
-    const linkBoost = 0.55 * introProgress * (1 + b * 0.6);
+    const effLinkDist = LINK_DIST * (1 - cSmooth * 0.62);
+    const maxD2 = effLinkDist * effLinkDist;
+    const linkBoost = 0.55 * introProgress * (1 + b * 0.6 + cSmooth * 0.9);
     for (let i = 0; i < count && li < MAX_LINKS; i++) {
       const ix = pos[i * 3], iy = pos[i * 3 + 1], iz = pos[i * 3 + 2];
       for (let j = i + 1; j < count && li < MAX_LINKS; j++) {
         const dx = ix - pos[j * 3];
         const dy = iy - pos[j * 3 + 1];
-        const d2 = dx * dx + dy * dy;
+        const dz = iz - pos[j * 3 + 2];
+        // depth joins the distance check only as the sphere forms, so links hug
+        // the surface instead of crossing the globe's interior
+        const d2 = dx * dx + dy * dy + dz * dz * cSmooth;
         if (d2 < maxD2) {
-          const a = 1 - Math.sqrt(d2) / LINK_DIST;
+          const a = 1 - Math.sqrt(d2) / effLinkDist;
           const k = a * a * linkBoost;
           const o = li * 6;
           linePos[o] = ix; linePos[o + 1] = iy; linePos[o + 2] = iz;
@@ -184,9 +220,11 @@ export interface PassingWebProps {
   introProgress: number;
   reducedMotion: boolean;
   boost?: number;
+  /** TEAMS handoff — the web gathers into a rotating Earth-sphere silhouette */
+  converge?: boolean;
 }
 
-export default function PassingWeb({ mousePos, introProgress, reducedMotion, boost = 0 }: PassingWebProps) {
+export default function PassingWeb({ mousePos, introProgress, reducedMotion, boost = 0, converge = false }: PassingWebProps) {
   return (
     <div className="fixed inset-0 z-0" aria-hidden="true">
       <Canvas
@@ -195,7 +233,7 @@ export default function PassingWeb({ mousePos, introProgress, reducedMotion, boo
         gl={{ antialias: false, alpha: true, powerPreference: "high-performance" }}
         style={{ background: "transparent" }}
       >
-        <Web mousePos={mousePos} introProgress={introProgress} reducedMotion={reducedMotion} boost={boost} />
+        <Web mousePos={mousePos} introProgress={introProgress} reducedMotion={reducedMotion} boost={boost} converge={converge} />
       </Canvas>
     </div>
   );

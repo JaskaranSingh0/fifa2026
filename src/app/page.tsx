@@ -30,6 +30,7 @@ import React, {
   useCallback,
 } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { gsap } from "gsap";
@@ -40,6 +41,52 @@ import LiveNowBadge from "@/components/LiveNowBadge";
 import { useMusic } from "@/components/music/MusicProvider";
 import { useMouseInteraction } from "@/hooks/useMouseInteraction";
 import { ParticleState } from "@/lib/particle-system";
+import { getTeamBranding } from "@/lib/data/team-branding";
+
+// ---------------------------------------------------------------------------
+// FinalWhisper — one quiet line: where this universe is heading. Becomes the
+// crowning once the Final is decided (the champion deserves the front door).
+// ---------------------------------------------------------------------------
+function FinalWhisper() {
+  const [champion, setChampion] = useState<{ name: string; code: string } | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/matches", { cache: "no-store" });
+        const data = await res.json();
+        const final = (data.matches || []).find((m: { id: string }) => m.id === "m104");
+        if (!alive || !final || final.status !== "FINISHED") return;
+        const { homeScore: h, awayScore: a, penaltyScore: p } = final;
+        if (h == null || a == null) return;
+        const homeWins = h !== a ? h > a : p && p[0] !== p[1] ? p[0] > p[1] : null;
+        if (homeWins === null) return;
+        setChampion(homeWins ? final.home : final.away);
+      } catch { /* whisper is non-critical */ }
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const accent = champion ? getTeamBranding(champion.code).primary : null;
+  return (
+    <span
+      className="uppercase"
+      style={{
+        fontSize: "0.55rem",
+        fontWeight: champion ? 700 : 400,
+        letterSpacing: "0.34em",
+        whiteSpace: "nowrap",
+        color: champion ? accent! : "rgba(255,255,255,0.28)",
+        textShadow: champion ? `0 0 24px ${accent}66` : "none",
+      }}
+    >
+      {champion
+        ? `★ ${champion.name} · World Champions ★`
+        : "The Final · MetLife Stadium · July 19"}
+    </span>
+  );
+}
 
 // Dynamically import the WebGL canvas — avoids SSR issues with Three.js
 const PassingWeb = dynamic(
@@ -85,6 +132,8 @@ interface NavPortalProps {
   /** parent-owned writer so the child never mutates a prop */
   registerSibling: (index: number, el: HTMLAnchorElement | null) => void;
   myIndex: number;
+  /** optional navigation interceptor (the TEAMS particles→Earth handoff) */
+  onIntercept?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
 function NavPortal({
@@ -98,6 +147,7 @@ function NavPortal({
   siblingRefs,
   registerSibling,
   myIndex,
+  onIntercept,
 }: NavPortalProps) {
   const linkRef = useRef<HTMLAnchorElement>(null);
 
@@ -168,11 +218,12 @@ function NavPortal({
         ref={linkRef}
         href={href}
         aria-label={`Navigate to ${label}`}
+        onClick={onIntercept}
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
         onFocus={handleEnter}
         onBlur={handleLeave}
-        className="flex items-center justify-center min-h-[52px] md:min-h-0 focus-visible:outline-none"
+        className="flex items-center justify-center min-h-[52px] md:min-h-0"
         style={{
           fontFamily: "var(--font-inter, 'Inter', sans-serif)",
           fontSize: "clamp(1.1rem, 2.1vw, 2.4rem)",
@@ -199,12 +250,16 @@ function NavPortal({
 // ---------------------------------------------------------------------------
 
 export default function HomePage() {
+  const router = useRouter();
   const [phase, setPhase] = useState<'gate' | 'warp' | 'universe'>('gate');
   const [navState, setNavState] = useState<ParticleState>(ParticleState.INTRO);
   const [introProgress, setIntroProgress] = useState(0);
   const [showWelcome, setShowWelcome] = useState(false);
   const [showNav, setShowNav] = useState(false);
   const [introComplete, setIntroComplete] = useState(false);
+  // TEAMS handoff — the web gathers into an Earth silhouette, THEN we route.
+  // "One universe, many states": the particles literally become the globe.
+  const [handoff, setHandoff] = useState(false);
   const { start: startMusic } = useMusic();
 
   useEffect(() => {
@@ -322,6 +377,20 @@ export default function HomePage() {
     if (!introCompleteRef.current) return;
     setNavState(ParticleState.IDLE);
   }, []);
+
+  // TEAMS click → gather the web into an Earth-sphere, then route. Reduced
+  // motion (or an unfinished intro) skips straight to normal navigation.
+  const handoffTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (handoffTimer.current) clearTimeout(handoffTimer.current); }, []);
+  const beginTeamsHandoff = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (reducedMotion || !introCompleteRef.current) return; // let Link navigate
+    e.preventDefault();
+    if (handoffTimer.current) return; // already under way
+    setHandoff(true);
+    setShowNav(false);     // nav + text recede as the sphere forms
+    setShowWelcome(false);
+    handoffTimer.current = setTimeout(() => router.push("/teams"), 1600);
+  }, [reducedMotion, router]);
 
   // ---------------------------------------------------------------------------
   // Render
@@ -483,8 +552,11 @@ export default function HomePage() {
               transition={{ duration: 0.6, delay: phase === 'gate' ? 1.5 : 0.3 }}
               onClick={phase === 'gate' ? handleSkip : handleWarpComplete}
               style={{
-                position: 'absolute', bottom: '2rem', right: '2rem', zIndex: 3,
+                // padding grows the tap target to ~44px; offsets shrink so the
+                // label stays visually in the same corner spot
+                position: 'absolute', bottom: 'calc(2rem - 16px)', right: 'calc(2rem - 16px)', zIndex: 3,
                 background: 'none', border: 'none', cursor: 'pointer',
+                padding: '16px',
                 fontSize: '0.55rem', letterSpacing: '0.2em',
                 color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase',
                 transition: 'color 0.25s ease',
@@ -504,6 +576,7 @@ export default function HomePage() {
         introProgress={introProgress}
         reducedMotion={reducedMotion}
         boost={navState !== ParticleState.IDLE && navState !== ParticleState.INTRO ? 1 : 0}
+        converge={handoff}
       />
 
       {/* ── Welcome Text (top-right desktop / top-center mobile) ────────────── */}
@@ -557,6 +630,7 @@ export default function HomePage() {
                 aria-label="Main navigation"
                 initial="hidden"
                 animate="visible"
+                exit={{ opacity: 0, transition: { duration: 0.55, ease: "easeOut" } }}
                 variants={{
                   hidden: {},
                   visible: {
@@ -580,12 +654,25 @@ export default function HomePage() {
                     siblingRefs={siblingRefs}
                     registerSibling={registerSibling}
                     myIndex={index}
+                    onIntercept={item.href === "/teams" ? beginTeamsHandoff : undefined}
                   />
                 ))}
               </motion.nav>
             )}
           </AnimatePresence>
         </div>
+      )}
+
+      {/* ── The Final whisper — where the universe is heading ────────────── */}
+      {phase === 'universe' && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={showWelcome ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ duration: 1.4, ease: "easeOut", delay: 0.9 }}
+          className="absolute z-10 bottom-[76px] left-1/2 -translate-x-1/2 pointer-events-none select-none hidden md:block"
+        >
+          <FinalWhisper />
+        </motion.div>
       )}
 
       {/* ── Bottom vertical accent line ───────────────────────────────────── */}

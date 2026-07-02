@@ -10,6 +10,11 @@ export interface NormalizedMatch {
   date: string;
   stage: string;
   source: 'football-data' | 'espn';
+  /** Shootout score, when the match went (or is going) to penalties */
+  homePens?: number | null;
+  awayPens?: number | null;
+  /** How the match ended / is being decided */
+  duration?: 'REGULAR' | 'EXTRA_TIME' | 'PENALTY_SHOOTOUT';
 }
 
 const FETCH_TIMEOUT_MS = 8000;
@@ -55,6 +60,13 @@ export async function fetchFromFootballData(): Promise<NormalizedMatch[]> {
         status = 'FINISHED';
       }
       
+      // v4: score.duration = REGULAR | EXTRA_TIME | PENALTY_SHOOTOUT,
+      // with the shootout itself in score.penalties.{home,away}
+      const duration: NormalizedMatch['duration'] =
+        match.score?.duration === 'PENALTY_SHOOTOUT' ? 'PENALTY_SHOOTOUT'
+        : match.score?.duration === 'EXTRA_TIME' ? 'EXTRA_TIME'
+        : 'REGULAR';
+
       return {
         externalId: match.id.toString(),
         homeTeam: match.homeTeam?.name || 'TBD',
@@ -65,7 +77,10 @@ export async function fetchFromFootballData(): Promise<NormalizedMatch[]> {
         status,
         date: match.utcDate,
         stage: match.stage,
-        source: 'football-data'
+        source: 'football-data',
+        homePens: match.score?.penalties?.home ?? null,
+        awayPens: match.score?.penalties?.away ?? null,
+        duration,
       };
     });
   } catch (err) {
@@ -115,11 +130,14 @@ export async function fetchFromESPN(): Promise<NormalizedMatch[]> {
       const home = competition?.competitors?.find((c: any) => c.homeAway === 'home');
       const away = competition?.competitors?.find((c: any) => c.homeAway === 'away');
       const statusName = event.status?.type?.name ?? 'STATUS_SCHEDULED';
+      const statusDetail: string = event.status?.type?.detail ?? event.status?.type?.shortDetail ?? '';
 
       const normalizedStatus: 'SCHEDULED' | 'LIVE' | 'FINISHED' =
         statusName === 'STATUS_IN_PROGRESS' || statusName === 'STATUS_HALFTIME' || statusName === 'STATUS_FIRST_HALF' || statusName === 'STATUS_SECOND_HALF'
+          || statusName === 'STATUS_OVERTIME' || statusName === 'STATUS_SHOOTOUT' || statusName === 'STATUS_HALFTIME_ET'
           ? 'LIVE'
           : statusName === 'STATUS_FULL_TIME' || statusName === 'STATUS_FINAL' || statusName === 'STATUS_END_PERIOD'
+            || statusName === 'STATUS_FINAL_PEN' || statusName === 'STATUS_FINAL_AET'
           ? 'FINISHED'
           : 'SCHEDULED';
 
@@ -128,13 +146,25 @@ export async function fetchFromESPN(): Promise<NormalizedMatch[]> {
       let minute = 0;
 
       if (normalizedStatus === 'LIVE') {
-        // ESPN format: "23'", "45'+2'", "90'+6'"
+        // ESPN format: "23'", "45'+2'", "90'+6'", "105'+1'" (extra time)
         const match = clockStr.match(/^(\d+)/);
         minute = match ? parseInt(match[1]) : 0;
-        // Add injury time if present
+        // Add injury time if present (cap at 125 so ET stoppage still reads sanely)
         const injuryMatch = clockStr.match(/\+(\d+)/);
-        if (injuryMatch) minute = Math.min(minute + parseInt(injuryMatch[1]), 90);
+        if (injuryMatch) minute = Math.min(minute + parseInt(injuryMatch[1]), 125);
       }
+
+      // Shootout: competitors carry shootoutScore when pens happened / are underway
+      const homePensRaw = home?.shootoutScore;
+      const awayPensRaw = away?.shootoutScore;
+      const hasPens = homePensRaw != null && awayPensRaw != null;
+      const duration: NormalizedMatch['duration'] =
+        hasPens || statusName === 'STATUS_FINAL_PEN' || statusName === 'STATUS_SHOOTOUT' || /pen/i.test(statusDetail)
+          ? 'PENALTY_SHOOTOUT'
+          : statusName === 'STATUS_FINAL_AET' || statusName === 'STATUS_OVERTIME' || statusName === 'STATUS_HALFTIME_ET'
+            || /AET|extra/i.test(statusDetail) || (normalizedStatus === 'LIVE' && minute > 90)
+          ? 'EXTRA_TIME'
+          : 'REGULAR';
 
       return {
         externalId: `espn-${event.id}`,
@@ -147,6 +177,9 @@ export async function fetchFromESPN(): Promise<NormalizedMatch[]> {
         date: event.date,
         stage: event.season?.slug ?? 'GROUP_STAGE',
         source: 'espn' as const,
+        homePens: hasPens ? parseInt(String(homePensRaw)) || 0 : null,
+        awayPens: hasPens ? parseInt(String(awayPensRaw)) || 0 : null,
+        duration,
       };
     });
   } catch (err) {

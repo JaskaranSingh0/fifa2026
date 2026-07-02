@@ -132,7 +132,7 @@ export default function GroupsPage() {
                   delay: Math.min(i * 0.05, 0.3),
                   ease: [0.25, 0.46, 0.45, 0.94],
                 }}
-                className="group flex flex-col relative cursor-pointer focus-visible:outline-none"
+                className="group flex flex-col relative cursor-pointer"
                 style={{
                   background: 'radial-gradient(circle at 0% 50%, rgba(255,255,255,0.015) 0%, transparent 70%)'
                 }}

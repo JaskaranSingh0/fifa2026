@@ -1,6 +1,16 @@
 // bracket.ts — turn the flat knockout fixtures into a feeder tree and resolve
 // the group-position placeholders ("1A"/"2B"…) into real qualified teams.
 
+import { MATCHES as SEEDED_MATCHES } from "./data/matches";
+
+// The knockout STRUCTURE is fixed by the official schedule. The live data
+// replaces placeholder slots ("W73") with real teams as results land, so the
+// tree must follow the SEEDED slot refs — never the live ones — or finished
+// feeders would drop out of the bracket once their next round materialises.
+const SEED_SLOT_REFS = new Map(
+  SEEDED_MATCHES.map((m) => [m.matchNumber, { home: m.home.code, away: m.away.code }])
+);
+
 export interface BracketMatch {
   id: string;
   matchNumber: number;
@@ -10,6 +20,8 @@ export interface BracketMatch {
   awayScore?: number;
   home: { code: string; name: string };
   away: { code: string; name: string };
+  penaltyScore?: [number, number];
+  duration?: string;
   liveData?: { currentMinute: number; penaltyScore?: [number, number] };
 }
 
@@ -124,8 +136,8 @@ export function buildWinnerResolver(matches: BracketMatch[]) {
     if (fed.homeScore !== fed.awayScore) {
       homeAdvances = fed.homeScore > fed.awayScore;
     } else {
-      const pens = fed.liveData?.penaltyScore;
-      if (!pens) return null; // level after normal time, no shoot-out score yet
+      const pens = fed.penaltyScore ?? fed.liveData?.penaltyScore;
+      if (!pens || pens[0] === pens[1]) return null; // level, no decisive shoot-out score yet
       homeAdvances = pens[0] > pens[1];
     }
     const advancing = homeAdvances === wantWinner ? fed.home : fed.away;
@@ -148,16 +160,19 @@ export function buildBracketTree(matches: BracketMatch[]): BracketTree | null {
     const m = /^W(\d+)$/.exec(code);
     return m ? byNumber.get(parseInt(m[1], 10)) : undefined;
   };
+  // Follow the SEEDED refs — the live match may already hold real team codes.
   const node = (m: BracketMatch): BracketNode => {
-    const h = feeder(m.home.code);
-    const a = feeder(m.away.code);
+    const refs = SEED_SLOT_REFS.get(m.matchNumber);
+    const h = refs ? feeder(refs.home) : undefined;
+    const a = refs ? feeder(refs.away) : undefined;
     return h && a ? { match: m, children: [node(h), node(a)] } : { match: m };
   };
 
   const final = byNumber.get(104);
   if (!final) return null;
-  const left = feeder(final.home.code);
-  const right = feeder(final.away.code);
+  const finalRefs = SEED_SLOT_REFS.get(104);
+  const left = finalRefs ? feeder(finalRefs.home) : undefined;
+  const right = finalRefs ? feeder(finalRefs.away) : undefined;
   return {
     final,
     third: byNumber.get(103),

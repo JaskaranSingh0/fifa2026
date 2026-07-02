@@ -157,7 +157,7 @@ export default function StadiumsPage() {
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelected(stadium); }
                       }}
-                      className="group relative flex flex-col md:flex-row md:items-start justify-between py-8 md:py-10 border-b border-[rgba(255,255,255,0.03)] cursor-pointer focus-visible:outline-none"
+                      className="group relative flex flex-col md:flex-row md:items-start justify-between py-8 md:py-10 border-b border-[rgba(255,255,255,0.03)] cursor-pointer"
                       style={{
                         opacity: isAnyHovered ? (isHovered ? 1 : 0.2) : 1,
                         transition: "opacity 0.4s ease",
